@@ -1,0 +1,21 @@
+type Swap {
+  id: ID!
+  pool: String!
+  blockNumber: Int!
+  blockTimestamp: Int!
+  txIndex: Int!
+  logIndex: Int!
+  txHash: String!
+  txFrom: String
+  txTo: String
+  gasPrice: BigInt
+  maxFeePerGas: BigInt
+  maxPriorityFeePerGas: BigInt
+  sender: String!
+  recipient: String!
+  amount0: BigInt!
+  amount1: BigInt!
+  sqrtPriceX96: BigInt!
+  liquidity: BigInt!
+  tick: BigInt!
+}

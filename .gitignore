@@ -1,0 +1,18 @@
+# Raw + derived data never committed. Reproducibility comes from
+# data/checksums/CHECKSUMS.sha256 (committed) + deterministic pipeline.
+data/raw/
+data/parquet/
+data/bars/
+data/onchain/
+*.part
+
+# RPC endpoint contains auth key
+.env
+
+# Runtime logs (extract.log, extract_txs.log, indexer/indexer.log)
+*.log
+
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/

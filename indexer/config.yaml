@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: ammbro-indexer
+# Self-hosted sync from our own Chainstack RPC (no hosted HyperSync dependency).
+field_selection:
+  transaction_fields:
+    - transactionIndex
+    - hash
+    - from
+    - to
+    - gasPrice
+    - maxFeePerGas
+    - maxPriorityFeePerGas
+networks:
+  - id: 1
+    # 2026-03-01 00:00 UTC (see pipeline/config.py WINDOW_START)
+    start_block: 24558868
+    rpc_config:
+      url: ${RPC_URL}
+    contracts:
+      - name: UniswapV3Pool
+        handler: src/EventHandlers.ts
+        abi_file_path: ./abi/UniswapV3Pool.json
+        address:
+          # ETH/USDC 0.05% — primary study pool
+          - 0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640
+          # USDC/USDT 0.01% — calm-period control pool
+          - 0x3416cF6C708Da44DB2624D63ea0AAef7113527C6
+        events:
+          - event: Swap(address indexed sender, address indexed recipient, int256 amount0, int256 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick)

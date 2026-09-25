@@ -1,0 +1,21 @@
+[project]
+name = "repamm-backtest"
+version = "0.1.0"
+description = "REP-AMM backtest data pipeline (Layer 2/3: Binance public archive benchmark)"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.2",
+    "pyarrow>=16",
+    "numpy>=1.26",
+    "requests>=2.32",
+    # export_indexer.py reads the Envio postgres
+    "sqlalchemy>=2.0",
+    # study_a figures — `make all` must reproduce every figure (spec §17.10)
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,21 @@
+{
+  "name": "ammbro-indexer",
+  "version": "0.1.0",
+  "scripts": {
+    "codegen": "envio codegen",
+    "dev": "envio dev",
+    "stop": "envio stop",
+    "start": "ts-node generated/src/Index.bs.js"
+  },
+  "devDependencies": {
+    "@types/node": "20.8.8",
+    "ts-node": "10.9.1",
+    "typescript": "5.2.2"
+  },
+  "dependencies": {
+    "envio": "^2.22.3"
+  },
+  "optionalDependencies": {
+    "generated": "./generated"
+  }
+}
