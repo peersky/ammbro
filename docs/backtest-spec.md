@@ -107,8 +107,8 @@ activation/exit delay. `ε` comes from Study E, not a guess. `κ` is
 listed in P§4.7 but undefined in P§4.3 — excluded until defined.
 
 **q_LP input.** Directional benchmark (Study D) is primary per P§4.2,
-`arb_exit` convention (the paper's stated intent) until open item 8 is
-resolved; `paper_literal` and trade-price reported beside it. Columns in
+`arb_exit` convention (the paper's rule); `paper_literal` and
+trade-price reported beside it as sensitivities. Columns in
 `data/onchain/scored_directional/`.
 
 ## Study D — directional benchmark proxy (P§3.6)
@@ -120,14 +120,13 @@ bid/ask proxy from Binance `aggTrades` using the `isBuyerMaker` flag
 the numeraire correction applied to each side. Report trade-price,
 proxy-mid and directional `q_LP` side by side.
 
-Two conventions, because the paper's text and its stated intent
-disagree (open item 8):
+Two conventions (open item 8, resolved in favour of `arb_exit`):
 - **`arb_exit`** — pool sends ETH → bid, pool receives ETH → ask. The
   price an arb can exit at; a no-flag band `[bid, ask]` that widens with
-  the spread. Matches the intent in P§3.6 ("not penalized during
-  volatile periods", "permissive").
-- **`paper_literal`** — pool sends ETH → ask, receives → bid, as the
-  sentences in P§3.6/P§4.2 read. Flags MORE flow as the spread widens.
+  the spread. The paper's rule since the P§3.6/P§4.2 fix.
+- **`paper_literal`** — pool sends ETH → ask, receives → bid, as
+  P§3.6/P§4.2 read before the fix. Flags MORE flow as the spread widens.
+  Kept as a sensitivity only.
 
 ## Study E — timestamp sensitivity (P§3.4, P§4.2)
 
@@ -167,7 +166,7 @@ q_LP_i(h)       = LP_markout_i(h) / notional_i
 Direction-free: overpayment in EITHER direction must come out LP-positive
 without per-side negation (unit-tested). Pool-perspective raw deltas.
 Under the directional benchmark `oracle_value` follows the `arb_exit`
-convention by default (Study D; open item 8).
+convention (Study D; P§3.6/P§4.2).
 
 ## v0.2 reporting requirement (§12.2)
 
@@ -211,14 +210,10 @@ nothing."
 6. **Bootstrap.** `f_max` = 5% for unstaked flow needs a launch story
    (retroactive seeding from history?) — P§2.5 mentions a
    "retroactive-bootstrap means" without specifying it.
-8. **Bid/ask assignment is reversed relative to its stated purpose.**
-   P§3.6/P§4.2 value the pool's asset leg at the ask when the pool sells
-   and the bid when it buys. Under that rule a wider spread makes LP
-   markout more negative, so MORE flow is flagged in volatile markets —
-   the opposite of P§3.6's stated aim ("legitimate trading flow is not
-   penalized during volatile periods") and of P§3.6's own description of
-   the rule as "permissive". The intent needs bid-when-pool-sells /
-   ask-when-pool-buys (`arb_exit`). Study D measures both.
+8. ~~**Bid/ask assignment reversed relative to its stated purpose.**~~
+   RESOLVED 2026-09-30: P§3.6/P§4.2 now read bid-when-pool-sells /
+   ask-when-pool-buys, matching `arb_exit`. `arb_exit` is the paper's
+   rule; `paper_literal` stays in Study D only as a sensitivity.
 7. **Promised studies.** P§3.6 cites a benchmark-equivalence study
    ("§N") and P§4.2 a timestamp-sensitivity study (§5) — now Studies D
    and E; the paper's cross-refs need numbers.
