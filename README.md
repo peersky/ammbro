@@ -21,7 +21,7 @@ month ingested separately when dump arrives.
 ```
 make data      # download + checksum-verify Binance zips, parse to Parquet, derive bars
 make onchain   # swap extraction, tx meta, q_LP scoring, control gate, labels
-make studies   # Study A, Study B, Supp-1
+make studies   # Study A, Study B, Supp-1, Study D
 make all       # all three, in order
 make test      # mandatory unit tests (timestamp boundary, price_at, numeraire, labels)
 ```
@@ -61,6 +61,8 @@ pipeline/
   study_a.py            ROC of q_LP vs labels
   study_b.py            fee-schedule sweep + residual extraction (§12.2)
   supp1.py              position ↔ q_LP correlation
+  directional.py        bid/ask proxy from aggTrades aggressor flag (P§3.6)
+  study_d.py            directional-benchmark re-score of A and B
   export_indexer.py     read the Envio postgres (durable/live source)
 indexer/                self-hosted Envio indexer (TypeScript)
 sql/                    committed queries

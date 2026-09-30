@@ -106,8 +106,10 @@ must be labelled so. Also run `f_max ∈ {30bp, 5%}` as sensitivity.
 activation/exit delay. `ε` comes from Study E, not a guess. `κ` is
 listed in P§4.7 but undefined in P§4.3 — excluded until defined.
 
-**q_LP input.** Directional benchmark (Study D) is primary per P§4.2;
-trade-price `q_LP` reported beside it.
+**q_LP input.** Directional benchmark (Study D) is primary per P§4.2,
+`arb_exit` convention (the paper's stated intent) until open item 8 is
+resolved; `paper_literal` and trade-price reported beside it. Columns in
+`data/onchain/scored_directional/`.
 
 ## Study D — directional benchmark proxy (P§3.6)
 
@@ -116,9 +118,16 @@ sells the asset, bid when it buys. Until Layer-1 LWBA arrives, build a
 bid/ask proxy from Binance `aggTrades` using the `isBuyerMaker` flag
 (last buyer-initiated trade ≈ ask, last seller-initiated ≈ bid), with
 the numeraire correction applied to each side. Report trade-price,
-proxy-mid and directional `q_LP` side by side. The directional rule is
-more lenient, mostly on small swaps, so current A/B extraction figures
-overstate it relative to the paper's rule — D measures by how much.
+proxy-mid and directional `q_LP` side by side.
+
+Two conventions, because the paper's text and its stated intent
+disagree (open item 8):
+- **`arb_exit`** — pool sends ETH → bid, pool receives ETH → ask. The
+  price an arb can exit at; a no-flag band `[bid, ask]` that widens with
+  the spread. Matches the intent in P§3.6 ("not penalized during
+  volatile periods", "permissive").
+- **`paper_literal`** — pool sends ETH → ask, receives → bid, as the
+  sentences in P§3.6/P§4.2 read. Flags MORE flow as the spread widens.
 
 ## Study E — timestamp sensitivity (P§3.4, P§4.2)
 
@@ -157,8 +166,8 @@ q_LP_i(h)       = LP_markout_i(h) / notional_i
 
 Direction-free: overpayment in EITHER direction must come out LP-positive
 without per-side negation (unit-tested). Pool-perspective raw deltas.
-Under the directional benchmark `oracle_value` uses ask when the pool
-sells token1 and bid when it buys (Study D).
+Under the directional benchmark `oracle_value` follows the `arb_exit`
+convention by default (Study D; open item 8).
 
 ## v0.2 reporting requirement (§12.2)
 
@@ -202,6 +211,14 @@ nothing."
 6. **Bootstrap.** `f_max` = 5% for unstaked flow needs a launch story
    (retroactive seeding from history?) — P§2.5 mentions a
    "retroactive-bootstrap means" without specifying it.
+8. **Bid/ask assignment is reversed relative to its stated purpose.**
+   P§3.6/P§4.2 value the pool's asset leg at the ask when the pool sells
+   and the bid when it buys. Under that rule a wider spread makes LP
+   markout more negative, so MORE flow is flagged in volatile markets —
+   the opposite of P§3.6's stated aim ("legitimate trading flow is not
+   penalized during volatile periods") and of P§3.6's own description of
+   the rule as "permissive". The intent needs bid-when-pool-sells /
+   ask-when-pool-buys (`arb_exit`). Study D measures both.
 7. **Promised studies.** P§3.6 cites a benchmark-equivalence study
    ("§N") and P§4.2 a timestamp-sensitivity study (§5) — now Studies D
    and E; the paper's cross-refs need numbers.
@@ -233,7 +250,19 @@ nothing."
      The cost of longer horizons is on the survival side, not surplus: survival ratio falls 0.958→0.821 at $10 gas. **h0 stays the headline** — smallest claim, fastest settlement, best arb survival. Longer-horizon surplus must not be cited as upside without the survival cost beside it.
    - Gas sensitivity (survival ratio headline/baseline): h0 holds ≥0.85 across flat $2–$50 and the base-fee model (0.996). Fragile corner is long horizon × high gas: h60 at $50 → 0.509, h30 at $50 → 0.588 — roughly half of profitable arbs killed. Base-fee model (base fee × 250k gas) is a LOWER bound on cost: omits priority fees and coinbase-transfer builder payments; true cost sits between it and the flat sweep.
 7b. ✅ Supp-1 at all horizons (2026-09-30). The P§2.8 claim holds at every h: index-10+ (un-raced) extraction $2.11M / $2.32M / $2.55M / $2.85M at h = 0/12/30/60s, share 21.3% / 19.5% / 18.9% / 18.5%. Top-3 share rises 59.9% → 64.8% — later-horizon deepening concentrates slightly in raced positions, but the un-raced floor never drops below ~19%.
-8. ☐ Study D — directional bid/ask proxy; re-run A and B(h0) under it. Before C: C's primary `q_LP` depends on it.
+8. ✅ Study D (2026-09-30, results/study_d/, `make study-d`). Touch proxy from `is_buyer_maker`, composed spread median 0.22bp / P90 1.9bp / P99 4.4bp; per-side staleness median ~0.75s (bursty prints — at a random instant the last print on a side is often ~1s old); raw ETH sides cross 4.4% before bounding.
+
+     | benchmark (h0) | LP-neg share | gross LVR | baseline net | headline net | Δ vs baseline | capture | survival ratio | AUC | AUC >100k |
+     |---|---|---|---|---|---|---|---|---|---|
+     | trade | 29.0% | $9.91M | −$1.93M | +$2.14M | +$4.07M | 41% | 0.958 | 0.867 | 0.978 |
+     | mid | 27.9% | $9.83M | −$1.80M | +$2.28M | +$4.08M | 41% | 0.958 | 0.860 | 0.977 |
+     | arb_exit | 23.7% | $9.22M | −$0.77M | +$3.11M | +$3.88M | 42% | 0.955 | 0.852 | 0.975 |
+     | paper_literal | 33.1% | $10.56M | −$2.84M | +$1.49M | +$4.33M | 41% | 0.962 | 0.861 | 0.977 |
+
+   - **Robust to the benchmark:** Study A gate (AUC 0.852–0.867) and the Study B recapture (+$3.88M to +$4.33M, capture 41–42%, survival ratio 0.955–0.962). Same pattern at every horizon. Mid ≈ trade (0.22bp median spread), so trade-price was already a fair mid.
+   - **Sensitive to the benchmark:** the size of the problem. Baseline LP net is −$0.77M under `arb_exit` vs −$1.93M trade vs −$2.84M literal; 5.3pp of swaps sit inside the bid/ask band. P§1's "net-unprofitable" still holds under every convention, but under the paper's intended rule the LP loss is 60% smaller than the trade-price figure. Cite the baseline with its convention, never bare.
+   - Control gate passes under all four (|q| P95 1.92–2.25bp vs 38.4bp ceiling).
+   - CAVEAT: touch proxy, not LWBA. Depth-weighted spreads are wider for size, so `arb_exit` under real LWBA would flag less still, mostly on large trades. Layer-1 LWBA replaces this (item 13).
 9. ☐ Study E — timestamp sensitivity → `ε`. Before C: C's burn tolerance depends on it.
 10. ☐ Study C + Supp-2 (depends on 8, 9). Bootstrap Mar–May, evaluate Jun–Aug.
 11. ☐ Study F — competitor baselines (needs 0.30% ETH/USDC pool extraction).
