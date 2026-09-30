@@ -452,14 +452,14 @@ nothing."
      | thirds rule, ×2 / ÷2 | 0.51 | 0.13 | 0.03 | **97.4%** | **5.16** | 0.05 → 0.05 | 0.00 → 0.00 |
      | staleness + flag, ×2 / ÷2 | 4.67 | 0.18 | 0.35 | 7.6% | 0.14 | 0.47 → 2.14 | 0.46 → 1.97 |
      | staleness + flag, ×1.25 / ×0.8 / 0.95 | 4.47 | 0.30 | 0.21 | 5.1% | 0.39 | 0.47 → 1.69 | 0.47 → 1.65 |
-     | **staleness 3-zone + top-slot flag, ×2 up / ×0.8 / 0.95** (flag confounded by block busyness) | **4.58** | **0.37** | 0.33 | **1.8%** | **0.04** | **0.62 → 2.62** | **0.59 → 2.37** |
+     | **staleness 3-zone + top-slot flag, ×2 up / ×0.8 / 0.95** (flag confounded by block busyness) | **4.58** | **0.37** | 0.32 | **1.8%** | **0.04** | **0.62 → 2.62** | **0.59 → 2.31** |
      | same, busyness-normalised τ | 4.59 | 0.36 | 0.32 | 1.8% | 0.04 | 0.62 → 2.24 | 0.59 → 2.05 |
      | staleness 3-zone only, decay 0.95 | 3.99 | 0.82 | 0.39 | 1.9% | 0.13 | 0.85 → 2.60 | — |
      | staleness 3-zone only, decay 0.90 | 4.30 | 0.54 | — | 4.0% | 0.18 | 0.98 → 2.05 | — |
      | staleness 3-zone only, decay 0.85 | 4.17 | 0.42 | — | 6.7% | 0.49 | 0.70 → 1.88 | — |
 
      ×2 scenario: proposed 4.85 / 0.36 / 1.0% uncorrected vs today 0 / 5.11; static 1bp is best in hindsight (4.94 / 0.23 / 0.9%) only because the cheapest arb's cost stayed below 1bp.
-   - **Market-driven payouts.** The controller never sees arb costs, yet `m` settles just above the cheapest arb's cost (0.3 → 0.62bp; 1.2 → 2.2–2.6bp after ×4) and what arbs keep tracks it (0.59 → 2.05–2.37bp). Builder payments fall from $4.81M to $0.36–0.37M (−92%); LP recapture $4.58–4.59M.
+   - **Market-driven payouts.** The controller never sees arb costs, yet `m` settles just above the cheapest arb's cost (0.3 → 0.62bp; 1.2 → 2.2–2.6bp after ×4) and what arbs keep tracks it (0.59 → 2.05–2.31bp). Builder payments fall from $4.81M to $0.36–0.37M (−92%); LP recapture $4.58–4.59M.
    - **Block-busyness confound on the top-slot flag** (2026-10-01): real at the block level — no-rent flag rate 0.55 → 0.34 and rent flag rate 0.87 → 0.74 from quietest to busiest base-fee quintile — but it largely averages out over a daily epoch (~800 opportunities across blocks of every busyness): confounded vs unconfounded 4.58 vs 4.59 LP, 0.37 vs 0.36 builder; settled `m` after the shift 2.62 vs 2.24bp. Busyness-normalised τ restores the unconfounded result exactly. **The flag earns its place:** staleness-only controllers trade builder rent against staleness at every decay speed (table), while the flag lowers `m` fast only when rent is visible. The arb payout is set by competition among arbs, not by a hardcoded parameter.
    - **No fixed `m` survives a regime change:** 1bp kills rebalancing after the shift (100% uncorrected, $1.78M of gaps); 2bp survives but leaves builders 2× the controller's payments; 5bp leaves 5.5×.
    - **The thirds rule collapses:** almost every epoch reads "first third", `m` halves to the floor within days, rebalancing stops, and the first swap in each block becomes user flow that also sits high — so no raise signal ever fires.
