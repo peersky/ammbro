@@ -27,7 +27,12 @@ gap-taking opportunities.
    win (bid > 0) takes the flag rate and block position of today's
    rent-bearing gap-takers, an uncontested win those of no-rent
    gap-takers, and an uncorrected block the position of today's
-   non-correcting first swaps.
+   non-correcting first swaps. Top slots are sold block-wide, so the flag
+   rate depends on how busy the block is (quiet blocks give free top
+   slots; busy ones displace our pool's arb). Flag probabilities are
+   therefore drawn per opportunity from its own block's base-fee quintile
+   ("confounded"); a pooled-rate variant is kept as the optimistic
+   reference, and a busyness-normalised threshold is tested as the fix.
 
 HONESTY (bind to writeup): the arb cost population is ASSUMED; the
 opportunity set is static (x does not shrink as the pool gets less
@@ -160,11 +165,18 @@ def cutoffs(df: pd.DataFrame) -> dict:
     }
 
 
+N_BUSY = 5                      # base-fee quintiles for the block-busyness confound
+
 CONTROLLERS = [
     "today (no reconciliation)", "static m=1bp", "static m=2bp", "static m=5bp",
     "thirds rule, x2 / /2", "staleness + flag, x2 / /2", "staleness + flag, x1.25 / x0.8 / decay 0.95",
     "staleness 3-zone + flag, x1.25 / x0.8 / decay 0.95",
     "staleness 3-zone + flag, asymmetric x2 up / x0.8 / decay 0.95",
+    "staleness 3-zone + flag (pooled rates, no confound), asymmetric x2 up / x0.8 / decay 0.95",
+    "staleness 3-zone + flag (busyness-normalised tau), asymmetric x2 up / x0.8 / decay 0.95",
+    "staleness 3-zone only, asymmetric x2 up / decay 0.95",
+    "staleness 3-zone only, asymmetric x2 up / decay 0.9",
+    "staleness 3-zone only, asymmetric x2 up / decay 0.85",
 ]
 
 
@@ -176,11 +188,15 @@ def simulate(df: pd.DataFrame, cost_shift: float) -> dict:
     p_flag_rent = float(gt.loc[gt.rent_today > 0, "flag"].mean())
     p_flag_norent = float(gt.loc[gt.rent_today <= 0, "flag"].mean())
     tau = (p_flag_rent + p_flag_norent) / 2
+    busy = pd.qcut(gt["base_fee_wei"].astype(float), N_BUSY, labels=False).to_numpy()
+    gt = gt.assign(busy=busy)
+    pr_q = np.array([gt.loc[(gt.busy == b) & (gt.rent_today > 0), "flag"].mean() for b in range(N_BUSY)])
+    pn_q = np.array([gt.loc[(gt.busy == b) & (gt.rent_today <= 0), "flag"].mean() for b in range(N_BUSY)])
 
     opp = gt[gt.x > 0].sort_values("day")
     days = np.sort(opp["day"].unique())
     shift_day = days[len(days) // 2]
-    groups = {d: (g.x.to_numpy(), g.v.to_numpy(), g.gas.to_numpy()) for d, g in opp.groupby("day")}
+    groups = {d: (g.x.to_numpy(), g.v.to_numpy(), g.gas.to_numpy(), g.busy.to_numpy()) for d, g in opp.groupby("day")}
 
     results = {}
     for ctl in CONTROLLERS:
@@ -188,7 +204,7 @@ def simulate(df: pd.DataFrame, cost_shift: float) -> dict:
         m = {"static m=1bp": 1.0, "static m=2bp": 2.0, "static m=5bp": 5.0}.get(ctl, M0_BPS)
         daily = []
         for d in days:
-            xs, vs, gs = groups[d]
+            xs, vs, gs, bq = groups[d]
             costs = ARB_COSTS_BPS * (cost_shift if d >= shift_day else 1.0) / 1e4
             kept = xs if ctl.startswith("today") else np.minimum(xs, m / 1e4)
             net = kept[:, None] * vs[:, None] - gs[:, None] - costs[None, :] * vs[:, None]
@@ -203,8 +219,12 @@ def simulate(df: pd.DataFrame, cost_shift: float) -> dict:
             comp = corrected & (bid > 0)
             n = len(xs)
             u = rng.random(n)
-            flag = corrected & np.where(comp, u < p_flag_rent, u < p_flag_norent)
+            if "pooled rates" in ctl:
+                flag = corrected & np.where(comp, u < p_flag_rent, u < p_flag_norent)
+            else:
+                flag = corrected & np.where(comp, u < pr_q[bq], u < pn_q[bq])
             flagged = float(flag.sum() / max(corrected.sum(), 1))
+            tau_d = float((pr_q[bq[corrected]].mean() + pn_q[bq[corrected]].mean()) / 2) if corrected.any() else tau
             frac = np.empty(n)
             frac[comp] = rng.choice(pool_rent, comp.sum())
             frac[corrected & ~comp] = rng.choice(pool_norent, (corrected & ~comp).sum())
@@ -231,7 +251,9 @@ def simulate(df: pd.DataFrame, cost_shift: float) -> dict:
                 elif stale >= S_LOW:
                     pass
                 else:
-                    m *= 0.8 if flagged > tau else 0.95
+                    thr = tau_d if "normalised" in ctl else tau
+                    decay = float(ctl.rsplit("decay ", 1)[1])
+                    m *= 0.8 if ("+ flag" in ctl and flagged > thr) else decay
             m = float(np.clip(m, M_MIN_BPS, M_MAX_BPS))
         results[ctl] = daily
 
@@ -261,6 +283,7 @@ def simulate(df: pd.DataFrame, cost_shift: float) -> dict:
             "cost_shift_day": pd.to_datetime(int(shift_day) * 86400, unit="s").strftime("%Y-%m-%d"),
             "epoch": "1 UTC day", "m0_bps": M0_BPS, "s_star": S_STAR, "s_low": S_LOW, "flag_rule": f"tx_index <= {FLAG_IDX}",
             "flag_tau": round(tau, 4),
+            "flag_rate_by_base_fee_quintile": {"rent": [round(x, 4) for x in pr_q], "no_rent": [round(x, 4) for x in pn_q]},
             "p_flag_contested": round(p_flag_rent, 4), "p_flag_uncontested": round(p_flag_norent, 4),
             "median_gas_over_notional_bps": round(vw_gas, 4),
             "cheapest_two_arbs_bps": {"before": ARB_COSTS_BPS[:2].tolist(),
