@@ -2,7 +2,7 @@ PY := uv run python
 
 .PHONY: all setup data onchain studies \
         download parse bars extract txs score gate labels \
-        study-a study-b study-d supp1 test clean
+        study-a study-b study-d study-e supp1 test clean
 
 # Full §17.9 chain: benchmark data -> on-chain swaps -> scoring -> control
 # gate -> labels -> studies. `gate` exits non-zero on failure, so no study
@@ -11,7 +11,7 @@ all: data onchain studies
 
 data: download parse bars
 onchain: extract txs score gate labels
-studies: study-a study-b supp1 study-d
+studies: study-a study-b supp1 study-d study-e
 
 setup:
 	uv venv && uv pip install -e ".[dev]"
@@ -54,6 +54,9 @@ supp1:
 
 study-d:
 	$(PY) -m pipeline.study_d
+
+study-e:
+	$(PY) -m pipeline.study_e
 
 test:
 	$(PY) -m pytest -q

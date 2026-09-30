@@ -106,10 +106,16 @@ must be labelled so. Also run `f_max ∈ {30bp, 5%}` as sensitivity.
 activation/exit delay. `ε` comes from Study E, not a guess. `κ` is
 listed in P§4.7 but undefined in P§4.3 — excluded until defined.
 
-**q_LP input.** Directional benchmark (Study D) is primary per P§4.2,
-`arb_exit` convention (the paper's rule); `paper_literal` and
-trade-price reported beside it as sensitivities. Columns in
-`data/onchain/scored_directional/`.
+**q_LP input.** `arb_exit` directional q (Study D, P§4.2) on the Study E
+timeline: kernel centered on `block_ts + L + h`, width 1s, L = 1.5s
+measured. Columns `q_c_h{0,12,30}` in
+`data/onchain/scored_timing/eth_usdc_005/q_c.parquet`. Forward-timeline
+`q_LP` and `paper_literal` reported beside it as sensitivities.
+
+**ε.** 1bp (Study E: per-swap timing noise P90 0.80bp at the chosen
+1s kernel, notional-weighted 0.49bp; epoch aggregates average it down,
+so 1bp is conservative). Sweep {0.5, 1, 2}bp. Sits on top of the
+arb_exit bid/ask band, not instead of it.
 
 ## Study D — directional benchmark proxy (P§3.6)
 
@@ -132,8 +138,10 @@ Two conventions (open item 8, resolved in favour of `arb_exit`):
 
 Compare `q_LP` from (a) block timestamp, (b) virtual-time point read
 (`t_norm_us`, current), (c) kernel average of the price path over the
-swap's plausible execution window. On the USDC/USDT control pool the
-spread between reconstructions is the noise floor; `ε` is set from it.
+swap's plausible execution window. Measure when swaps were actually
+priced (decision-time profile) and set `ε` from the timing noise at the
+chosen kernel. The USDC/USDT control barely moves inside a slot, so it
+bounds peg noise only and cannot calibrate timing noise.
 
 ## Study F — competitor baselines
 
@@ -210,6 +218,21 @@ nothing."
 6. **Bootstrap.** `f_max` = 5% for unstaked flow needs a launch story
    (retroactive seeding from history?) — P§2.5 mentions a
    "retroactive-bootstrap means" without specifying it.
+9. **Virtual time plane (P§3.4) is not supported by the data.** P§3.4
+   spreads a block's txs across the block interval by index. Study E
+   finds index is not time: top-of-block arbs price at ≈ block_ts + 1.5s
+   (after the slot label, because blocks are published into the slot),
+   and mapping deeper txs forward in time is lookahead — it prices them
+   against prints from after the block was sealed. A single per-block
+   anchor at `block_ts + L` scores as well as any index spread
+   (block_L AUC 0.886 = backward_L 0.886 > forward 0.852). Suggest
+   rewriting P§3.4 around a measured per-block decision latency.
+10. **Kernel window (P§4.2) must be centered on the decision instant and
+   narrow.** A trailing window `[block_ts − w, block_ts]` scores arbs
+   against pre-move prices: at w = 12s the baseline LP P&L flips from
+   −$0.58M to +$5.26M and AUC drops to 0.753. Centered on `block_ts + L`
+   at w = 1s it is stable (AUC 0.889). P§4.2 should state both the
+   anchor and the width, and cite ε ≈ 1bp from Study E.
 8. ~~**Bid/ask assignment reversed relative to its stated purpose.**~~
    RESOLVED 2026-09-30: P§3.6/P§4.2 now read bid-when-pool-sells /
    ask-when-pool-buys, matching `arb_exit`. `arb_exit` is the paper's
@@ -258,7 +281,25 @@ nothing."
    - **Sensitive to the benchmark:** the size of the problem. Baseline LP net is −$0.77M under `arb_exit` vs −$1.93M trade vs −$2.84M literal; 5.3pp of swaps sit inside the bid/ask band. P§1's "net-unprofitable" still holds under every convention, but under the paper's intended rule the LP loss is 60% smaller than the trade-price figure. Cite the baseline with its convention, never bare.
    - Control gate passes under all four (|q| P95 1.92–2.25bp vs 38.4bp ceiling).
    - CAVEAT: touch proxy, not LWBA. Depth-weighted spreads are wider for size, so `arb_exit` under real LWBA would flag less still, mostly on large trades. Layer-1 LWBA replaces this (item 13).
-9. ☐ Study E — timestamp sensitivity → `ε`. Before C: C's burn tolerance depends on it.
+9. ✅ Study E (2026-09-30, results/study_e/, `make study-e`). All figures arb_exit, h0.
+   - **Decision latency L = +1.5s after block_ts.** Fee-adjusted residual between the pool's post-swap price (Swap tick) and the CEX side an arb hedges at, minimized over offsets −24s…+6s, on 154,899 toxic top-3 swaps. Bracketed against proxy staleness: last-print quote (lags, biases late) +1.75s, next-print quote (leads, biases early) +1.25s → L = 1.5s; fresh-quotes-only (<100ms, 3% of instants) +1.0s. Benign flow shows no relation (flat), as it should. Mechanism: `block_ts` is the slot label; blocks are published ~1–2s into the slot (MEV-Boost timing games) and arbs quote until the final bid is taken. Their own reaction time is milliseconds.
+   - Results are insensitive inside the bracket and sensitive to leaving it:
+
+     | anchor | LP-neg | gross LVR | baseline net | Δ headline | AUC | AUC >100k |
+     |---|---|---|---|---|---|---|
+     | block_ts (L=0) | 22.1% | $9.03M | −$0.58M | +$3.78M | 0.862 | 0.977 |
+     | forward t_norm (current pipeline) | 23.7% | $9.22M | −$0.77M | +$3.88M | 0.852 | 0.975 |
+     | block_ts + 1.0s | 23.4% | $9.55M | −$1.38M | +$3.96M | 0.882 | 0.983 |
+     | block_ts + 1.5s | 23.9% | $9.72M | −$1.59M | +$4.05M | 0.886 | 0.982 |
+     | block_ts + 1.75s | 24.2% | $9.82M | −$1.70M | +$4.12M | 0.886 | 0.982 |
+     | **centered on +1.5s, w=1s (C input)** | — | — | −$1.58M | +$4.02M | **0.889** | **0.984** |
+     | trailing [bt−12s, bt] (pitfall) | 10.8% | $5.59M | **+$5.26M** | +$2.51M | 0.753 | 0.931 |
+
+   - **Forward timeline (all studies so far) is lookahead for mid-block swaps** and scores slightly worse than a single per-block anchor. Anchoring at the decision instant raises AUC 0.852 → 0.889 and deepens baseline LP loss −$0.77M → −$1.58M; the Study B recapture is stable (+$3.88M → +$4.02M).
+   - **ε = 1bp.** Per-swap timing noise at the chosen kernel: P50 0.0bp, P90 0.80bp, notional-weighted 0.49bp (>$100k P50 0.15bp). Wider kernels add noise (w=4s: P90 1.67bp).
+   - Control pool |q| P95 2.25bp under every reconstruction — peg noise, not timing noise.
+   - CAVEATS: touch proxy (Study D caveat applies); L measured on gap-closing flow only — mid-block swaps show no pool↔CEX relation, so their decision times are not identified and they share the block anchor by assumption.
+9b. ☐ Re-base Study A, Study B, Supp-1 and Study D on the Study E timeline (currently forward `t_norm_us`). Numbers above give the expected direction: AUC up, baseline LP loss deeper, recapture stable.
 10. ☐ Study C + Supp-2 (depends on 8, 9). Bootstrap Mar–May, evaluate Jun–Aug.
 11. ☐ Study F — competitor baselines (needs 0.30% ETH/USDC pool extraction).
 12. ☐ Study G — L1 gas viability (receipts).

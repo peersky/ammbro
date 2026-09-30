@@ -84,6 +84,21 @@ class SidedSeries:
             "stale_ask_s": (t - ta) / 1e6,
         }
 
+    def next_quotes(self, t_us, horizon_s: float = 0.0) -> dict:
+        """Mirror of `quotes` using the FIRST print on each side at or
+        after t + h, bounded by the first print overall. The last-print
+        quote lags the true book and the next-print quote leads it, so
+        the pair brackets any timing estimate against proxy staleness."""
+        t = np.asarray(t_us, dtype=np.int64) + int(horizon_s * 1_000_000)
+        ib = np.searchsorted(self.ts_b, t, side="left")
+        ia = np.searchsorted(self.ts_a, t, side="left")
+        ok = (ib < len(self.ts_b)) & (ia < len(self.ts_a))
+        ib_c, ia_c = np.clip(ib, 0, len(self.ts_b) - 1), np.clip(ia, 0, len(self.ts_a) - 1)
+        bid_raw, ask_raw = self.px_b[ib_c], self.px_a[ia_c]
+        first = np.where(self.ts_a[ia_c] <= self.ts_b[ib_c], ask_raw, bid_raw)
+        nan = np.where(ok, 1.0, np.nan)
+        return {"bid": np.minimum(bid_raw, first) * nan, "ask": np.maximum(ask_raw, first) * nan}
+
 
 def compose_eth_usdc(eth: dict, usdc: dict) -> tuple[np.ndarray, np.ndarray]:
     """ETH priced in USDC from ETHUSDT and USDCUSDT sided quotes."""

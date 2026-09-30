@@ -47,3 +47,12 @@ def test_zero_spread_reduces_to_trade_price():
     base = q_lp(a0, a1, p)[0]
     for c in ("arb_exit", "mid", "paper_literal"):
         assert np.isclose(q_lp(a0, a1, directional_price(a1, p, p, c))[0], base)
+
+
+def test_next_quotes_lead_and_never_cross():
+    # Bid prints at 0 (101) and 30 (99); ask prints at 10 (100) and 40 (102).
+    s = SidedSeries(ts_bid=[0, 30], px_bid=[101.0, 99.0], ts_ask=[10, 40], px_ask=[100.0, 102.0])
+    q = s.next_quotes(np.array([20]))
+    assert q["bid"][0] == 99.0 and q["ask"][0] == 102.0   # first prints after t=20
+    assert q["bid"][0] <= q["ask"][0]
+    assert np.isnan(s.next_quotes(np.array([50]))["bid"][0])  # no later print
