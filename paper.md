@@ -127,7 +127,7 @@ markout = Δ₀ + P_dir(t)·Δ₁          (token0 terms)
 q_LP    = markout / notional         (dimensionless)
 ```
 
-where `P_dir(t)` is the **directional** benchmark of §3.6: the liquidity-weighted bid when the pool sells the asset, the liquidity-weighted ask when the pool buys, evaluated at the swap's reconstructed instant on the virtual time plane (h = 0). Where the pair price must be composed from two single-asset feeds, the directional composition is buy-leg-ask over sell-leg-bid.
+where `P_dir(t)` is the **directional** benchmark of §3.6: the liquidity-weighted bid when the pool sells the asset, the liquidity-weighted ask when the pool buys, evaluated at the swap's reconstructed instant on the virtual time plane (h = 0). Where the pair price must be composed from two single-asset feeds, each side is composed as the round trip it represents: the pair ask is buy-leg-ask over sell-leg-bid, and the pair bid is sell-leg-bid over buy-leg-ask.
 
 Three properties carry the section's weight. *Numeraire symmetry:* re-denominating in token1 rescales markout and notional identically; `q_LP` is unchanged, so the numeraire is bookkeeping, not economics. *Direction-freedom:* the delta formulation needs no per-side sign conventions; benign overpayment is `q_LP > 0` for buys and sells alike. *Instantaneity:* scoring at h = 0 measures the extraction where it occurs — against the executable reference price at the moment of the trade — rather than against later prices that mix extraction with market drift. Forward-horizon markouts (+12s, +30s) are retained as robustness cross-checks, not alternative definitions: they bound reconstruction and feed-latency noise and close the surface against horizon-aware adversaries.
 
