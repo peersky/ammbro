@@ -32,9 +32,9 @@ from. Two conditions, both necessary:
    (base-fee gas + CEX hedge cost `h`). Real gas is 0.31% of LVR, so
    ~99.7% of today's LVR is rent. `m` must sit just above `h`: at
    `m ≤ h` arbs cannot cover costs and rebalancing stops (Study B hedge
-   grid). `h` is private (CEX fee tiers), so `m` is a parameter to tune —
-   plausibly adaptively, lowering it until pool staleness vs the oracle
-   starts to rise.
+   grid). `h` is private (CEX fee tiers) and changes over time, so no
+   fixed `m` works: `m` is discovered by the allowance controller (Study
+   C design, evidence in Study H).
 
 **Test, reported by every schedule in Study B and every condition in
 Study C:**
@@ -59,6 +59,7 @@ rebalancing is failure, not success.
 | E | Timestamp sensitivity: point read vs kernel average over the virtual-time window (P§3.4, P§4.2) | `q_LP` spread per reconstruction; noise floor on the control pool | Sets `ε` for C |
 | F | Competitor baselines (abstract: "existing solution incompleteness") | Capture / net LP for MEV tax, volatility-scaled fee, 0.05% vs 0.30% fee tier | informational — must be reported beside C |
 | G | L1 viability (title, P§4.6) | Per-swap execution `gasUsed` vs estimated reconciliation gas | Reconciliation ≤ execution per swap |
+| H | Allowance `m` controller: signal evidence, position-cutoff scoring, agent simulation on real gap-taking opportunities | Controller signals; cutoff TPR/FPR; per-controller LP recapture, builder payments, uncorrected gaps, `m` vs cheapest arb cost | informational — sets the Study C controller |
 | Supp-1 | position↔q_LP correlation, pre/post normalization | Correlation + quartile plots | informational |
 | Supp-2 | Σmint vs Σburn from the C replay; pool income vs θ* per epoch | Supply drift; distance from target | informational — static replay cannot test convergence |
 
@@ -121,6 +122,46 @@ f(r))·V`. **Sizing target (design objective):** the burn's value should
 equal extraction beyond the allowance `m`, i.e. the Study B `margin`
 schedule expressed in REP — so the rent left to bid to builders is
 ≈ `(m − h)·V`, not the full extraction.
+
+**Allowance `m` controller (design objective; Study H).** `m` is set per
+epoch (1 day) by a feedback loop, not fixed:
+
+```
+staleness(e) = share of correctable gaps left uncorrected in epoch e
+             (correctable: some arb would profit at m = ∞; measured at
+              reconciliation against the signed oracle)
+
+if   staleness(e) > S*   (2%)     → m ← m × 2      rebalancing failing: raise fast
+elif staleness(e) ≥ S_low (0.5%)  → m unchanged    near the cost cliff: hold
+elif flag(e) > τ                  → m ← m × 0.8    visible rent: lower
+else                              → m ← m × 0.95   default decay
+```
+
+- **Raise signal = staleness,** the direct measure of P§3.2's goal. It is
+  the only signal that still works when `m` is below cost: arbs vanish,
+  so their position and fees carry no information.
+- **Lower signal = share of gap-takers at `tx_index ≤ 2`** (best rent
+  signal in Study H, Youden J 0.329). `τ` = midpoint of today's rates for
+  rent / no-rent gap-takers (0.64). Priority fee is readable at execution
+  (`tx.gasprice − block.basefee`) but weaker (J ≤ 0.25) and ~45% of
+  gap-takers hide their bid in coinbase transfers; index still sees them.
+- **Tx index on-chain:** the EVM cannot read it at execution, but
+  reconciliation can. Keepers post indices optimistically; any can be
+  challenged inside the oracle retention window with a Merkle-Patricia
+  proof against the block's `transactionsRoot`, the header authenticated
+  via `BLOCKHASH` / EIP-2935. The pool-internal swap ordinal is free
+  (hook counter). Coinbase transfers cannot be attributed per tx on-chain.
+- **Asymmetric steps.** Fast up (×2) restores rebalancing within a day or
+  two after a cost shock; slow down (×0.8 / ×0.95) avoids oscillating
+  across the cost cliff. Symmetric ×2 / ÷2 oscillates (Study H: 7.6–12%
+  uncorrected vs 1.0–1.8%).
+- **Evasion bounds.** Hiding rent (index ≥ 3 and zero priority) only
+  removes the faster lowering; it cannot raise `m`. Faking staleness
+  means leaving gaps a competitor takes; only a dominant builder in its
+  own blocks can, bounded by its block share through the epoch median.
+- **Required in C:** agent simulation with behavioural response (x shrinks
+  as staleness falls; arbs re-enter as `m` rises), and a joint stability
+  check with the θ* mint valve — two feedback loops on the same flow.
 
 **Mint (P§4.4).** Per epoch, `N = Σfees + Σmarkouts`,
 `S = N − θ*·ΣV`. If `S > 0`, mint `σ·S` pro-rata to actors whose
@@ -209,6 +250,23 @@ reconciliation cost (one markout multiply-add, one tolerance compare,
 one state write, signature verification amortized over the report's
 validity window). The paper's bound is reconciliation ≤ execution.
 
+## Study H — allowance `m` controller (design objective)
+
+`pipeline/study_h.py`, `results/study_h/` (metrics + `m_controller.png`).
+
+1. **Signals.** Gap-takers = the block's first pool swap, moved the pool
+   toward the oracle at `block_ts + L`. Today's rent = extraction −
+   base-fee gas − 1bp hedge.
+2. **Cutoffs.** Every position / fee rule scored as a rent detector
+   (TPR on rent-bearing gap-takers, FPR on no-rent ones, Youden J).
+3. **Agent simulation.** 150,582 real LP-negative gap-taking
+   opportunities, 184 daily epochs. Assumed arb population with hedge
+   costs {0.3, 0.6, 1.0, 1.5, 2.5}bp; cheapest wins, pays the builder the
+   second-best net (second-price for the top slot). Costs ×2 or ×4 from
+   2026-06-01 to test tracking. Controller signals resampled from (1).
+   Assumed cost population, static opportunity set, today's signal
+   rates — shows controller dynamics, not a dollar forecast.
+
 ## Scoring metric (§17.2, P§4.2 — q_LP, NOT the §5 price ratio)
 
 ```
@@ -280,6 +338,14 @@ nothing."
    −$0.58M to +$5.26M and AUC drops to 0.753. Centered on `block_ts + L`
    at w = 1s it is stable (AUC 0.889). P§4.2 should state both the
    anchor and the width, and cite ε ≈ 1bp from Study E.
+11. **Allowance `m` and its controller belong in P§4.** P§4.7's
+   undefined `κ` ("covers the divergence range where extraction
+   empirically concentrates") is best defined as the allowance `m` of the
+   margin schedule, and P§1's claim that the fee becomes "a useful
+   dynamic variable" is substantiated by the Study H controller — a
+   second feedback valve beside the θ* mint valve of P§4.4. Suggest a
+   P§4.3 paragraph: burn sized to extraction beyond `m`; `m` set per
+   epoch by staleness (raise) and top-slot share (lower).
 8. ~~**Bid/ask assignment reversed relative to its stated purpose.**~~
    RESOLVED 2026-09-30: P§3.6/P§4.2 now read bid-when-pool-sells /
    ask-when-pool-buys, matching `arb_exit`. `arb_exit` is the paper's
@@ -360,10 +426,32 @@ nothing."
    - **Forward timeline (all studies so far) is lookahead for mid-block swaps** and scores slightly worse than a single per-block anchor. Anchoring at the decision instant raises AUC 0.852 → 0.889 and deepens baseline LP loss −$0.77M → −$1.58M; the Study B recapture is stable (+$3.88M → +$4.02M).
    - **ε = 1bp.** Per-swap timing noise at the chosen kernel: P50 0.0bp, P90 0.80bp, notional-weighted 0.49bp (>$100k P50 0.15bp). Wider kernels add noise (w=4s: P90 1.67bp).
    - Control pool |q| P95 2.25bp under every reconstruction — peg noise, not timing noise.
+   - Position-gaming tests committed (`pipeline/timing_gaming.py`, `position_gaming` in results/study_e): orientation of index time planes, pool-internal clocks and their attacks, and the post-swap-distance metric — source of the figures cited in the design objective.
    - CAVEATS: touch proxy (Study D caveat applies); L measured on gap-closing flow only — mid-block swaps show no pool↔CEX relation, so their decision times are not identified and they share the block anchor by assumption.
 9b. ☐ Re-base Study A, Study B, Supp-1 and Study D on the Study E timeline (currently forward `t_norm_us`). Numbers above give the expected direction: AUC up, baseline LP loss deeper, recapture stable.
 10. ☐ Study C + Supp-2 (depends on 8, 9). Bootstrap Mar–May, evaluate Jun–Aug.
 11. ☐ Study F — competitor baselines (needs 0.30% ETH/USDC pool extraction).
+11c. ✅ Study H (2026-10-01, `make study-h`). Allowance `m` controller.
+   - **Block thirds are not a rent signal.** Thirds rule (first third → lower) flags 99.4% of rent-bearing gap-takers and 94.0% of no-rent ones (J 0.054). The raise zone (last third) almost never occurs: 0.2% / 2.1%. DEX flow sits high in blocks regardless of rent, and the *fraction* of a block is diluted by block size. The informative boundary is absolute: **`tx_index ≤ 2`** (TPR 0.806, FPR 0.477, J 0.329); `≤ 3` is equivalent (0.324). AUC: lower index 0.697, lower block fraction 0.661, priority fee 0.573.
+   - **Simulation, arb costs ×4 on 2026-06-01** (window totals, $M):
+
+     | controller | LP recapture | builder payments | arb margin | uncorrected (mean) | gaps left | `m` before → after (bp) | arb keeps (bp) |
+     |---|---|---|---|---|---|---|---|
+     | today, no reconciliation | 0.00 | **4.81** | 0.49 | 0.0% | 0.00 | — | 3.72 → 6.09 |
+     | static m = 1bp | 3.47 | 0.23 | 0.19 | **50.5%** | **1.78** | 1.00 → 1.00 | 0.92 → **0.00** |
+     | static m = 2bp | 4.18 | 0.72 | 0.40 | 0.1% | 0.00 | 2.00 → 2.00 | 1.54 → 1.91 |
+     | static m = 5bp | 2.84 | 1.97 | 0.49 | 0.0% | 0.00 | 5.00 → 5.00 | 2.45 → 3.39 |
+     | thirds rule, ×2 / ÷2 | 0.51 | 0.13 | 0.03 | **97.4%** | **5.16** | 0.05 → 0.05 | 0.00 → 0.00 |
+     | staleness + flag, ×2 / ÷2 | 4.67 | 0.18 | 0.35 | 7.6% | 0.14 | 0.47 → 2.14 | 0.46 → 1.97 |
+     | staleness + flag, ×1.25 / ×0.8 / 0.95 | 4.47 | 0.30 | 0.21 | 5.1% | 0.39 | 0.47 → 1.69 | 0.47 → 1.65 |
+     | **staleness 3-zone, ×2 up / ×0.8 / 0.95** | **4.59** | **0.36** | 0.32 | **1.8%** | **0.04** | **0.62 → 2.24** | **0.59 → 2.05** |
+
+     ×2 scenario: proposed 4.85 / 0.36 / 1.0% uncorrected vs today 0 / 5.11; static 1bp is best in hindsight (4.94 / 0.23 / 0.9%) only because the cheapest arb's cost stayed below 1bp.
+   - **Market-driven payouts.** The controller never sees arb costs, yet `m` settles just above the cheapest arb's cost (0.3 → 0.62bp; 1.2 → 2.24bp after ×4) and what arbs keep tracks it (0.59 → 2.05bp). Builder payments fall from $4.81M to $0.36M (−93%); LP recapture $4.59M. The arb payout is set by competition among arbs, not by a hardcoded parameter.
+   - **No fixed `m` survives a regime change:** 1bp kills rebalancing after the shift (100% uncorrected, $1.78M of gaps); 2bp survives but leaves builders 2× the controller's payments; 5bp leaves 5.5×.
+   - **The thirds rule collapses:** almost every epoch reads "first third", `m` halves to the floor within days, rebalancing stops, and the first swap in each block becomes user flow that also sits high — so no raise signal ever fires.
+   - **Why asymmetric + hold band:** symmetric ×2 / ÷2 oscillates across the cost cliff (7.6% uncorrected); slow symmetric steps recover slowly after a shock ($0.39M gaps); the 0.5–2% hold band stops decay before the cliff and ×2 up recovers in ~2 epochs ($0.04M).
+   - CAVEATS: assumed arb cost population and second-price auction; static opportunity set (no behavioural response); signal rates from today's cross-section; builder payments are model output (11b measures reality). Residual hunting remains — single 100% days when decay crosses the cliff (visible in the figure).
 11b. ☐ Measure today's actual builder payments by gap-takers: priority fee × gasUsed (receipts) + coinbase transfers (traces or fee-recipient balance deltas). The "before" number the design objective drives toward 0; Supp-1 sees only the priority part (~$1.9M, estimated).
 12. ☐ Study G — L1 gas viability (receipts).
 13. ☐ Layer-1 signed-feed ingestion + §17.5 equivalence test (when dump arrives; do not block). Replaces D's proxy with real LWBA.

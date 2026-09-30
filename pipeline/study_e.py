@@ -257,6 +257,9 @@ def run() -> dict:
     C_OUT.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(c_cols).to_parquet(C_OUT / "q_c.parquet", index=False)
 
+    from .timing_gaming import run_gaming
+    gaming = run_gaming(df, lab, a0, a1, v, L, price)
+
     out = {
         "n_swaps": len(df),
         "study_c_input": {"file": str(C_OUT.relative_to(REPO_ROOT) / "q_c.parquet"),
@@ -270,6 +273,7 @@ def run() -> dict:
         "kernel_width_sweep": kernels,
         "control_pool": control(usdc),
         "latency_sweep_block_anchor": latency_sweep,
+        "position_gaming": gaming,
         "decision_time_profile": profile,
         "decision_time_profile_next_print": profile_next,
     }
