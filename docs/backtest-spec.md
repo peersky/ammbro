@@ -60,6 +60,7 @@ rebalancing is failure, not success.
 | F | Competitor baselines (abstract: "existing solution incompleteness") | Capture / net LP for MEV tax, volatility-scaled fee, 0.05% vs 0.30% fee tier | informational — must be reported beside C |
 | G | L1 viability (title, P§4.6) | Per-swap execution `gasUsed` vs estimated reconciliation gas | Reconciliation ≤ execution per swap |
 | H | Allowance `m` controller: signal evidence, position-cutoff scoring, agent simulation on real gap-taking opportunities | Controller signals; cutoff TPR/FPR; per-controller LP recapture, builder payments, uncorrected gaps, `m` vs cheapest arb cost | informational — sets the Study C controller |
+| I | Block-level simulation of arb payout rules (all 1.32M blocks, real oracle path, real user flow, optimizing arbs) | Per rule: LP net P&L, builder payments, share of correctable blocks left uncorrected, overshoot, user-side staleness | Choose the rule: best worst-case LP gain among rules that keep the pool rebalanced in every scenario |
 | Supp-1 | position↔q_LP correlation, pre/post normalization | Correlation + quartile plots | informational |
 | Supp-2 | Σmint vs Σburn from the C replay; pool income vs θ* per epoch | Supply drift; distance from target | informational — static replay cannot test convergence |
 
@@ -123,8 +124,35 @@ equal extraction beyond the allowance `m`, i.e. the Study B `margin`
 schedule expressed in REP — so the rent left to bid to builders is
 ≈ `(m − h)·V`, not the full extraction.
 
-**Allowance `m` controller (design objective; Study H).** `m` is set per
-epoch (1 day) by a feedback loop, not fixed:
+**Payout rule (Study I).** The arb keeps, per trade,
+
+```
+kept = ∫ min(marginal edge, m) dV  +  min(base-fee gas of the trade, remaining extraction)
+```
+
+i.e. rent capped **per unit along the trade's price path** (not on the
+trade's average edge), plus reimbursement of the trade's actual base-fee
+gas. Everything else is recaptured for the LP. The reconciler knows the
+pre/post pool price, the oracle and the receipt, so both terms are
+computable ex-post. The average-edge form (`min(x̄, m)·V`, used in Study
+B/H) is REJECTED: it pays `m` per unit while the average stays above `m`,
+so arbs trade past the oracle to inflate volume (Study I: 2× volume,
+30k overshoot blocks, users trade against a 40% staler pool). A position
+premium is REJECTED: it buys no rebalancing and is bid away to builders
+(~$0.13M per 0.1bp over the window).
+
+**Allowance `m` controller (design objective; Studies H, I).** Study I
+supersedes the Study H design below on two points: (1) no blind decay —
+lower `m` **only while the slot is contested** (a second arb could also
+profit), otherwise hold; blind decay walks `m` into the cost cliff and
+loses a whole epoch of rebalancing each cycle; (2) **asymmetric timing** —
+staleness checked every ~300 blocks (~1h) and `m` doubled immediately;
+lowering stays daily. Staleness = share of *correctable* blocks (cheapest
+arb would profit with no charge) left uncorrected — never a fixed price
+band. Resulting target: `m` settles between the cheapest and the
+second-cheapest arb's cost, where exactly one arb can do the job and
+nothing is left to bid for the slot. Original Study H design, kept for
+reference:
 
 ```
 staleness(e) = share of correctable gaps left uncorrected in epoch e
@@ -274,6 +302,18 @@ validity window). The paper's bound is reconciliation ≤ execution.
    2026-06-01 to test tracking. Controller signals resampled from (1).
    Assumed cost population, static opportunity set, today's signal
    rates — shows controller dynamics, not a dollar forecast.
+
+## Study I — block-level payout-rule comparison
+
+`pipeline/blocksim.py` (inputs, all from data on disk), `pipeline/study_i.py`,
+`results/study_i/metrics.json`. Every block 2026-03..08 in order: arb
+phase at `block_ts + L` (optimizing arbs, costs {0.3, 0.6, 1.0, 1.5,
+2.5}bp, second-price for the slot), then the block's real non-arb swaps
+replayed. Linear depth per day (median $12.3k per bp — this v3 pool is
+thin in 2026; three estimators agree). Calibration vs the real pool with
+the same markout formula: LP net −$3.15M simulated vs −$2.63M real, arb
+flow −$7.39M vs −$6.18M, user flow +$4.24M vs +$3.55M, arb volume
+$13.4B vs $14.8B. Scenarios: stable costs, costs ×4 from 2026-06-01.
 
 ## Scoring metric (§17.2, P§4.2 — q_LP, NOT the §5 price ratio)
 
@@ -465,6 +505,24 @@ nothing."
    - **The thirds rule collapses:** almost every epoch reads "first third", `m` halves to the floor within days, rebalancing stops, and the first swap in each block becomes user flow that also sits high — so no raise signal ever fires.
    - **Why asymmetric + hold band:** symmetric ×2 / ÷2 oscillates across the cost cliff (7.6% uncorrected); slow symmetric steps recover slowly after a shock ($0.39M gaps); the 0.5–2% hold band stops decay before the cliff and ×2 up recovers in ~2 epochs ($0.04M).
    - CAVEATS: assumed arb cost population and second-price auction; static opportunity set (no behavioural response); signal rates from today's cross-section; builder payments are model output (11b measures reality). Residual hunting remains — single 100% days when decay crosses the cliff (visible in the figure).
+11d. ✅ Study I (2026-10-01, `make study-i`). Block-level payout-rule comparison; goal: best LP outcome while keeping the pool rebalanced every block.
+
+     | rule / m (stable costs) | LP net | vs today | builder | correctable blocks uncorrected | blocks within fee+1bp | overshoot blocks | arb volume | user-side staleness |
+     |---|---|---|---|---|---|---|---|---|
+     | today, no reconciliation | −$3.15M | — | $6.57M | 0.00% | 99.54% | 0 | $13.4B | 12.75bp |
+     | avg-edge margin, m = 1bp | +$2.40M | +$5.55M | $0.93M | 0.22% | 98.87% | **24,092** | **$24.5B** | **17.73bp** |
+     | marginal cap, m = 1bp (no gas) | +$3.00M | +$6.15M | $0.42M | **1.42%** | 99.26% | 0 | $13.4B | 12.78bp |
+     | **marginal cap + gas, controller (hourly raise)** | **+$3.15M** | **+$6.30M** | **$0.33M** | **0.00%** | **99.54%** | 0 | $13.4B | **12.75bp** |
+     | same + 0.5bp position premium | +$2.48M | +$5.63M | $1.00M | 0.00% | 99.54% | 0 | $13.4B | 12.75bp |
+
+     Costs ×4 shock: winner +$2.52M (+$5.94M vs today), builder $0.33M vs $6.16M, uncorrected 0.15%, within-band 88.07% vs today 88.09%. Robust ranking (rebalanced in every scenario, worst-case LP gain): **marginal cap + gas, controller +$5.94M** > same + 0.1bp premium +$5.81M > marginal cap (no gas), controller +$5.44M > static m = 2bp +$5.22–5.25M > avg-edge margin, controller +$4.98M.
+   - **The winner keeps the pool exactly as rebalanced as today** (same within-band share, same user-side staleness) and moves ~$6M from builders to LPs.
+   - **Gas reimbursement is what keeps every block rebalanced:** without it, per-unit rent capped at `m` cannot cover gas on small corrections (1.4% of correctable blocks lost at m = 1bp).
+   - **Controller evolution:** blind decay walks into the cost cliff (26% uncorrected — a full lost day every ~2 weeks); competition-targeting settles at m ≈ 0.54bp between the cheapest (0.3) and second-cheapest (0.6) arb cost; daily raises need two lost days after a ×4 shock (5.5% uncorrected), hourly raises fix it (0.15%).
+   - **Hindsight static m is not a design:** m = 0.5bp is best in stable costs (+$6.69M) but loses 84% of rebalancing after the ×4 shock.
+   - **Runs that stop rebalancing show absurd LP "gains" (+$193M)**: the pool freezes and replayed user flow trades against a price thousands of bp wrong, which no router would route. They are failures; the constraint filters them.
+   - `job_cap` (allowance only for trading exactly to a 5.5bp band) has a structural uncorrected floor (~5.7%): gaps between the arb's natural stop and the band are "correctable" but not a job under the rule. Not pursued.
+   - CAVEATS: linear depth; replayed user flow does not respond to pool quality; one arb action per block; assumed cost population; the controller's "contested" signal is observed ideally here — in practice it is the top-slot proxy (Study H, J 0.33, busyness-normalised); Study C must re-test with the proxy and with behavioural response.
 11b. ☐ Measure today's actual builder payments by gap-takers: priority fee × gasUsed (receipts) + coinbase transfers (traces or fee-recipient balance deltas). The "before" number the design objective drives toward 0; Supp-1 sees only the priority part (~$1.9M, estimated).
 12. ☐ Study G — L1 gas viability (receipts).
 13. ☐ Layer-1 signed-feed ingestion + §17.5 equivalence test (when dump arrives; do not block). Replaces D's proxy with real LWBA.
