@@ -61,6 +61,18 @@ the competitive price of rebalancing," never "LP pays nothing."
    - Best schedule (α=1.0, cap=100bp, f_benign=5bp): **LP net +$2.14M** (+$4.07M vs baseline), incremental capture 41% of LVR, residual extraction $5.84M (§12.2 reported), benign overcharge 0.05bp (negligible), arb survival 22.8% vs 23.8% baseline (96% of profitable arbs preserved).
    - Cutting f_benign to 1bp always loses money — benign flow is the revenue base; capture fraction ≈40% max matches §12's "tens of percent" expectation.
    - GATE: net-surplus PASS; survival read as relative (22.8/23.8 = most price-correcting arb stays profitable). CAVEAT: static replay, no behavioral response — capture is an upper bound on this schedule.
+   - Horizon sweep (2026-09-30, headline schedule held fixed, all 990,555 swaps scored at every h):
+
+     | h | baseline net | headline net | Δ vs baseline | capture | residual | benign overcharge | survival ratio ($10 gas) |
+     |---|---|---|---|---|---|---|---|
+     | 0s | −$1.93M | +$2.14M | +$4.07M | 41% | $5.84M | 0.05bp | 0.958 |
+     | 12s | −$2.96M | +$2.70M | +$5.66M | 48% | $6.20M | 0.17bp | 0.920 |
+     | 30s | −$3.04M | +$4.10M | +$7.14M | 53% | $6.36M | 0.40bp | 0.871 |
+     | 60s | −$3.20M | +$5.63M | +$8.83M | 57% | $6.55M | 0.77bp | 0.821 |
+
+     Net-surplus gate PASSES at every horizon, and the headline schedule stays best at every h. Surplus GROWS with h rather than decaying. Checked it is not an asymmetric-fee noise tax: benign-labeled capture is ≤$0.06M at every h, and the growth lands on toxic-labeled flow (2.15→5.76M, 53%→65% of capture). Reading: toxic markout keeps deepening for ~60s after execution (informed flow), matching baseline LP loss deepening −1.93→−3.20M. Unlabeled middle carries 34–47% of capture, composition unknown.
+     The cost of longer horizons is on the survival side, not surplus: survival ratio falls 0.958→0.821 at $10 gas. **h0 stays the headline** — smallest claim, fastest settlement, best arb survival. Longer-horizon surplus must not be cited as upside without the survival cost beside it.
+   - Gas sensitivity (survival ratio headline/baseline): h0 holds ≥0.85 across flat $2–$50 and the base-fee model (0.996). Fragile corner is long horizon × high gas: h60 at $50 → 0.509, h30 at $50 → 0.588 — roughly half of profitable arbs killed. Base-fee model (base fee × 250k gas) is a LOWER bound on cost: omits priority fees and coinbase-transfer builder payments; true cost sits between it and the flat sweep.
 8. ☐ Study C ablation + Supp-2
 9. ☐ Layer-1 signed-feed ingestion + §17.5 equivalence test (when dump arrives; do not block)
 10. ☐ Replication pair Study A (BTC/USDC or WBTC/ETH), after gates clear
