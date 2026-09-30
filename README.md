@@ -59,7 +59,7 @@ pipeline/
   control_gate.py       §17.3.2 USDC/USDT calm-period gate
   labels.py  routers.py price-independent labels (§14.2); router-origin list
   study_a.py            ROC of q_LP vs labels
-  study_b.py            fee-schedule sweep + residual extraction (§12.2)
+  study_b.py            fee-schedule ceiling (clip/additive/margin), residual (§12.2), builder-bid ceiling
   supp1.py              position ↔ q_LP correlation
   directional.py        bid/ask proxy from aggTrades aggressor flag (P§3.6)
   study_d.py            directional-benchmark re-score of A and B

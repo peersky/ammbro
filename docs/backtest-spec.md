@@ -10,13 +10,51 @@ Binds the pipeline to two sources:
 
 This file tracks what the code must satisfy.
 
+## Design objective (P§3.2) — binding on every mechanism study
+
+> **Paying builders for inclusion or position must be useless.** A
+> searcher's net payoff after reconciliation must not increase with what
+> it pays for inclusion or block position. Competition then bids nothing
+> to builders, and the value stays in the pool for LPs.
+
+Arbs pay builders to be first because being first wins whatever
+extraction they keep after reconciliation. That kept amount — §12.2
+residual extraction net of real costs — is the pot MEV extras are paid
+from. Two conditions, both necessary:
+
+1. **Position-invariant scoring.** If the score depends on block position,
+   position is worth buying. Study E: a single per-block anchor at
+   `block_ts + L` is the only rule tested with nothing to buy; every
+   position- or pool-order-dependent clock was gameable (one dust swap at
+   $0.03 bought $11.31 of forgiveness per arb).
+2. **Contestable rent ≈ competitive cost.** The charge must take
+   extraction beyond an allowance `m` that covers the arb's real cost
+   (base-fee gas + CEX hedge cost `h`). Real gas is 0.31% of LVR, so
+   ~99.7% of today's LVR is rent. `m` must sit just above `h`: at
+   `m ≤ h` arbs cannot cover costs and rebalancing stops (Study B hedge
+   grid). `h` is private (CEX fee tiers), so `m` is a parameter to tune —
+   plausibly adaptively, lowering it until pool staleness vs the oracle
+   starts to rise.
+
+**Test, reported by every schedule in Study B and every condition in
+Study C:**
+
+```
+builder_bid_ceiling = Σ over LP-negative swaps of max(residual_i − gas_i − h·V_i, 0)
+```
+
+— the most rational arbs would pay builders in aggregate. Reported beside
+today's value (baseline: full extraction net of real costs) and beside
+arb survival on real costs, since driving the ceiling to 0 by killing
+rebalancing is failure, not success.
+
 ## Studies and gates (§17.1, §17.8, P§4)
 
 | Study | Computation | Primary output | Gate |
 |---|---|---|---|
 | A | ROC of `q_LP` (sign+magnitude) vs. independent labels | AUC + overlaid q_LP histograms per class, sliced by trade size & block position | AUC > 0.75 on high-confidence labels |
-| B | **Ceiling:** perfect-information per-swap *cash* fee `F(q_LP, cap)` sweep incl. fixed-fee baseline | Net LP surplus, gross LVR captured, residual extraction (§12.2), benign overcharge (bps), arb survival | Ceiling, not a mechanism result — see below |
-| C | The P§4 mechanism under 4 conditions: (1) fixed 5bp / (2) P§4 curve + **cash bond** / (3) P§4 + **soulbound** REP / (4) P§4 + **transferable** REP | Per-condition net LP, captured, residual, **share of B ceiling**, benign effective fee, arb survival, REP concentration, unstaked-volume share | Keep REP only if (4) beats (2); keep transferability only if (4) ≥ (3) |
+| B | **Ceiling:** perfect-information per-swap *cash* fee `F(q_LP, cap)` sweep incl. fixed-fee baseline | Net LP surplus, gross LVR captured, residual extraction (§12.2), **builder-bid ceiling**, benign overcharge (bps), arb survival (flat $10 and real cost) | Ceiling, not a mechanism result — see below |
+| C | The P§4 mechanism under 4 conditions: (1) fixed 5bp / (2) P§4 curve + **cash bond** / (3) P§4 + **soulbound** REP / (4) P§4 + **transferable** REP | Per-condition net LP, captured, residual, **share of B ceiling**, **builder-bid ceiling**, benign effective fee, arb survival (real cost), REP concentration, unstaked-volume share | Keep REP only if (4) beats (2); keep transferability only if (4) ≥ (3) |
 | D | Directional benchmark: bid/ask proxy vs trade-price vs mid (P§3.6) | `q_LP` under each benchmark; A and B(h0) re-run under directional | informational — quantifies leniency of P§3.6 rule |
 | E | Timestamp sensitivity: point read vs kernel average over the virtual-time window (P§3.4, P§4.2) | `q_LP` spread per reconstruction; noise floor on the control pool | Sets `ε` for C |
 | F | Competitor baselines (abstract: "existing solution incompleteness") | Capture / net LP for MEV tax, volatility-scaled fee, 0.05% vs 0.30% fee tier | informational — must be reported beside C |
@@ -36,8 +74,12 @@ moves at reconciliation", and "cash cannot be recalled from a
 counterparty who has departed". Extraction is punished by burning
 staked REP, not by a cash charge.
 
-So Study B's +$4.07M (h0) is the most **any** per-swap, `q_LP`-keyed
-cash fee could recapture with perfect information. It stays in the
+So Study B is the most **any** per-swap, `q_LP`-keyed cash fee could
+recapture with perfect information — per schedule form. Three forms are
+swept: `clip(α|q|, f_benign, cap)` (original; exempts extraction below
+f_benign, so capture tops out near 41–56%), `additive`
+(`f_benign + α|q|`), and `margin` (`f_benign + max(|q| − m, 0)`, the
+form that serves the design objective). It stays in the
 pipeline as the yardstick: Study C results are reported as a share of
 the B ceiling at the same horizon. **Never cite Study B numbers as the
 REP-AMM result.**
@@ -75,7 +117,10 @@ than worst-case settlement with no flights pending.
 **Burn (P§4.3).** If `q_agg < −ε`: burn `min(tranche, λ·|q_agg|^γ·V)`,
 `γ ≥ 1` (convex, so splitting an extraction is strictly costlier).
 Design condition to check, not assume: `λ·|q|·V·P_annuity ≥ (f_max −
-f(r))·V`.
+f(r))·V`. **Sizing target (design objective):** the burn's value should
+equal extraction beyond the allowance `m`, i.e. the Study B `margin`
+schedule expressed in REP — so the rent left to bid to builders is
+≈ `(m − h)·V`, not the full extraction.
 
 **Mint (P§4.4).** Per epoch, `N = Σfees + Σmarkouts`,
 `S = N − θ*·ΣV`. If `S > 0`, mint `σ·S` pro-rata to actors whose
@@ -197,6 +242,8 @@ nothing."
 - Layer 1 (signed oracle month) = signed truth; Layers 2–3 (Binance
   archive) = reproducible but unsigned. Never blur.
 - Study B is a ceiling. Never cite it as the REP-AMM mechanism result.
+- Every Study B schedule and Study C condition reports the builder-bid
+  ceiling and real-cost arb survival together.
 - Study C bootstrap: seed window strictly precedes evaluation window.
 - Every Study C output states its actor definition, `η`, and `f_max`.
 - Every Dune query committed; every input sha256 recorded; `make all`
@@ -264,9 +311,24 @@ nothing."
      | 30s | −$3.04M | +$4.10M | +$7.14M | 53% | $6.36M | 0.40bp | 0.871 |
      | 60s | −$3.20M | +$5.63M | +$8.83M | 57% | $6.55M | 0.77bp | 0.821 |
 
-     Net-surplus gate PASSES at every horizon, and the headline schedule stays best at every h. Surplus GROWS with h rather than decaying. Checked it is not an asymmetric-fee noise tax: benign-labeled capture is ≤$0.06M at every h, and the growth lands on toxic-labeled flow (2.15→5.76M, 53%→65% of capture). Reading: toxic markout keeps deepening for ~60s after execution (informed flow), matching baseline LP loss deepening −1.93→−3.20M. Unlabeled middle carries 34–47% of capture, composition unknown.
+     Net-surplus gate PASSES at every horizon, and the headline schedule stays best at every h *within the original clip grid (caps ≤ 100bp)*; the 2026-10-01 grid below adds forms that beat it. Surplus GROWS with h rather than decaying. Checked it is not an asymmetric-fee noise tax: benign-labeled capture is ≤$0.06M at every h, and the growth lands on toxic-labeled flow (2.15→5.76M, 53%→65% of capture). Reading: toxic markout keeps deepening for ~60s after execution (informed flow), matching baseline LP loss deepening −1.93→−3.20M. Unlabeled middle carries 34–47% of capture, composition unknown.
      The cost of longer horizons is on the survival side, not surplus: survival ratio falls 0.958→0.821 at $10 gas. **h0 stays the headline** — smallest claim, fastest settlement, best arb survival. Longer-horizon surplus must not be cited as upside without the survival cost beside it.
    - Gas sensitivity (survival ratio headline/baseline): h0 holds ≥0.85 across flat $2–$50 and the base-fee model (0.996). Fragile corner is long horizon × high gas: h60 at $50 → 0.509, h30 at $50 → 0.588 — roughly half of profitable arbs killed. Base-fee model (base fee × 250k gas) is a LOWER bound on cost: omits priority fees and coinbase-transfer builder payments; true cost sits between it and the flat sweep.
+   - **Design-objective sweep (2026-10-01).** Forms `clip` / `additive` / `margin`, caps up to 500bp (= f_max), real-cost survival (base fee × 250k gas + hedge `h` = 1bp assumed), builder-bid ceiling. Today (baseline, h0): ceiling **$8.68M** of $9.91M LVR; 47.6% of LP-negative swaps cover real costs incl. a 1bp hedge (LP-negative ≠ arb — half are too small to be arbs).
+
+     | h0 schedule | capture | LP net | builder-bid ceiling | vs today | survival (real cost) vs today |
+     |---|---|---|---|---|---|
+     | today, fixed 5bp | — | −$1.93M | $8.68M | 1.00 | 1.00 |
+     | clip α1 cap100 (old headline) | 41% | +$2.14M | $4.62M | 0.53 | 0.99 |
+     | **margin m=2bp cap500 (objective)** | **73%** | **+$5.32M** | **$1.44M** | **0.17** | **0.96** |
+     | margin m=1bp cap500 | 83% | +$6.24M | $0.54M | 0.06 | 0.00 |
+     | additive α1 cap500 (max capture) | 95% | +$7.44M | $0.54M | 0.06 | 0.00 |
+
+     - Old headline leaves half the rent to bid; the objective schedule cuts it to 17% while keeping 96% of cost-covering arbs.
+     - **`m` must sit above the hedge cost `h`.** Hedge grid (margin, cap 500): m=1bp is fine if h=0 (survival 0.965 of today, ceiling 0.17) and fatal if h=1bp (survival 0). m=2bp at h=1bp: 0.958 / 0.166. m=5bp is robust to h≤2bp but leaves 28–44% of rent. `h` is private, so `m` is the parameter the objective hinges on.
+     - **$0.54M floor:** extraction beyond the 500bp cap. No cash schedule reaches it; in P§4 it is the part routed to REP burn.
+     - Across horizons the objective schedule's ceiling is flat (~$1.4M) while today's rent grows ($8.68M → $14.34M at h60), so its share falls 0.17 → 0.10. Cost: real-cost survival 0.96 → 0.88 and benign overcharge 0.09 → 1.13bp at h60. h0 stays the reference.
+     - CAVEATS: forward timeline, trade-price q (re-base pending 9b); static replay; `h` assumed; ceiling counts residual net of *base-fee* gas only — priority fees and builder payments are the extras being measured, not costs.
 7b. ✅ Supp-1 at all horizons (2026-09-30). The P§2.8 claim holds at every h: index-10+ (un-raced) extraction $2.11M / $2.32M / $2.55M / $2.85M at h = 0/12/30/60s, share 21.3% / 19.5% / 18.9% / 18.5%. Top-3 share rises 59.9% → 64.8% — later-horizon deepening concentrates slightly in raced positions, but the un-raced floor never drops below ~19%.
 8. ✅ Study D (2026-09-30, results/study_d/, `make study-d`). Touch proxy from `is_buyer_maker`, composed spread median 0.22bp / P90 1.9bp / P99 4.4bp; per-side staleness median ~0.75s (bursty prints — at a random instant the last print on a side is often ~1s old); raw ETH sides cross 4.4% before bounding.
 
@@ -302,6 +364,7 @@ nothing."
 9b. ☐ Re-base Study A, Study B, Supp-1 and Study D on the Study E timeline (currently forward `t_norm_us`). Numbers above give the expected direction: AUC up, baseline LP loss deeper, recapture stable.
 10. ☐ Study C + Supp-2 (depends on 8, 9). Bootstrap Mar–May, evaluate Jun–Aug.
 11. ☐ Study F — competitor baselines (needs 0.30% ETH/USDC pool extraction).
+11b. ☐ Measure today's actual builder payments by gap-takers: priority fee × gasUsed (receipts) + coinbase transfers (traces or fee-recipient balance deltas). The "before" number the design objective drives toward 0; Supp-1 sees only the priority part (~$1.9M, estimated).
 12. ☐ Study G — L1 gas viability (receipts).
 13. ☐ Layer-1 signed-feed ingestion + §17.5 equivalence test (when dump arrives; do not block). Replaces D's proxy with real LWBA.
 14. ☐ Replication pair Study A (BTC/USDC or WBTC/ETH), after gates clear.
