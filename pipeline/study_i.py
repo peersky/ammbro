@@ -61,6 +61,13 @@ the arb phase. Runs that leave more correctable blocks uncorrected than
 the pool freezes, and replayed user flow trades against a price no real
 router would route to, which inflates LP P&L artificially.
 
+Arb phase position (`phase`): open (before the block's user flow, default),
+close (after it), or both. No time passes inside a block, so open and close
+act on the same information; close only undoes the users' own in-block
+impact, which the next block's open also does with 12s fresher data. Close
+matters for the pool's RESTING price between blocks (what TWAP-style
+readers, lending protocols and next-block routers see).
+
 HONESTY (bind to writeup): linear depth; exogenous flow replayed with
 fixed size/direction (no routing response to pool quality); one arb
 action per block; assumed arb cost population; second-price slot
@@ -300,13 +307,15 @@ def grid() -> list:
         for r in RULES:
             runs += [(r, mm, sc, 0.0) for mm in GRID_M] + [(r, c, sc, 0.0) for c in ("ctl", "ctl_tight", "ctl_comp", "ctl_fast")]
         runs += [("marginal_cap_gas", "ctl_fast", sc, pr) for pr in (0.1, 0.5)]
+        runs += [(r, prm, sc, 0.0, ph) for r, prm in (("today", None), ("marginal_cap_gas", "ctl_fast"))
+                 for ph in ("close", "both")]
     return runs
 
 
 def run() -> dict:
     res = main(grid())
     calib = json.loads((CACHE / "calibration_inputs.json").read_text())
-    today = {r["scenario"]: r for r in res if r["rule"] == "today"}
+    today = {r["scenario"]: r for r in res if r["rule"] == "today" and r["phase"] == "open"}
     for r in res:
         t = today[r["scenario"]]
         r["lp_net_vs_today_m"] = round(r["lp_net_m"] - t["lp_net_m"], 3)
@@ -315,12 +324,12 @@ def run() -> dict:
     for sc in ("stable", "costs_x4"):
         ok = [r for r in res if r["scenario"] == sc and r["keeps_rebalanced"]]
         best = max(ok, key=lambda r: r["lp_net_m"])
-        out_best = {k: best[k] for k in ("rule", "param", "premium_bps", "lp_net_m", "lp_net_vs_today_m")}
+        out_best = {k: best[k] for k in ("rule", "param", "premium_bps", "phase", "lp_net_m", "lp_net_vs_today_m")}
         today[sc]["_best"] = out_best
     # Robust choice: must keep the pool rebalanced in EVERY scenario; ranked
     # by worst-case LP gain vs today. A static m that only works when you
     # already know arb costs is hindsight, not a design.
-    key = lambda r: (r["rule"], str(r["param"]), r["premium_bps"])
+    key = lambda r: (r["rule"], str(r["param"]), r["premium_bps"], r["phase"])
     by = {}
     for r in res:
         by.setdefault(key(r), []).append(r)
@@ -328,7 +337,7 @@ def run() -> dict:
     for k, rs in by.items():
         if k[0] == "today" or not all(r["keeps_rebalanced"] for r in rs):
             continue
-        robust.append({"rule": k[0], "param": k[1], "premium_bps": k[2],
+        robust.append({"rule": k[0], "param": k[1], "premium_bps": k[2], "phase": k[3],
                        "worst_lp_vs_today_m": float(min(r["lp_net_vs_today_m"] for r in rs)),
                        "by_scenario": {r["scenario"]: float(r["lp_net_vs_today_m"]) for r in rs}})
     robust.sort(key=lambda x: -x["worst_lp_vs_today_m"])
