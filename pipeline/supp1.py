@@ -9,6 +9,10 @@ Measures (informational, calibrates Study B):
    spend — the money currently leaking to builders (§12.1). Spend uses an
    assumed 250k gas/swap (receipts not fetched); stated as an estimate.
 
+All position tables are produced at every horizon in HORIZONS_S (§17.1).
+The headline check is whether the share of extraction at raw index 10+
+(un-raced flow, invisible to priority-keyed taxes) holds across horizons.
+
 Caveat carried to the writeup: the toxic label conditions on tx_index,
 so per-label position comparisons are partially label-induced; the
 by-position aggregates over ALL swaps (1,2) are label-free.
@@ -20,7 +24,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from .config import DATA_DIR, REPO_ROOT
+from .config import DATA_DIR, HORIZONS_S, REPO_ROOT
 from .pools import ETH_USDC
 
 SCORED_DIR = DATA_DIR / "onchain" / "scored" / ETH_USDC.name
@@ -44,18 +48,18 @@ def load() -> pd.DataFrame:
     return df
 
 
-def by_bucket(df: pd.DataFrame, key: pd.Series, edges: list) -> list[dict]:
+def by_bucket(df: pd.DataFrame, key: pd.Series, edges: list, col: str = "q_lp_h0") -> list[dict]:
     out = []
     for lo, hi, name in edges:
         s = df[(key >= lo) & (key < hi)]
-        q = s["q_lp_h0"].dropna()
-        neg = s[s["q_lp_h0"] < 0]
+        q = s[col].dropna()
+        neg = s[s[col] < 0]
         out.append({
             "bucket": name,
             "n": len(s),
             "share_lp_negative": round(float((q < 0).mean()), 4) if len(q) else None,
             "median_q_bps": round(float(q.median() * 1e4), 2) if len(q) else None,
-            "extraction_usd_m": round(float(-(neg.q_lp_h0 * neg.notional_token0).sum() / 1e6), 2),
+            "extraction_usd_m": round(float(-(neg[col] * neg.notional_token0).sum() / 1e6), 2),
         })
     return out
 
@@ -64,16 +68,32 @@ def run() -> dict:
     df = load()
     big = df[df.notional_token0 > 100_000]
 
-    res: dict = {}
+    res: dict = {"idx10plus_by_horizon": [], "by_horizon": {}}
     idx_edges = [(0, 1, "idx0"), (1, 2, "idx1"), (2, 3, "idx2"), (3, 10, "idx3-9"), (10, 10_000, "idx10+")]
-    res["by_raw_tx_index_all"] = by_bucket(df, df["tx_index"], idx_edges)
-    res["by_raw_tx_index_big"] = by_bucket(big, big["tx_index"], idx_edges)
-
     frac = (df["t_norm_us"] / 1e6 - df["block_ts"]) / (df["next_block_ts"] - df["block_ts"]).clip(1)
-    dec_edges = [(i / 10, (i + 1) / 10, f"pos_{i*10}-{(i+1)*10}%") for i in range(10)]
-    res["by_norm_position_all"] = by_bucket(df, frac, dec_edges)
     fb = (big["t_norm_us"] / 1e6 - big["block_ts"]) / (big["next_block_ts"] - big["block_ts"]).clip(1)
-    res["by_norm_position_big"] = by_bucket(big, fb, dec_edges)
+    dec_edges = [(i / 10, (i + 1) / 10, f"pos_{i*10}-{(i+1)*10}%") for i in range(10)]
+
+    for h in HORIZONS_S:
+        col = f"q_lp_h{h}"
+        t = {
+            "by_raw_tx_index_all": by_bucket(df, df["tx_index"], idx_edges, col),
+            "by_raw_tx_index_big": by_bucket(big, big["tx_index"], idx_edges, col),
+            "by_norm_position_all": by_bucket(df, frac, dec_edges, col),
+            "by_norm_position_big": by_bucket(big, fb, dec_edges, col),
+        }
+        res["by_horizon"][f"h{h}"] = t
+        rows = t["by_raw_tx_index_all"]
+        total = sum(r["extraction_usd_m"] for r in rows)
+        top3 = sum(r["extraction_usd_m"] for r in rows[:3])
+        tail = rows[-1]["extraction_usd_m"]
+        res["idx10plus_by_horizon"].append({
+            "horizon_s": h,
+            "total_extraction_usd_m": round(total, 2),
+            "top3_share": round(top3 / total, 3),
+            "idx10plus_usd_m": tail,
+            "idx10plus_share": round(tail / total, 3),
+        })
 
     for lbl in ["toxic", "benign"]:
         s = df[df.label == lbl]

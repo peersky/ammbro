@@ -1,222 +1,916 @@
 {
-  "by_raw_tx_index_all": [
+  "idx10plus_by_horizon": [
     {
-      "bucket": "idx0",
-      "n": 76251,
-      "share_lp_negative": 0.6462,
-      "median_q_bps": -0.66,
-      "extraction_usd_m": 2.34
+      "horizon_s": 0,
+      "total_extraction_usd_m": 9.91,
+      "top3_share": 0.599,
+      "idx10plus_usd_m": 2.11,
+      "idx10plus_share": 0.213
     },
     {
-      "bucket": "idx1",
-      "n": 74999,
-      "share_lp_negative": 0.5812,
-      "median_q_bps": -0.43,
-      "extraction_usd_m": 1.95
+      "horizon_s": 12,
+      "total_extraction_usd_m": 11.87,
+      "top3_share": 0.628,
+      "idx10plus_usd_m": 2.32,
+      "idx10plus_share": 0.195
     },
     {
-      "bucket": "idx2",
-      "n": 57137,
-      "share_lp_negative": 0.5054,
-      "median_q_bps": -0.03,
-      "extraction_usd_m": 1.65
+      "horizon_s": 30,
+      "total_extraction_usd_m": 13.5,
+      "top3_share": 0.64,
+      "idx10plus_usd_m": 2.55,
+      "idx10plus_share": 0.189
     },
     {
-      "bucket": "idx3-9",
-      "n": 148231,
-      "share_lp_negative": 0.3469,
-      "median_q_bps": 0.98,
-      "extraction_usd_m": 1.86
-    },
-    {
-      "bucket": "idx10+",
-      "n": 633937,
-      "share_lp_negative": 0.1805,
-      "median_q_bps": 3.19,
-      "extraction_usd_m": 2.11
+      "horizon_s": 60,
+      "total_extraction_usd_m": 15.37,
+      "top3_share": 0.648,
+      "idx10plus_usd_m": 2.85,
+      "idx10plus_share": 0.185
     }
   ],
-  "by_raw_tx_index_big": [
-    {
-      "bucket": "idx0",
-      "n": 15277,
-      "share_lp_negative": 0.8314,
-      "median_q_bps": -2.3,
-      "extraction_usd_m": 2.03
+  "by_horizon": {
+    "h0": {
+      "by_raw_tx_index_all": [
+        {
+          "bucket": "idx0",
+          "n": 76251,
+          "share_lp_negative": 0.6462,
+          "median_q_bps": -0.66,
+          "extraction_usd_m": 2.34
+        },
+        {
+          "bucket": "idx1",
+          "n": 74999,
+          "share_lp_negative": 0.5812,
+          "median_q_bps": -0.43,
+          "extraction_usd_m": 1.95
+        },
+        {
+          "bucket": "idx2",
+          "n": 57137,
+          "share_lp_negative": 0.5054,
+          "median_q_bps": -0.03,
+          "extraction_usd_m": 1.65
+        },
+        {
+          "bucket": "idx3-9",
+          "n": 148231,
+          "share_lp_negative": 0.3469,
+          "median_q_bps": 0.98,
+          "extraction_usd_m": 1.86
+        },
+        {
+          "bucket": "idx10+",
+          "n": 633937,
+          "share_lp_negative": 0.1805,
+          "median_q_bps": 3.19,
+          "extraction_usd_m": 2.11
+        }
+      ],
+      "by_raw_tx_index_big": [
+        {
+          "bucket": "idx0",
+          "n": 15277,
+          "share_lp_negative": 0.8314,
+          "median_q_bps": -2.3,
+          "extraction_usd_m": 2.03
+        },
+        {
+          "bucket": "idx1",
+          "n": 12399,
+          "share_lp_negative": 0.8256,
+          "median_q_bps": -2.88,
+          "extraction_usd_m": 1.66
+        },
+        {
+          "bucket": "idx2",
+          "n": 8436,
+          "share_lp_negative": 0.8442,
+          "median_q_bps": -2.56,
+          "extraction_usd_m": 1.47
+        },
+        {
+          "bucket": "idx3-9",
+          "n": 5479,
+          "share_lp_negative": 0.7308,
+          "median_q_bps": -2.4,
+          "extraction_usd_m": 1.53
+        },
+        {
+          "bucket": "idx10+",
+          "n": 3499,
+          "share_lp_negative": 0.3541,
+          "median_q_bps": 4.41,
+          "extraction_usd_m": 1.59
+        }
+      ],
+      "by_norm_position_all": [
+        {
+          "bucket": "pos_0-10%",
+          "n": 502435,
+          "share_lp_negative": 0.3992,
+          "median_q_bps": 0.61,
+          "extraction_usd_m": 7.63
+        },
+        {
+          "bucket": "pos_10-20%",
+          "n": 126785,
+          "share_lp_negative": 0.1671,
+          "median_q_bps": 2.99,
+          "extraction_usd_m": 0.51
+        },
+        {
+          "bucket": "pos_20-30%",
+          "n": 85118,
+          "share_lp_negative": 0.1612,
+          "median_q_bps": 3.26,
+          "extraction_usd_m": 0.16
+        },
+        {
+          "bucket": "pos_30-40%",
+          "n": 61341,
+          "share_lp_negative": 0.1631,
+          "median_q_bps": 3.48,
+          "extraction_usd_m": 0.13
+        },
+        {
+          "bucket": "pos_40-50%",
+          "n": 45995,
+          "share_lp_negative": 0.1749,
+          "median_q_bps": 3.51,
+          "extraction_usd_m": 0.82
+        },
+        {
+          "bucket": "pos_50-60%",
+          "n": 38122,
+          "share_lp_negative": 0.1796,
+          "median_q_bps": 3.61,
+          "extraction_usd_m": 0.11
+        },
+        {
+          "bucket": "pos_60-70%",
+          "n": 31205,
+          "share_lp_negative": 0.1913,
+          "median_q_bps": 3.76,
+          "extraction_usd_m": 0.14
+        },
+        {
+          "bucket": "pos_70-80%",
+          "n": 27574,
+          "share_lp_negative": 0.1939,
+          "median_q_bps": 3.86,
+          "extraction_usd_m": 0.12
+        },
+        {
+          "bucket": "pos_80-90%",
+          "n": 26120,
+          "share_lp_negative": 0.21,
+          "median_q_bps": 3.73,
+          "extraction_usd_m": 0.12
+        },
+        {
+          "bucket": "pos_90-100%",
+          "n": 45860,
+          "share_lp_negative": 0.2276,
+          "median_q_bps": 3.46,
+          "extraction_usd_m": 0.18
+        }
+      ],
+      "by_norm_position_big": [
+        {
+          "bucket": "pos_0-10%",
+          "n": 42049,
+          "share_lp_negative": 0.8087,
+          "median_q_bps": -2.46,
+          "extraction_usd_m": 6.47
+        },
+        {
+          "bucket": "pos_10-20%",
+          "n": 1030,
+          "share_lp_negative": 0.467,
+          "median_q_bps": 1.88,
+          "extraction_usd_m": 0.42
+        },
+        {
+          "bucket": "pos_20-30%",
+          "n": 527,
+          "share_lp_negative": 0.3472,
+          "median_q_bps": 4.76,
+          "extraction_usd_m": 0.09
+        },
+        {
+          "bucket": "pos_30-40%",
+          "n": 270,
+          "share_lp_negative": 0.3185,
+          "median_q_bps": 5.14,
+          "extraction_usd_m": 0.08
+        },
+        {
+          "bucket": "pos_40-50%",
+          "n": 186,
+          "share_lp_negative": 0.371,
+          "median_q_bps": 4.53,
+          "extraction_usd_m": 0.78
+        },
+        {
+          "bucket": "pos_50-60%",
+          "n": 199,
+          "share_lp_negative": 0.3568,
+          "median_q_bps": 4.29,
+          "extraction_usd_m": 0.07
+        },
+        {
+          "bucket": "pos_60-70%",
+          "n": 157,
+          "share_lp_negative": 0.4395,
+          "median_q_bps": 2.33,
+          "extraction_usd_m": 0.11
+        },
+        {
+          "bucket": "pos_70-80%",
+          "n": 148,
+          "share_lp_negative": 0.3986,
+          "median_q_bps": 3.24,
+          "extraction_usd_m": 0.08
+        },
+        {
+          "bucket": "pos_80-90%",
+          "n": 192,
+          "share_lp_negative": 0.5521,
+          "median_q_bps": -2.27,
+          "extraction_usd_m": 0.08
+        },
+        {
+          "bucket": "pos_90-100%",
+          "n": 332,
+          "share_lp_negative": 0.5151,
+          "median_q_bps": -0.58,
+          "extraction_usd_m": 0.1
+        }
+      ]
     },
-    {
-      "bucket": "idx1",
-      "n": 12399,
-      "share_lp_negative": 0.8256,
-      "median_q_bps": -2.88,
-      "extraction_usd_m": 1.66
+    "h12": {
+      "by_raw_tx_index_all": [
+        {
+          "bucket": "idx0",
+          "n": 76251,
+          "share_lp_negative": 0.6132,
+          "median_q_bps": -0.82,
+          "extraction_usd_m": 3.0
+        },
+        {
+          "bucket": "idx1",
+          "n": 74999,
+          "share_lp_negative": 0.5431,
+          "median_q_bps": -0.37,
+          "extraction_usd_m": 2.47
+        },
+        {
+          "bucket": "idx2",
+          "n": 57137,
+          "share_lp_negative": 0.4896,
+          "median_q_bps": 0.09,
+          "extraction_usd_m": 1.99
+        },
+        {
+          "bucket": "idx3-9",
+          "n": 148231,
+          "share_lp_negative": 0.37,
+          "median_q_bps": 1.36,
+          "extraction_usd_m": 2.09
+        },
+        {
+          "bucket": "idx10+",
+          "n": 633937,
+          "share_lp_negative": 0.2335,
+          "median_q_bps": 3.37,
+          "extraction_usd_m": 2.32
+        }
+      ],
+      "by_raw_tx_index_big": [
+        {
+          "bucket": "idx0",
+          "n": 15277,
+          "share_lp_negative": 0.7322,
+          "median_q_bps": -2.67,
+          "extraction_usd_m": 2.46
+        },
+        {
+          "bucket": "idx1",
+          "n": 12399,
+          "share_lp_negative": 0.7152,
+          "median_q_bps": -2.98,
+          "extraction_usd_m": 1.98
+        },
+        {
+          "bucket": "idx2",
+          "n": 8436,
+          "share_lp_negative": 0.7244,
+          "median_q_bps": -2.63,
+          "extraction_usd_m": 1.7
+        },
+        {
+          "bucket": "idx3-9",
+          "n": 5479,
+          "share_lp_negative": 0.6425,
+          "median_q_bps": -2.35,
+          "extraction_usd_m": 1.59
+        },
+        {
+          "bucket": "idx10+",
+          "n": 3499,
+          "share_lp_negative": 0.3541,
+          "median_q_bps": 4.46,
+          "extraction_usd_m": 1.63
+        }
+      ],
+      "by_norm_position_all": [
+        {
+          "bucket": "pos_0-10%",
+          "n": 502435,
+          "share_lp_negative": 0.4099,
+          "median_q_bps": 0.91,
+          "extraction_usd_m": 9.42
+        },
+        {
+          "bucket": "pos_10-20%",
+          "n": 126785,
+          "share_lp_negative": 0.2282,
+          "median_q_bps": 3.28,
+          "extraction_usd_m": 0.56
+        },
+        {
+          "bucket": "pos_20-30%",
+          "n": 85118,
+          "share_lp_negative": 0.2176,
+          "median_q_bps": 3.46,
+          "extraction_usd_m": 0.19
+        },
+        {
+          "bucket": "pos_30-40%",
+          "n": 61341,
+          "share_lp_negative": 0.2169,
+          "median_q_bps": 3.6,
+          "extraction_usd_m": 0.14
+        },
+        {
+          "bucket": "pos_40-50%",
+          "n": 45995,
+          "share_lp_negative": 0.2236,
+          "median_q_bps": 3.65,
+          "extraction_usd_m": 0.83
+        },
+        {
+          "bucket": "pos_50-60%",
+          "n": 38122,
+          "share_lp_negative": 0.229,
+          "median_q_bps": 3.67,
+          "extraction_usd_m": 0.12
+        },
+        {
+          "bucket": "pos_60-70%",
+          "n": 31205,
+          "share_lp_negative": 0.2333,
+          "median_q_bps": 3.8,
+          "extraction_usd_m": 0.15
+        },
+        {
+          "bucket": "pos_70-80%",
+          "n": 27574,
+          "share_lp_negative": 0.2417,
+          "median_q_bps": 3.81,
+          "extraction_usd_m": 0.12
+        },
+        {
+          "bucket": "pos_80-90%",
+          "n": 26120,
+          "share_lp_negative": 0.254,
+          "median_q_bps": 3.73,
+          "extraction_usd_m": 0.13
+        },
+        {
+          "bucket": "pos_90-100%",
+          "n": 45860,
+          "share_lp_negative": 0.2626,
+          "median_q_bps": 3.52,
+          "extraction_usd_m": 0.2
+        }
+      ],
+      "by_norm_position_big": [
+        {
+          "bucket": "pos_0-10%",
+          "n": 42049,
+          "share_lp_negative": 0.7057,
+          "median_q_bps": -2.63,
+          "extraction_usd_m": 7.5
+        },
+        {
+          "bucket": "pos_10-20%",
+          "n": 1030,
+          "share_lp_negative": 0.434,
+          "median_q_bps": 2.5,
+          "extraction_usd_m": 0.43
+        },
+        {
+          "bucket": "pos_20-30%",
+          "n": 527,
+          "share_lp_negative": 0.3435,
+          "median_q_bps": 4.66,
+          "extraction_usd_m": 0.1
+        },
+        {
+          "bucket": "pos_30-40%",
+          "n": 270,
+          "share_lp_negative": 0.3296,
+          "median_q_bps": 5.43,
+          "extraction_usd_m": 0.08
+        },
+        {
+          "bucket": "pos_40-50%",
+          "n": 186,
+          "share_lp_negative": 0.3871,
+          "median_q_bps": 3.53,
+          "extraction_usd_m": 0.78
+        },
+        {
+          "bucket": "pos_50-60%",
+          "n": 199,
+          "share_lp_negative": 0.3417,
+          "median_q_bps": 4.58,
+          "extraction_usd_m": 0.07
+        },
+        {
+          "bucket": "pos_60-70%",
+          "n": 157,
+          "share_lp_negative": 0.4076,
+          "median_q_bps": 3.24,
+          "extraction_usd_m": 0.11
+        },
+        {
+          "bucket": "pos_70-80%",
+          "n": 148,
+          "share_lp_negative": 0.4392,
+          "median_q_bps": 2.4,
+          "extraction_usd_m": 0.08
+        },
+        {
+          "bucket": "pos_80-90%",
+          "n": 192,
+          "share_lp_negative": 0.5208,
+          "median_q_bps": -1.1,
+          "extraction_usd_m": 0.09
+        },
+        {
+          "bucket": "pos_90-100%",
+          "n": 332,
+          "share_lp_negative": 0.497,
+          "median_q_bps": 0.04,
+          "extraction_usd_m": 0.11
+        }
+      ]
     },
-    {
-      "bucket": "idx2",
-      "n": 8436,
-      "share_lp_negative": 0.8442,
-      "median_q_bps": -2.56,
-      "extraction_usd_m": 1.47
+    "h30": {
+      "by_raw_tx_index_all": [
+        {
+          "bucket": "idx0",
+          "n": 76251,
+          "share_lp_negative": 0.548,
+          "median_q_bps": -0.55,
+          "extraction_usd_m": 3.56
+        },
+        {
+          "bucket": "idx1",
+          "n": 74999,
+          "share_lp_negative": 0.4971,
+          "median_q_bps": 0.04,
+          "extraction_usd_m": 2.83
+        },
+        {
+          "bucket": "idx2",
+          "n": 57137,
+          "share_lp_negative": 0.4555,
+          "median_q_bps": 0.57,
+          "extraction_usd_m": 2.25
+        },
+        {
+          "bucket": "idx3-9",
+          "n": 148231,
+          "share_lp_negative": 0.3723,
+          "median_q_bps": 1.79,
+          "extraction_usd_m": 2.31
+        },
+        {
+          "bucket": "idx10+",
+          "n": 633937,
+          "share_lp_negative": 0.2692,
+          "median_q_bps": 3.48,
+          "extraction_usd_m": 2.55
+        }
+      ],
+      "by_raw_tx_index_big": [
+        {
+          "bucket": "idx0",
+          "n": 15277,
+          "share_lp_negative": 0.6363,
+          "median_q_bps": -2.31,
+          "extraction_usd_m": 2.84
+        },
+        {
+          "bucket": "idx1",
+          "n": 12399,
+          "share_lp_negative": 0.6295,
+          "median_q_bps": -2.52,
+          "extraction_usd_m": 2.2
+        },
+        {
+          "bucket": "idx2",
+          "n": 8436,
+          "share_lp_negative": 0.635,
+          "median_q_bps": -2.24,
+          "extraction_usd_m": 1.87
+        },
+        {
+          "bucket": "idx3-9",
+          "n": 5479,
+          "share_lp_negative": 0.5839,
+          "median_q_bps": -1.92,
+          "extraction_usd_m": 1.67
+        },
+        {
+          "bucket": "idx10+",
+          "n": 3499,
+          "share_lp_negative": 0.3638,
+          "median_q_bps": 4.56,
+          "extraction_usd_m": 1.69
+        }
+      ],
+      "by_norm_position_all": [
+        {
+          "bucket": "pos_0-10%",
+          "n": 502435,
+          "share_lp_negative": 0.3991,
+          "median_q_bps": 1.37,
+          "extraction_usd_m": 10.82
+        },
+        {
+          "bucket": "pos_10-20%",
+          "n": 126785,
+          "share_lp_negative": 0.2645,
+          "median_q_bps": 3.42,
+          "extraction_usd_m": 0.68
+        },
+        {
+          "bucket": "pos_20-30%",
+          "n": 85118,
+          "share_lp_negative": 0.2605,
+          "median_q_bps": 3.54,
+          "extraction_usd_m": 0.23
+        },
+        {
+          "bucket": "pos_30-40%",
+          "n": 61341,
+          "share_lp_negative": 0.254,
+          "median_q_bps": 3.67,
+          "extraction_usd_m": 0.16
+        },
+        {
+          "bucket": "pos_40-50%",
+          "n": 45995,
+          "share_lp_negative": 0.2585,
+          "median_q_bps": 3.76,
+          "extraction_usd_m": 0.85
+        },
+        {
+          "bucket": "pos_50-60%",
+          "n": 38122,
+          "share_lp_negative": 0.2652,
+          "median_q_bps": 3.71,
+          "extraction_usd_m": 0.12
+        },
+        {
+          "bucket": "pos_60-70%",
+          "n": 31205,
+          "share_lp_negative": 0.2731,
+          "median_q_bps": 3.77,
+          "extraction_usd_m": 0.14
+        },
+        {
+          "bucket": "pos_70-80%",
+          "n": 27574,
+          "share_lp_negative": 0.279,
+          "median_q_bps": 3.87,
+          "extraction_usd_m": 0.13
+        },
+        {
+          "bucket": "pos_80-90%",
+          "n": 26120,
+          "share_lp_negative": 0.288,
+          "median_q_bps": 3.78,
+          "extraction_usd_m": 0.14
+        },
+        {
+          "bucket": "pos_90-100%",
+          "n": 45860,
+          "share_lp_negative": 0.2916,
+          "median_q_bps": 3.57,
+          "extraction_usd_m": 0.22
+        }
+      ],
+      "by_norm_position_big": [
+        {
+          "bucket": "pos_0-10%",
+          "n": 42049,
+          "share_lp_negative": 0.6204,
+          "median_q_bps": -2.2,
+          "extraction_usd_m": 8.29
+        },
+        {
+          "bucket": "pos_10-20%",
+          "n": 1030,
+          "share_lp_negative": 0.4252,
+          "median_q_bps": 2.9,
+          "extraction_usd_m": 0.51
+        },
+        {
+          "bucket": "pos_20-30%",
+          "n": 527,
+          "share_lp_negative": 0.3757,
+          "median_q_bps": 4.56,
+          "extraction_usd_m": 0.12
+        },
+        {
+          "bucket": "pos_30-40%",
+          "n": 270,
+          "share_lp_negative": 0.3296,
+          "median_q_bps": 5.47,
+          "extraction_usd_m": 0.08
+        },
+        {
+          "bucket": "pos_40-50%",
+          "n": 186,
+          "share_lp_negative": 0.3871,
+          "median_q_bps": 3.97,
+          "extraction_usd_m": 0.79
+        },
+        {
+          "bucket": "pos_50-60%",
+          "n": 199,
+          "share_lp_negative": 0.3518,
+          "median_q_bps": 5.62,
+          "extraction_usd_m": 0.07
+        },
+        {
+          "bucket": "pos_60-70%",
+          "n": 157,
+          "share_lp_negative": 0.4268,
+          "median_q_bps": 2.48,
+          "extraction_usd_m": 0.1
+        },
+        {
+          "bucket": "pos_70-80%",
+          "n": 148,
+          "share_lp_negative": 0.4527,
+          "median_q_bps": 1.02,
+          "extraction_usd_m": 0.09
+        },
+        {
+          "bucket": "pos_80-90%",
+          "n": 192,
+          "share_lp_negative": 0.5052,
+          "median_q_bps": -0.5,
+          "extraction_usd_m": 0.09
+        },
+        {
+          "bucket": "pos_90-100%",
+          "n": 332,
+          "share_lp_negative": 0.503,
+          "median_q_bps": -0.34,
+          "extraction_usd_m": 0.12
+        }
+      ]
     },
-    {
-      "bucket": "idx3-9",
-      "n": 5479,
-      "share_lp_negative": 0.7308,
-      "median_q_bps": -2.4,
-      "extraction_usd_m": 1.53
-    },
-    {
-      "bucket": "idx10+",
-      "n": 3499,
-      "share_lp_negative": 0.3541,
-      "median_q_bps": 4.41,
-      "extraction_usd_m": 1.59
+    "h60": {
+      "by_raw_tx_index_all": [
+        {
+          "bucket": "idx0",
+          "n": 76251,
+          "share_lp_negative": 0.5219,
+          "median_q_bps": -0.36,
+          "extraction_usd_m": 4.16
+        },
+        {
+          "bucket": "idx1",
+          "n": 74999,
+          "share_lp_negative": 0.482,
+          "median_q_bps": 0.32,
+          "extraction_usd_m": 3.23
+        },
+        {
+          "bucket": "idx2",
+          "n": 57137,
+          "share_lp_negative": 0.4469,
+          "median_q_bps": 0.9,
+          "extraction_usd_m": 2.57
+        },
+        {
+          "bucket": "idx3-9",
+          "n": 148231,
+          "share_lp_negative": 0.3839,
+          "median_q_bps": 2.03,
+          "extraction_usd_m": 2.56
+        },
+        {
+          "bucket": "idx10+",
+          "n": 633937,
+          "share_lp_negative": 0.3013,
+          "median_q_bps": 3.57,
+          "extraction_usd_m": 2.85
+        }
+      ],
+      "by_raw_tx_index_big": [
+        {
+          "bucket": "idx0",
+          "n": 15277,
+          "share_lp_negative": 0.5968,
+          "median_q_bps": -2.13,
+          "extraction_usd_m": 3.24
+        },
+        {
+          "bucket": "idx1",
+          "n": 12399,
+          "share_lp_negative": 0.5834,
+          "median_q_bps": -2.07,
+          "extraction_usd_m": 2.44
+        },
+        {
+          "bucket": "idx2",
+          "n": 8436,
+          "share_lp_negative": 0.5837,
+          "median_q_bps": -1.85,
+          "extraction_usd_m": 2.08
+        },
+        {
+          "bucket": "idx3-9",
+          "n": 5479,
+          "share_lp_negative": 0.5569,
+          "median_q_bps": -1.63,
+          "extraction_usd_m": 1.75
+        },
+        {
+          "bucket": "idx10+",
+          "n": 3499,
+          "share_lp_negative": 0.3701,
+          "median_q_bps": 4.45,
+          "extraction_usd_m": 1.76
+        }
+      ],
+      "by_norm_position_all": [
+        {
+          "bucket": "pos_0-10%",
+          "n": 502435,
+          "share_lp_negative": 0.4039,
+          "median_q_bps": 1.66,
+          "extraction_usd_m": 12.45
+        },
+        {
+          "bucket": "pos_10-20%",
+          "n": 126785,
+          "share_lp_negative": 0.2971,
+          "median_q_bps": 3.54,
+          "extraction_usd_m": 0.75
+        },
+        {
+          "bucket": "pos_20-30%",
+          "n": 85118,
+          "share_lp_negative": 0.2938,
+          "median_q_bps": 3.65,
+          "extraction_usd_m": 0.3
+        },
+        {
+          "bucket": "pos_30-40%",
+          "n": 61341,
+          "share_lp_negative": 0.287,
+          "median_q_bps": 3.74,
+          "extraction_usd_m": 0.18
+        },
+        {
+          "bucket": "pos_40-50%",
+          "n": 45995,
+          "share_lp_negative": 0.2956,
+          "median_q_bps": 3.77,
+          "extraction_usd_m": 0.87
+        },
+        {
+          "bucket": "pos_50-60%",
+          "n": 38122,
+          "share_lp_negative": 0.3017,
+          "median_q_bps": 3.76,
+          "extraction_usd_m": 0.14
+        },
+        {
+          "bucket": "pos_60-70%",
+          "n": 31205,
+          "share_lp_negative": 0.3087,
+          "median_q_bps": 3.77,
+          "extraction_usd_m": 0.15
+        },
+        {
+          "bucket": "pos_70-80%",
+          "n": 27574,
+          "share_lp_negative": 0.3132,
+          "median_q_bps": 3.79,
+          "extraction_usd_m": 0.14
+        },
+        {
+          "bucket": "pos_80-90%",
+          "n": 26120,
+          "share_lp_negative": 0.315,
+          "median_q_bps": 3.82,
+          "extraction_usd_m": 0.15
+        },
+        {
+          "bucket": "pos_90-100%",
+          "n": 45860,
+          "share_lp_negative": 0.3178,
+          "median_q_bps": 3.55,
+          "extraction_usd_m": 0.25
+        }
+      ],
+      "by_norm_position_big": [
+        {
+          "bucket": "pos_0-10%",
+          "n": 42049,
+          "share_lp_negative": 0.5787,
+          "median_q_bps": -1.86,
+          "extraction_usd_m": 9.2
+        },
+        {
+          "bucket": "pos_10-20%",
+          "n": 1030,
+          "share_lp_negative": 0.432,
+          "median_q_bps": 2.21,
+          "extraction_usd_m": 0.52
+        },
+        {
+          "bucket": "pos_20-30%",
+          "n": 527,
+          "share_lp_negative": 0.3757,
+          "median_q_bps": 4.54,
+          "extraction_usd_m": 0.16
+        },
+        {
+          "bucket": "pos_30-40%",
+          "n": 270,
+          "share_lp_negative": 0.363,
+          "median_q_bps": 4.4,
+          "extraction_usd_m": 0.1
+        },
+        {
+          "bucket": "pos_40-50%",
+          "n": 186,
+          "share_lp_negative": 0.3978,
+          "median_q_bps": 2.56,
+          "extraction_usd_m": 0.79
+        },
+        {
+          "bucket": "pos_50-60%",
+          "n": 199,
+          "share_lp_negative": 0.392,
+          "median_q_bps": 4.83,
+          "extraction_usd_m": 0.07
+        },
+        {
+          "bucket": "pos_60-70%",
+          "n": 157,
+          "share_lp_negative": 0.4204,
+          "median_q_bps": 2.65,
+          "extraction_usd_m": 0.1
+        },
+        {
+          "bucket": "pos_70-80%",
+          "n": 148,
+          "share_lp_negative": 0.4865,
+          "median_q_bps": 0.99,
+          "extraction_usd_m": 0.09
+        },
+        {
+          "bucket": "pos_80-90%",
+          "n": 192,
+          "share_lp_negative": 0.5312,
+          "median_q_bps": -1.99,
+          "extraction_usd_m": 0.09
+        },
+        {
+          "bucket": "pos_90-100%",
+          "n": 332,
+          "share_lp_negative": 0.4639,
+          "median_q_bps": 2.03,
+          "extraction_usd_m": 0.14
+        }
+      ]
     }
-  ],
-  "by_norm_position_all": [
-    {
-      "bucket": "pos_0-10%",
-      "n": 502435,
-      "share_lp_negative": 0.3992,
-      "median_q_bps": 0.61,
-      "extraction_usd_m": 7.63
-    },
-    {
-      "bucket": "pos_10-20%",
-      "n": 126785,
-      "share_lp_negative": 0.1671,
-      "median_q_bps": 2.99,
-      "extraction_usd_m": 0.51
-    },
-    {
-      "bucket": "pos_20-30%",
-      "n": 85118,
-      "share_lp_negative": 0.1612,
-      "median_q_bps": 3.26,
-      "extraction_usd_m": 0.16
-    },
-    {
-      "bucket": "pos_30-40%",
-      "n": 61341,
-      "share_lp_negative": 0.1631,
-      "median_q_bps": 3.48,
-      "extraction_usd_m": 0.13
-    },
-    {
-      "bucket": "pos_40-50%",
-      "n": 45995,
-      "share_lp_negative": 0.1749,
-      "median_q_bps": 3.51,
-      "extraction_usd_m": 0.82
-    },
-    {
-      "bucket": "pos_50-60%",
-      "n": 38122,
-      "share_lp_negative": 0.1796,
-      "median_q_bps": 3.61,
-      "extraction_usd_m": 0.11
-    },
-    {
-      "bucket": "pos_60-70%",
-      "n": 31205,
-      "share_lp_negative": 0.1913,
-      "median_q_bps": 3.76,
-      "extraction_usd_m": 0.14
-    },
-    {
-      "bucket": "pos_70-80%",
-      "n": 27574,
-      "share_lp_negative": 0.1939,
-      "median_q_bps": 3.86,
-      "extraction_usd_m": 0.12
-    },
-    {
-      "bucket": "pos_80-90%",
-      "n": 26120,
-      "share_lp_negative": 0.21,
-      "median_q_bps": 3.73,
-      "extraction_usd_m": 0.12
-    },
-    {
-      "bucket": "pos_90-100%",
-      "n": 45860,
-      "share_lp_negative": 0.2276,
-      "median_q_bps": 3.46,
-      "extraction_usd_m": 0.18
-    }
-  ],
-  "by_norm_position_big": [
-    {
-      "bucket": "pos_0-10%",
-      "n": 42049,
-      "share_lp_negative": 0.8087,
-      "median_q_bps": -2.46,
-      "extraction_usd_m": 6.47
-    },
-    {
-      "bucket": "pos_10-20%",
-      "n": 1030,
-      "share_lp_negative": 0.467,
-      "median_q_bps": 1.88,
-      "extraction_usd_m": 0.42
-    },
-    {
-      "bucket": "pos_20-30%",
-      "n": 527,
-      "share_lp_negative": 0.3472,
-      "median_q_bps": 4.76,
-      "extraction_usd_m": 0.09
-    },
-    {
-      "bucket": "pos_30-40%",
-      "n": 270,
-      "share_lp_negative": 0.3185,
-      "median_q_bps": 5.14,
-      "extraction_usd_m": 0.08
-    },
-    {
-      "bucket": "pos_40-50%",
-      "n": 186,
-      "share_lp_negative": 0.371,
-      "median_q_bps": 4.53,
-      "extraction_usd_m": 0.78
-    },
-    {
-      "bucket": "pos_50-60%",
-      "n": 199,
-      "share_lp_negative": 0.3568,
-      "median_q_bps": 4.29,
-      "extraction_usd_m": 0.07
-    },
-    {
-      "bucket": "pos_60-70%",
-      "n": 157,
-      "share_lp_negative": 0.4395,
-      "median_q_bps": 2.33,
-      "extraction_usd_m": 0.11
-    },
-    {
-      "bucket": "pos_70-80%",
-      "n": 148,
-      "share_lp_negative": 0.3986,
-      "median_q_bps": 3.24,
-      "extraction_usd_m": 0.08
-    },
-    {
-      "bucket": "pos_80-90%",
-      "n": 192,
-      "share_lp_negative": 0.5521,
-      "median_q_bps": -2.27,
-      "extraction_usd_m": 0.08
-    },
-    {
-      "bucket": "pos_90-100%",
-      "n": 332,
-      "share_lp_negative": 0.5151,
-      "median_q_bps": -0.58,
-      "extraction_usd_m": 0.1
-    }
-  ],
+  },
   "priority_fee_toxic": {
     "median_gwei": 1.553,
     "p90_gwei": 34.405,
