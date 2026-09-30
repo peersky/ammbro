@@ -142,7 +142,8 @@ def arb_choice(rule: str, a: float, D: float, h: float, g: float, m: float, gap_
 
 
 def run_one(args) -> dict:
-    rule, param, scenario, premium = args
+    rule, param, scenario, premium = args[:4]
+    phase = args[4] if len(args) > 4 else "open"     # open | close | both
     if not _DATA:
         _init()
     o, Dd, gas, day = _DATA["o"], _DATA["D"], _DATA["gas"], _DATA["day"]
@@ -161,6 +162,7 @@ def run_one(args) -> dict:
     exo_gap_w = exo_vol = 0.0
     reb = n = overshoot = 0
     pre_gaps = []
+    eob_gaps = []; eob_n = eob_reb = 0
     stale_run = persist2 = 0
     post_gaps = []
     daily = []
@@ -182,41 +184,57 @@ def run_one(args) -> dict:
                 m = min(max(m, 0.02e-4), 50e-4)
             d_cur = day[i]; d_stale = d_n = d_arb = d_cont = 0; d_m = m
         oi = o[i]; D = Dd[i]
-        G = oi - p; gab = abs(G); a = gab - F
+        G = oi - p; gab = abs(G)
         if es[i] < ee[i] and i % 10 == 0:
             pre_gaps.append(gab)
-        if a > 0:
-            costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) for c in costs_base]
-            correctable = arb_choice("today", a, D, costs[0], gas[i], 0.0, gab)[0] > 0
-            res = sorted((arb_choice(rule, a, D, h, gas[i], m, gab) for h in costs), reverse=True)
-            w, r2 = res[0], res[1]
-            traded = w[0] > 0 and w[1] > 0
-            if correctable:
-                n_corr += 1; d_n += 1; w_corr += 1
-                if not traded:
-                    n_uncorr += 1; d_stale += 1; w_uncorr += 1
-            if traded:
-                V, kept = w[1], w[2]
-                E = (a - V / (2 * D)) * V
-                bid = max(r2[0], 0.0) + premium / 1e4 * V
-                lp_arb -= kept + premium / 1e4 * V
-                charge_tot += E - kept
-                builder += bid
-                margin += w[0] - max(r2[0], 0.0)
-                arb_vol += V
-                p += math.copysign(V / D, G)
-                if (oi - p) * G < 0 and abs(oi - p) > 0.5e-4:
-                    overshoot += 1
-                d_arb += 1
-                if r2[0] > 0:
-                    d_cont += 1
+        if phase == "close":
+            for k in range(es[i], ee[i]):
+                s = xs[k]; V = xv[k]
+                pav = p + s * V / (2 * D)
+                lp_exo += V * (F + s * (pav - oi))
+                exo_gap_w += V * abs(p - oi); exo_vol += V
+                p += s * V / D
+        for _pass in ((0,) if phase != "both" else (0, 1)):
+          if _pass == 1:
+            for k in range(es[i], ee[i]):
+                s = xs[k]; V = xv[k]
+                pav = p + s * V / (2 * D)
+                lp_exo += V * (F + s * (pav - oi))
+                exo_gap_w += V * abs(p - oi); exo_vol += V
+                p += s * V / D
+          G = oi - p; gab = abs(G); a = gab - F
+          if a > 0:
+              costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) for c in costs_base]
+              correctable = arb_choice("today", a, D, costs[0], gas[i], 0.0, gab)[0] > 0
+              res = sorted((arb_choice(rule, a, D, h, gas[i], m, gab) for h in costs), reverse=True)
+              w, r2 = res[0], res[1]
+              traded = w[0] > 0 and w[1] > 0
+              if correctable:
+                  n_corr += 1; d_n += 1; w_corr += 1
+                  if not traded:
+                      n_uncorr += 1; d_stale += 1; w_uncorr += 1
+              if traded:
+                  V, kept = w[1], w[2]
+                  E = (a - V / (2 * D)) * V
+                  bid = max(r2[0], 0.0) + premium / 1e4 * V
+                  lp_arb -= kept + premium / 1e4 * V
+                  charge_tot += E - kept
+                  builder += bid
+                  margin += w[0] - max(r2[0], 0.0)
+                  arb_vol += V
+                  p += math.copysign(V / D, G)
+                  if (oi - p) * G < 0 and abs(oi - p) > 0.5e-4:
+                      overshoot += 1
+                  d_arb += 1
+                  if r2[0] > 0:
+                      d_cont += 1
         if fast:
             w_n += 1
             if w_n >= RAISE_BLOCKS:
                 if w_corr >= 20 and w_uncorr / w_corr > s_star:
                     m = min(m * 2.0, 50e-4)
                 w_n = w_corr = w_uncorr = 0
-        post = abs(oi - p)
+        post = abs(oi - p)                      # after the arb phase (open) / after everything (close, both)
         n += 1
         if post <= REB:
             reb += 1; stale_run = 0
@@ -226,16 +244,26 @@ def run_one(args) -> dict:
                 persist2 += 1
         if i % 50 == 0:
             post_gaps.append(post)
-        for k in range(es[i], ee[i]):
-            s = xs[k]; V = xv[k]
-            pav = p + s * V / (2 * D)
-            lp_exo += V * (F + s * (pav - oi))
-            exo_gap_w += V * abs(p - oi); exo_vol += V
-            p += s * V / D
+        if phase == "open":
+            for k in range(es[i], ee[i]):
+                s = xs[k]; V = xv[k]
+                pav = p + s * V / (2 * D)
+                lp_exo += V * (F + s * (pav - oi))
+                exo_gap_w += V * abs(p - oi); exo_vol += V
+                p += s * V / D
+        eob_n += 1
+        if abs(oi - p) <= REB:
+            eob_reb += 1
+        if i % 50 == 0:
+            eob_gaps.append(abs(oi - p))
     pg = np.array(post_gaps) * 1e4
+    eg = np.array(eob_gaps) * 1e4
     pre = np.array(pre_gaps) * 1e4
     return {
-        "rule": rule, "param": param, "scenario": scenario, "premium_bps": premium,
+        "rule": rule, "param": param, "scenario": scenario, "premium_bps": premium, "phase": phase,
+        "end_of_block_within_band": round(eob_reb / max(eob_n, 1), 5),
+        "end_of_block_gap_bps": {"p50": round(float(np.median(eg)), 2), "p90": round(float(np.percentile(eg, 90)), 2),
+                                 "p99": round(float(np.percentile(eg, 99)), 2)},
         "lp_net_m": round((lp_arb + lp_exo) / 1e6, 3),
         "lp_from_arbs_m": round(lp_arb / 1e6, 3), "lp_from_users_m": round(lp_exo / 1e6, 3),
         "lp_recapture_m": round(charge_tot / 1e6, 3),
