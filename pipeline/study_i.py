@@ -170,6 +170,7 @@ def run_one(args) -> dict:
     reb = n = overshoot = 0
     pre_gaps = []
     eob_gaps = []; eob_n = eob_reb = 0
+    pass_trades = [0, 0]; pass_vol = [0.0, 0.0]
     stale_run = persist2 = 0
     post_gaps = []
     daily = []
@@ -229,6 +230,7 @@ def run_one(args) -> dict:
                   builder += bid
                   margin += w[0] - max(r2[0], 0.0)
                   arb_vol += V
+                  pass_trades[_pass] += 1; pass_vol[_pass] += V
                   p += math.copysign(V / D, G)
                   if (oi - p) * G < 0 and abs(oi - p) > 0.5e-4:
                       overshoot += 1
@@ -269,6 +271,8 @@ def run_one(args) -> dict:
     return {
         "rule": rule, "param": param, "scenario": scenario, "premium_bps": premium, "phase": phase,
         "end_of_block_within_band": round(eob_reb / max(eob_n, 1), 5),
+        "arb_trades_by_pass": {"first": pass_trades[0], "second_after_users": pass_trades[1]},
+        "arb_volume_b_by_pass": {"first": round(pass_vol[0] / 1e9, 3), "second_after_users": round(pass_vol[1] / 1e9, 3)},
         "end_of_block_gap_bps": {"p50": round(float(np.median(eg)), 2), "p90": round(float(np.percentile(eg, 90)), 2),
                                  "p99": round(float(np.percentile(eg, 99)), 2)},
         "lp_net_m": round((lp_arb + lp_exo) / 1e6, 3),
