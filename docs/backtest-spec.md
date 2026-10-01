@@ -381,43 +381,20 @@ nothing."
 
 ## Open items for the paper (resolve in `paper.md`, not in code)
 
-1. **Abstract vs P§4.1.** Abstract says arbitrageurs "face increased
-   fees" via retroactive reconciliation; P§4 makes the fee final at
-   execution and punishes via REP burn (higher *future* fees). Abstract
-   should say so.
-2. **Concave vs convex.** Spec and P§2.2/§2.7 say "concave curve"; P§4.3
-   says the fee is "decreasing and convex in r". Both hold for different
-   quantities (discount concave, fee convex) — pick one term.
-3. **`κ`** is listed in P§4.7 but never defined in P§4.3.
+Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (actor identity in a v4 hook), 6 (bootstrap / launch at `f_max`), 7 (number the §5 cross-references once §5 exists).
+
+1. ~~**Abstract vs P§4.1.**~~ RESOLVED 2026-10-01: abstract now says swaps are priced at execution and reconciled after; extraction beyond the job allowance is recaptured from posted collateral; reputation loss raises future fees.
+2. ~~**Concave vs convex.**~~ RESOLVED 2026-10-01: P§2.2/§2.7 now say "concave discount curve"; P§4.3's fee stays "decreasing and convex in r".
+3. ~~**`κ`**~~ RESOLVED 2026-10-01: removed; replaced by the job allowance `m` (P§4.3), which the controller discovers and P§4.7 lists as not-a-parameter.
 4. **Horizons.** Paper: +12s/+30s. Pipeline also runs +60s. Align.
 5. **Actor identity in a v4 hook.** `sender` is the router; the paper
    must say how the trader is identified.
 6. **Bootstrap.** `f_max` = 5% for unstaked flow needs a launch story
    (retroactive seeding from history?) — P§2.5 mentions a
    "retroactive-bootstrap means" without specifying it.
-9. **Virtual time plane (P§3.4) is not supported by the data.** P§3.4
-   spreads a block's txs across the block interval by index. Study E
-   finds index is not time: top-of-block arbs price at ≈ block_ts + 1.5s
-   (after the slot label, because blocks are published into the slot),
-   and mapping deeper txs forward in time is lookahead — it prices them
-   against prints from after the block was sealed. A single per-block
-   anchor at `block_ts + L` scores as well as any index spread
-   (block_L AUC 0.886 = backward_L 0.886 > forward 0.852). Suggest
-   rewriting P§3.4 around a measured per-block decision latency.
-10. **Kernel window (P§4.2) must be centered on the decision instant and
-   narrow.** A trailing window `[block_ts − w, block_ts]` scores arbs
-   against pre-move prices: at w = 12s the baseline LP P&L flips from
-   −$0.58M to +$5.26M and AUC drops to 0.753. Centered on `block_ts + L`
-   at w = 1s it is stable (AUC 0.889). P§4.2 should state both the
-   anchor and the width, and cite ε ≈ 1bp from Study E.
-11. **Allowance `m` and its controller belong in P§4.** P§4.7's
-   undefined `κ` ("covers the divergence range where extraction
-   empirically concentrates") is best defined as the allowance `m` of the
-   margin schedule, and P§1's claim that the fee becomes "a useful
-   dynamic variable" is substantiated by the Study H controller — a
-   second feedback valve beside the θ* mint valve of P§4.4. Suggest a
-   P§4.3 paragraph: burn sized to extraction beyond `m`; `m` set per
-   epoch by staleness (raise) and top-slot share (lower).
+9. ~~**Virtual time plane (P§3.4).**~~ RESOLVED 2026-10-01: P§3.4 rewritten — measured decision latency, single per-block anchor `t* = block_ts + L`, index-based plane kept as a base-layer proposal conditional on time-enforced ordering, with the measured attacks.
+10. ~~**Kernel window (P§4.2).**~~ RESOLVED 2026-10-01: P§4.2 now centres a ≈1s window on `t*` and cites ε ≈ 1bp.
+11. ~~**Allowance `m` and its controller.**~~ RESOLVED 2026-10-01: P§4.3 "Arbitrage as a paid job" (per-unit path cap + gas allowance, stake-debited, epoch-aggregate gated) and "The allowance is discovered, not set" (feasible controller); P§4.4 burn at the inverse mint scalar; P§4.5 tranche sizing; P§4.6 what reconciliation computes.
 8. ~~**Bid/ask assignment reversed relative to its stated purpose.**~~
    RESOLVED 2026-09-30: P§3.6/P§4.2 now read bid-when-pool-sells /
    ask-when-pool-buys, matching `arb_exit`. `arb_exit` is the paper's
