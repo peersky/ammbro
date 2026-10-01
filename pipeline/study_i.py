@@ -46,6 +46,18 @@ Parameter m: static grid, or a controller per UTC day:
              profit), otherwise HOLD. Settles where only the cheapest arb
              can do the job — between the cheapest and second-cheapest
              cost — and never approaches the cliff unless costs rise.
+  ctl_feasible  uses ONLY on-chain-observable information. Staleness is
+             self-referential: among blocks with a pool swap whose RESTING
+             gap at block start exceeds f + m + EPS_SR, the share where the
+             block's first swap did not move the pool toward the oracle.
+             Any arb with cost below m profits from correcting such a gap,
+             so in a healthy pool this ~never happens; with m below every
+             arb's cost it always does. Needs only the resting price, the
+             oracle report and the first swap's direction — all already in
+             reconciliation. (A post-first-swap gap test is too noisy: large
+             USER first swaps push the pool off and ratchet m up.) Hourly x2
+             raise on it, daily decay x0.95 otherwise — no "contested" signal,
+             no arb cost knowledge, no index proofs.
   ctl_fast   ctl_comp with asymmetric timing: staleness checked every
              RAISE_BLOCKS (~1h) and raised x2 immediately; lowering stays
              on the daily competition signal. Recovers from a cost shock
@@ -94,6 +106,11 @@ ARB_GAS_UNITS = 250_000
 SHIFT_DAY = pd.Timestamp("2026-06-01").value // 10**9 // 86400
 S_STAR, S_LOW, TAU_C = 0.02, 0.005, 0.5
 RAISE_BLOCKS = 300              # ~1 hour
+EPS_SR = 0.5e-4                 # self-referential staleness tolerance above f + m
+S_STAR_SR = 0.02
+S_LOW_SR = 0.01                 # daily decay allowed only below this
+MIN_STALE_SR = 5                # hourly raise needs at least this many stale blocks
+RAISE_SR, DECAY_SR = 2.0, 0.95  # feasible controller step sizes
 
 _DATA = {}
 
@@ -157,12 +174,14 @@ def run_one(args) -> dict:
     es, ee, xs, xv = _DATA["exo_start"], _DATA["exo_end"], _DATA["exo_s"], _DATA["exo_v"]
     controlled = isinstance(param, str) and param.startswith("ctl")
     comp_only = param in ("ctl_comp", "ctl_fast")
-    fast = param == "ctl_fast"
+    feasible = param == "ctl_feasible"
+    fast = param in ("ctl_fast", "ctl_feasible")
+    sr_obs = sr_stale = w_sr_obs = w_sr_stale = 0
     w_corr = w_uncorr = w_n = 0
     s_star, s_low = (0.005, 0.001) if param == "ctl_tight" else (S_STAR, S_LOW)
     m = 5e-4 if controlled else (param / 1e4 if param is not None else 0.0)
     costs_base = [c / 1e4 for c in ARB_COSTS_BPS]
-    shift = 4.0 if scenario == "costs_x4" else 1.0
+    shift = float(scenario.split("_x")[1]) if scenario.startswith("costs_x") else 1.0
 
     p = o[0]
     lp_arb = lp_exo = builder = margin = charge_tot = arb_vol = 0.0
@@ -176,12 +195,17 @@ def run_one(args) -> dict:
     daily = []
     d_cur = day[0]; d_stale = d_n = d_arb = d_cont = 0; d_m = m
     n_corr = n_uncorr = 0
+    d_sr_obs = d_sr_stale = 0
     for i in range(len(o)):
         if day[i] != d_cur:
             st = d_stale / max(d_n, 1); ct = d_cont / max(d_arb, 1)
             daily.append((int(d_cur), round(d_m * 1e4, 4), round(st, 4), round(ct, 4)))
             if controlled:
-                if st > s_star and not fast:
+                if feasible:
+                    d_sr = d_sr_stale / max(d_sr_obs, 1)
+                    if d_sr < S_LOW_SR:
+                        m *= DECAY_SR
+                elif st > s_star and not fast:
                     m *= 2.0
                 elif st >= s_low:
                     pass
@@ -191,8 +215,11 @@ def run_one(args) -> dict:
                     m *= 0.95
                 m = min(max(m, 0.02e-4), 50e-4)
             d_cur = day[i]; d_stale = d_n = d_arb = d_cont = 0; d_m = m
+            d_sr_obs = d_sr_stale = 0
         oi = o[i]; D = Dd[i]
+        _trades_before = pass_trades[0] + pass_trades[1]
         G = oi - p; gab = abs(G)
+        _pre_gap = gab; _pre_sign = 1.0 if G > 0 else -1.0     # +1: pool below oracle, a buy corrects
         if es[i] < ee[i] and i % 10 == 0:
             pre_gaps.append(gab)
         if phase == "close":
@@ -237,12 +264,23 @@ def run_one(args) -> dict:
                   d_arb += 1
                   if r2[0] > 0:
                       d_cont += 1
+        # self-referential staleness: resting gap beyond f + m + eps at block start,
+        # and the block's first swap did not correct it (open phase only)
+        traded_this_block = pass_trades[0] + pass_trades[1] > _trades_before
+        if phase == "open" and _pre_gap > F + m + EPS_SR and (traded_this_block or es[i] < ee[i]):
+            sr_obs += 1; w_sr_obs += 1; d_sr_obs += 1
+            first_corrects = traded_this_block or (xs[es[i]] * _pre_sign > 0)
+            if not first_corrects:
+                sr_stale += 1; w_sr_stale += 1; d_sr_stale += 1
         if fast:
             w_n += 1
             if w_n >= RAISE_BLOCKS:
-                if w_corr >= 20 and w_uncorr / w_corr > s_star:
+                if feasible:
+                    if w_sr_stale >= MIN_STALE_SR and w_sr_stale / w_sr_obs > S_STAR_SR:
+                        m = min(m * RAISE_SR, 50e-4)
+                elif w_corr >= 20 and w_uncorr / w_corr > s_star:
                     m = min(m * 2.0, 50e-4)
-                w_n = w_corr = w_uncorr = 0
+                w_n = w_corr = w_uncorr = w_sr_obs = w_sr_stale = 0
         post = abs(oi - p)                      # after the arb phase (open) / after everything (close, both)
         n += 1
         if post <= REB:
@@ -271,6 +309,7 @@ def run_one(args) -> dict:
     return {
         "rule": rule, "param": param, "scenario": scenario, "premium_bps": premium, "phase": phase,
         "end_of_block_within_band": round(eob_reb / max(eob_n, 1), 5),
+        "selfref_stale_share": round(sr_stale / max(sr_obs, 1), 5),
         "arb_trades_by_pass": {"first": pass_trades[0], "second_after_users": pass_trades[1]},
         "arb_volume_b_by_pass": {"first": round(pass_vol[0] / 1e9, 3), "second_after_users": round(pass_vol[1] / 1e9, 3)},
         "end_of_block_gap_bps": {"p50": round(float(np.median(eg)), 2), "p90": round(float(np.percentile(eg, 90)), 2),
@@ -301,16 +340,18 @@ def main(runs: list, workers: int = 8) -> list:
 
 
 GRID_M = [0.5, 1.0, 2.0, 5.0]
+SCENARIOS = ("stable", "costs_x4", "costs_x8")
 RULES = ["avg_margin", "job_cap", "marginal_cap", "marginal_cap_gas"]
 
 
 def grid() -> list:
     runs = []
-    for sc in ("stable", "costs_x4"):
+    for sc in SCENARIOS:
         runs.append(("today", None, sc, 0.0))
         for r in RULES:
             runs += [(r, mm, sc, 0.0) for mm in GRID_M] + [(r, c, sc, 0.0) for c in ("ctl", "ctl_tight", "ctl_comp", "ctl_fast")]
         runs += [("marginal_cap_gas", "ctl_fast", sc, pr) for pr in (0.1, 0.5)]
+        runs += [(r, "ctl_feasible", sc, 0.0) for r in ("marginal_cap", "marginal_cap_gas")]
         runs += [(r, prm, sc, 0.0, ph) for r, prm in (("today", None), ("marginal_cap_gas", "ctl_fast"))
                  for ph in ("close", "both")]
     return runs
@@ -325,7 +366,7 @@ def run() -> dict:
         r["lp_net_vs_today_m"] = round(r["lp_net_m"] - t["lp_net_m"], 3)
         # binding constraint: no worse rebalancing than today (+0.5pp tolerance)
         r["keeps_rebalanced"] = bool(r["uncorrected_share_of_correctable"] <= t["uncorrected_share_of_correctable"] + 0.005)
-    for sc in ("stable", "costs_x4"):
+    for sc in SCENARIOS:
         ok = [r for r in res if r["scenario"] == sc and r["keeps_rebalanced"]]
         best = max(ok, key=lambda r: r["lp_net_m"])
         out_best = {k: best[k] for k in ("rule", "param", "premium_bps", "phase", "lp_net_m", "lp_net_vs_today_m")}
@@ -348,14 +389,14 @@ def run() -> dict:
     out = {
         "robust_ranking": robust,
         "assumptions": {"pool_fee": F, "rebalanced_band_bps": REB * 1e4, "job_band_bps": B_JOB * 1e4,
-                        "arb_costs_bps": ARB_COSTS_BPS, "costs_x4_from": "2026-06-01",
+                        "arb_costs_bps": ARB_COSTS_BPS, "cost_shocks_from": "2026-06-01 (x4, x8)",
                         "controller": {"s_star": S_STAR, "s_low": S_LOW, "tau_contested": TAU_C}},
         "calibration": {"real": {k: calib[k] for k in ("real_lp_markout_m", "real_pre_first_swap_gap_bps",
                                                        "arb_like_volume_b", "depth_usd_per_bp_median")},
                         "simulated_today_stable": {k: today["stable"][k] for k in (
                             "lp_net_m", "lp_from_arbs_m", "lp_from_users_m", "arb_volume_b",
                             "pre_arb_gap_bps_active_blocks")}},
-        "best_keeping_rebalanced": {sc: today[sc].pop("_best") for sc in ("stable", "costs_x4")},
+        "best_keeping_rebalanced": {sc: today[sc].pop("_best") for sc in SCENARIOS},
         "runs": res,
     }
     OUT.mkdir(parents=True, exist_ok=True)

@@ -141,6 +141,30 @@ so arbs trade past the oracle to inflate volume (Study I: 2× volume,
 premium is REJECTED: it buys no rebalancing and is bid away to builders
 (~$0.13M per 0.1bp over the window).
 
+**Feasibility (binding: every component must be implementable as a v4
+hook + reconciliation on L1).**
+
+| component | needs | feasible how | status |
+|---|---|---|---|
+| recapture `E − kept` after the fact | money from a counterparty who has left | NOT as cash (P§4.1). Only against collateral posted before trading: the arb's in-flight stake / bond tranche (P§4.5) is debited at reconciliation. Arbs are repeat players; stake is part of their cost `h`. | design constraint for C |
+| per-unit cap `∫ min(edge, m)` | the trade's price path | afterSwap records pre/post sqrtPrice + liquidity; closed form for constant liquidity (most arb trades move < one tick spacing); tick-crossing trades recomputed off-chain from pool state, posted optimistically, challengeable | feasible |
+| gas reimbursement | gas cost of the tx | `block.basefee × fixed gas units` (readable at execution) instead of the receipt's gasUsed | feasible |
+| oracle at `block_ts + L` | signed price at the decision instant | Data Streams report per block with a swap, verified once per block and amortized over its swaps | feasible |
+| staleness (raise) | whether profitable corrections were skipped | **self-referential, no arb-cost knowledge:** among blocks whose resting gap exceeds `f + m + ε`, share where the first swap did not move the pool toward the oracle — needs only resting price, report, first swap's direction | feasible (`ctl_feasible`) |
+| "contested" (lower) | whether a second arb could also profit | not observable. Proxies: top-slot share (tx index, optimistic Merkle proof; J 0.33) or priority fee (readable at execution; J ≤ 0.25) | proxy only |
+| correctable-block staleness, arb costs | private arb costs | not observable | simulation-only yardstick |
+
+Study I's `ctl_fast` uses the two unobservable signals and is an UPPER
+BOUND. **Chosen design = `ctl_feasible`** (hourly ×2 raise on the
+self-referential signal when ≥ 5 stale blocks and > 2%; daily ×0.95 decay
+when the signal < 1%; nothing else): LP +$2.26M stable / +$1.81M after
+×4 / +$1.38M after ×8, rebalancing within 0.07% / 0.28% / 0.43% of today.
+Worst-case gain vs today +$5.07M — first among implementable designs; the
+best fixed `m` that survives all three scenarios (5bp) reaches only
++$3.68M, and 2bp breaks at ×8 (84% uncorrected). Any fixed `m` is a bet
+on how high arb costs can go. The ~$0.55–0.9M gap to `ctl_fast` is the
+value of a competition signal; Study C tests the feasible proxies.
+
 **Allowance `m` controller (design objective; Studies H, I).** Study I
 supersedes the Study H design below on two points: (1) no blind decay —
 lower `m` **only while the slot is contested** (a second arb could also
@@ -521,6 +545,7 @@ nothing."
    - **Controller evolution:** blind decay walks into the cost cliff (26% uncorrected — a full lost day every ~2 weeks); competition-targeting settles at m ≈ 0.54bp between the cheapest (0.3) and second-cheapest (0.6) arb cost; daily raises need two lost days after a ×4 shock (5.5% uncorrected), hourly raises fix it (0.15%).
    - **Hindsight static m is not a design:** m = 0.5bp is best in stable costs (+$6.69M) but loses 84% of rebalancing after the ×4 shock.
    - **Runs that stop rebalancing show absurd LP "gains" (+$193M)**: the pool freezes and replayed user flow trades against a price thousands of bp wrong, which no router would route. They are failures; the constraint filters them.
+   - **Feasibility pass (2026-10-01).** Every component audited against "implementable as a v4 hook + L1 reconciliation" (table in the Study C design). Two signals of `ctl_fast` are not observable on-chain (arb costs; whether a second arb could profit). Replaced by a self-referential staleness signal (resting gap beyond f + m + 0.5bp not corrected by the block's first swap). First attempt (post-first-swap gap) ran away to m ≈ 47bp — large user first swaps are noise; hourly raises on tiny samples also ratcheted m up until a ≥ 5-stale-block minimum was added. Scenario ×8 (cheapest arb 2.4bp) added. Robust ranking over stable / ×4 / ×8: `ctl_fast` +$5.62M (upper bound) > **`ctl_feasible` +$5.07M** > static 5bp +$3.68M; static 0.5 / 1 / 2bp all break in at least one scenario. Closing pass fired in 14,532 blocks (1.1%, $0.70B) — only when user flow pushed the pool beyond what an arb can profitably correct; real share lower (needs the user swap to be visible for a same-block backrun).
    - **Opening vs closing correction** (stable, winner rule): open +$3.15M / users see 12.75bp staleness / 98.69% of blocks END within fee+1bp; close-only +$2.99M / 14.78bp (+16% staler — users trade against a price 12s out of date) / 99.53%; both +$3.14M / 12.73bp / 99.55%. No time passes inside a block, so a closing trade only undoes users' own in-block impact; it matters for the pool's RESTING price between blocks (TWAP-style readers, lending protocols, next-block routers). Do not REQUIRE a closing trade (a position requirement, and "pool-last" is unknowable at execution); the winner rule already pays any correcting trade, so a restoring backrun earns the same job reward and the pool gets both.
    - `job_cap` (allowance only for trading exactly to a 5.5bp band) has a structural uncorrected floor (~5.7%): gaps between the arb's natural stop and the band are "correctable" but not a job under the rule. Not pursued.
    - CAVEATS: linear depth; replayed user flow does not respond to pool quality; one arb action per block; assumed cost population; the controller's "contested" signal is observed ideally here — in practice it is the top-slot proxy (Study H, J 0.33, busyness-normalised); Study C must re-test with the proxy and with behavioural response.
