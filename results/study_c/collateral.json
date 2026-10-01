@@ -164,6 +164,43 @@
           "mean_tranche_bps": 24.45
         }
       ],
+      "size_based_schedules_vs_splitting": [
+        {
+          "schedule": "flat 20bp",
+          "collected_share": 0.7271,
+          "collected_share_split_x10": 0.6926,
+          "user_lock_per_day_usd": 52254.0,
+          "lock_on_1m_user_swap_usd": 2000.0
+        },
+        {
+          "schedule": "exp 2bp*e^(V/$100k), cap 5%",
+          "collected_share": 0.9887,
+          "collected_share_split_x10": 0.515,
+          "user_lock_per_day_usd": 193829.0,
+          "lock_on_1m_user_swap_usd": 50000.0
+        },
+        {
+          "schedule": "exp 2bp*e^(V/$250k), cap 5%",
+          "collected_share": 0.9129,
+          "collected_share_split_x10": 0.3997,
+          "user_lock_per_day_usd": 84278.0,
+          "lock_on_1m_user_swap_usd": 10920.0
+        },
+        {
+          "schedule": "exp 2bp*e^(V/$500k), cap 5%",
+          "collected_share": 0.8008,
+          "collected_share_split_x10": 0.2962,
+          "user_lock_per_day_usd": 39791.0,
+          "lock_on_1m_user_swap_usd": 1478.0
+        },
+        {
+          "schedule": "impact 2bp + 0.5*V/D",
+          "collected_share": 1.0,
+          "collected_share_split_x10": 0.3287,
+          "user_lock_per_day_usd": 28039.0,
+          "lock_on_1m_user_swap_usd": 4282.0
+        }
+      ],
       "account_bond_by_arb": {
         "arb cost 0.3bp": {
           "days_active": 184,
@@ -459,6 +496,43 @@
           "leak_m": 0.395,
           "trades_fully_covered": 0.9939,
           "mean_tranche_bps": 24.69
+        }
+      ],
+      "size_based_schedules_vs_splitting": [
+        {
+          "schedule": "flat 20bp",
+          "collected_share": 0.7177,
+          "collected_share_split_x10": 0.6821,
+          "user_lock_per_day_usd": 52254.0,
+          "lock_on_1m_user_swap_usd": 2000.0
+        },
+        {
+          "schedule": "exp 2bp*e^(V/$100k), cap 5%",
+          "collected_share": 0.9912,
+          "collected_share_split_x10": 0.5146,
+          "user_lock_per_day_usd": 193829.0,
+          "lock_on_1m_user_swap_usd": 50000.0
+        },
+        {
+          "schedule": "exp 2bp*e^(V/$250k), cap 5%",
+          "collected_share": 0.9169,
+          "collected_share_split_x10": 0.3947,
+          "user_lock_per_day_usd": 84278.0,
+          "lock_on_1m_user_swap_usd": 10920.0
+        },
+        {
+          "schedule": "exp 2bp*e^(V/$500k), cap 5%",
+          "collected_share": 0.8051,
+          "collected_share_split_x10": 0.2878,
+          "user_lock_per_day_usd": 39791.0,
+          "lock_on_1m_user_swap_usd": 1478.0
+        },
+        {
+          "schedule": "impact 2bp + 0.5*V/D",
+          "collected_share": 1.0,
+          "collected_share_split_x10": 0.3197,
+          "user_lock_per_day_usd": 28039.0,
+          "lock_on_1m_user_swap_usd": 4282.0
         }
       ],
       "account_bond_by_arb": {

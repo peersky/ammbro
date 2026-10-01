@@ -35,6 +35,12 @@ Findings drive two alternatives to a flat per-trade ρ, both feasible:
                          charges are debited from, sized to the trader's worst
                          epoch rather than its worst trade.
 
+Size-based lock schedules (author proposal: lock grows exponentially with
+swap size, tunable) are tested against an adversarial arb that splits each
+correction into 10 pieces in one block, and costed on real user swaps.
+Any lock driven by a quantity the trader controls (size, count, accounts)
+is gameable; the charge is driven by the gap, which the market sets.
+
 HONESTY: r is assumed (5%/yr); the arb population is Study I's assumed
 one; leak assumes a uniform ρ per trade (the hook cannot see the oracle at
 execution, so it cannot size the tranche to the trade's actual edge).
@@ -109,6 +115,33 @@ def analyse(scenario: str) -> dict:
                                 "leak_m": round(float((charge - cover).sum()) / 1e6, 3),
                                 "trades_fully_covered": round(float((charge <= tranche).mean()), 4),
                                 "mean_tranche_bps": round(float(tranche.sum() / V.sum() * 1e4), 2)})
+    # size-based schedules vs a 10-way splitting attack, and their cost to users
+    a_edge = np.abs(G) - F
+    m_t = t[:, 6]
+    blocks, exo = load()
+    Dblk = blocks["D"].to_numpy()
+    ev = exo["v"].to_numpy()
+    eD = Dblk[np.searchsorted(blocks["block_number"].to_numpy(), exo["block_number"].to_numpy())]
+    schedules = {
+        "flat 20bp": lambda v, d: np.full_like(v, 20e-4),
+        "exp 2bp*e^(V/$100k), cap 5%": lambda v, d: np.minimum(2e-4 * np.exp(v / 1e5), 0.05),
+        "exp 2bp*e^(V/$250k), cap 5%": lambda v, d: np.minimum(2e-4 * np.exp(v / 2.5e5), 0.05),
+        "exp 2bp*e^(V/$500k), cap 5%": lambda v, d: np.minimum(2e-4 * np.exp(v / 5e5), 0.05),
+        "impact 2bp + 0.5*V/D": lambda v, d: 2e-4 + 0.5 * v / d,
+    }
+    size_rows = []
+    for name, sch in schedules.items():
+        coll = float(np.minimum(charge, sch(V, D) * V).sum() / charge.sum())
+        c10 = l10 = 0.0
+        for k in range(1, 11):
+            vk = V / 10
+            ch_k = np.maximum(a_edge - (k - 0.5) * V / (10 * D) - m_t, 0.0) * vk
+            lk = sch(vk, D) * vk
+            c10 += np.minimum(ch_k, lk).sum(); l10 += np.maximum(ch_k - lk, 0.0).sum()
+        size_rows.append({"schedule": name, "collected_share": round(coll, 4),
+                          "collected_share_split_x10": round(float(c10 / (c10 + l10)), 4),
+                          "user_lock_per_day_usd": round(float((sch(ev, eD) * ev).sum() / n_days), 0),
+                          "lock_on_1m_user_swap_usd": round(float(sch(np.array([1e6]), np.array([np.median(Dblk)]))[0] * 1e6), 0)})
     # account bond: charges per winning arb (cost type) per epoch
     arb_day = {}
     for h, d, c in zip(t[:, 5], t[:, 1], charge):
@@ -125,6 +158,7 @@ def analyse(scenario: str) -> dict:
         "scenario": scenario, "n_trades": len(t),
         "impact_scaled_tranche_rejected_gameable": impact,
         "last_oracle_tranche": last_oracle,
+        "size_based_schedules_vs_splitting": size_rows,
         "account_bond_by_arb": bond, "arb_volume_b": round(float(V.sum()) / 1e9, 3),
         "arb_volume_per_day_m": round(vol_day / 1e6, 2),
         "total_charge_m": round(float(charge.sum()) / 1e6, 3),
