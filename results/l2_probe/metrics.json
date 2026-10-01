@@ -1,0 +1,171 @@
+{
+  "base": {
+    "head_block": 52021249,
+    "blocks_sampled": 1800,
+    "seconds": 3600,
+    "measured_block_time_s": 2.0,
+    "pools": {
+      "v3 WETH/USDC 0.05%": {
+        "swaps": 581,
+        "swaps_per_hour": 581.0,
+        "share_of_blocks_with_a_swap": 0.2167,
+        "swaps_per_active_block": {
+          "p50": 1.0,
+          "p99": 4.110000000000014,
+          "max": 7
+        },
+        "volume_usd_per_hour_m": 0.68,
+        "depth_usd_per_bp_median": 3683.0,
+        "eth_usd": 2706.0,
+        "swap_tx_gas_used": {
+          "p50": 181629,
+          "p90": 1525070
+        },
+        "effective_gas_price_gwei_p50": 0.00965,
+        "swap_tx_l2_execution_cost_usd_p50": 0.01035,
+        "swap_tx_l1_data_fee_usd_p50": 0.0,
+        "swap_tx_gas_used_for_l1_p50": null,
+        "block_gas_used_p50": 38822953,
+        "block_gas_limit": 400000000,
+        "block_gas_limits_seen": {
+          "400000000": 30
+        },
+        "token0_price_usd": 2705.64,
+        "pool_swap_gas_per_hour_m": 105.5,
+        "chain_gas_per_hour_m": 69881.0
+      },
+      "v3 WETH/USDC 0.01%": {
+        "swaps": 1863,
+        "swaps_per_hour": 1863.0,
+        "share_of_blocks_with_a_swap": 0.4589,
+        "swaps_per_active_block": {
+          "p50": 1.0,
+          "p99": 12.0,
+          "max": 37
+        },
+        "volume_usd_per_hour_m": 0.22,
+        "depth_usd_per_bp_median": 191.0,
+        "eth_usd": 2705.0,
+        "swap_tx_gas_used": {
+          "p50": 250029,
+          "p90": 527497
+        },
+        "effective_gas_price_gwei_p50": 0.00798,
+        "swap_tx_l2_execution_cost_usd_p50": 0.00659,
+        "swap_tx_l1_data_fee_usd_p50": 1e-05,
+        "swap_tx_gas_used_for_l1_p50": null,
+        "block_gas_used_p50": 37288761,
+        "block_gas_limit": 400000000,
+        "block_gas_limits_seen": {
+          "400000000": 30
+        },
+        "token0_price_usd": 2704.66,
+        "pool_swap_gas_per_hour_m": 465.8,
+        "chain_gas_per_hour_m": 67120.0
+      },
+      "v3 WETH/USDC 0.30%": {
+        "swaps": 236,
+        "swaps_per_hour": 236.0,
+        "share_of_blocks_with_a_swap": 0.0633,
+        "swaps_per_active_block": {
+          "p50": 1.0,
+          "p99": 9.610000000000014,
+          "max": 11
+        },
+        "volume_usd_per_hour_m": 6.53,
+        "depth_usd_per_bp_median": 115645.0,
+        "eth_usd": 2701.0,
+        "swap_tx_gas_used": {
+          "p50": 132108,
+          "p90": 738071
+        },
+        "effective_gas_price_gwei_p50": 0.14822,
+        "swap_tx_l2_execution_cost_usd_p50": 0.06753,
+        "swap_tx_l1_data_fee_usd_p50": 0.0,
+        "swap_tx_gas_used_for_l1_p50": null,
+        "block_gas_used_p50": 39941357,
+        "block_gas_limit": 400000000,
+        "block_gas_limits_seen": {
+          "400000000": 30
+        },
+        "token0_price_usd": 2701.21,
+        "pool_swap_gas_per_hour_m": 31.2,
+        "chain_gas_per_hour_m": 71894.0
+      }
+    }
+  },
+  "arbitrum": {
+    "head_block": 510564603,
+    "blocks_sampled": 14400,
+    "seconds": 4108,
+    "measured_block_time_s": 0.285,
+    "pools": {
+      "v3 WETH/USDC 0.05%": {
+        "swaps": 601,
+        "swaps_per_hour": 527.0,
+        "share_of_blocks_with_a_swap": 0.0203,
+        "swaps_per_active_block": {
+          "p50": 1.0,
+          "p99": 15.089999999999975,
+          "max": 17
+        },
+        "volume_usd_per_hour_m": 1.66,
+        "depth_usd_per_bp_median": 9653.0,
+        "eth_usd": 2706.0,
+        "swap_tx_gas_used": {
+          "p50": 132853,
+          "p90": 271753
+        },
+        "effective_gas_price_gwei_p50": 0.02017,
+        "swap_tx_l2_execution_cost_usd_p50": 0.00761,
+        "swap_tx_l1_data_fee_usd_p50": null,
+        "swap_tx_gas_used_for_l1_p50": 617,
+        "block_gas_used_p50": 1415586,
+        "block_gas_limit": 1125899906842624,
+        "block_gas_limits_seen": {
+          "1125899906842624": 30
+        },
+        "token0_price_usd": 2705.52,
+        "pool_swap_gas_per_hour_m": 70.0,
+        "chain_gas_per_hour_m": 17881.0
+      }
+    }
+  },
+  "hyperevm": {
+    "head_block": 47351708,
+    "blocks_sampled": 3600,
+    "seconds": 3541,
+    "measured_block_time_s": 0.984,
+    "pools": {
+      "v3 WHYPE/USDC (busiest)": {
+        "swaps": 665,
+        "swaps_per_hour": 676.0,
+        "share_of_blocks_with_a_swap": 0.1594,
+        "swaps_per_active_block": {
+          "p50": 1.0,
+          "p99": 3.0,
+          "max": 5
+        },
+        "volume_usd_per_hour_m": 1.91,
+        "depth_usd_per_bp_median": 4582.0,
+        "eth_usd": 89.0,
+        "swap_tx_gas_used": {
+          "p50": 133680,
+          "p90": 398535
+        },
+        "effective_gas_price_gwei_p50": 1.919,
+        "swap_tx_l2_execution_cost_usd_p50": 0.03301,
+        "swap_tx_l1_data_fee_usd_p50": null,
+        "swap_tx_gas_used_for_l1_p50": null,
+        "block_gas_used_p50": 1409899,
+        "block_gas_limit": 3000000,
+        "block_gas_limits_seen": {
+          "3000000": 30
+        },
+        "token0_price_usd": 88.82,
+        "pool_swap_gas_per_hour_m": 90.4,
+        "chain_gas_per_hour_m": 5158.0
+      }
+    }
+  }
+}

@@ -69,6 +69,7 @@ pipeline/
   blocksim.py           block-level inputs from data on disk: oracle per block, depth, user flow
   study_i.py            block-level payout-rule comparison (rebalanced every block, LP P&L)
   v4_probe.py           v3 vs v4 ETH/USDC volume and depth over the window (RPC only)
+  l2_probe.py           Base / Arbitrum / HyperEVM pool load, gas per swap, block gas limits (latest hour)
   export_indexer.py     read the Envio postgres (durable/live source)
 indexer/                self-hosted Envio indexer (TypeScript)
 sql/                    committed queries

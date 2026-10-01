@@ -561,6 +561,20 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
    - `job_cap` (allowance only for trading exactly to a 5.5bp band) has a structural uncorrected floor (~5.7%): gaps between the arb's natural stop and the band are "correctable" but not a job under the rule. Not pursued.
    - CAVEATS: linear depth; replayed user flow does not respond to pool quality; one arb action per block; assumed cost population; the controller's "contested" signal is observed ideally here — in practice it is the top-slot proxy (Study H, J 0.33, busyness-normalised); Study C must re-test with the proxy and with behavioural response.
 11e. ✅ v3 vs v4 venue probe (2026-10-01, `pipeline/v4_probe.py`, RPC only). Mar–Aug 2026 Uniswap ETH/USDC volume: **v3 0.05% (study pool) $19.6B**, v3 0.30% $0.67B, v4 hook-less 0.30% $0.66B, 0.01% $0.63B, 0.05% $0.41B, 1.00% ~$0 — the study pool carries 89% of $22.0B. Depth from each pool's own swap-event liquidity: study pool **$12.1k/bp** (matches Study I's swap-based estimate, $12.3k/bp — estimator validated), next deepest $2.9k/bp. Busiest v4 pool ids in a 300-block sample identified from swap receipts: ETH/USDT (hooked), a long-tail token, stable/stable pairs, multi-hop routes — **no large hooked ETH/USDC pool**. Study I's calibration is representative: Uniswap ETH/USDC is thin in 2026 as a venue, not just this pool. The RPC caps eth_getLogs below 50k blocks even when topic-filtered.
+11f. ✅ L2 gas-constraint probe (2026-10-01, `pipeline/l2_probe.py`; latest hour per chain; Base via public RPC, Arbitrum and HyperEVM via Chainstack URLs in `.env`).
+
+     | pool | block time | swaps/hour | blocks with a swap | swaps per active block p99 / max | volume/hour | depth/bp | gas per swap tx p50 | cost per swap tx |
+     |---|---|---|---|---|---|---|---|---|
+     | mainnet v3 WETH/USDC 0.05% (window) | 12s | 194 (median hour) | 45% | 7 / 214 | — | $12.1k | — | — |
+     | Base v3 0.01% | 2s | 1,863 | 46% | 12 / 37 | $0.22M | $191 | 250k | $0.007 |
+     | Base v3 0.05% | 2s | 581 | 22% | 4 / 7 | $0.68M | $3.7k | 182k | $0.010 |
+     | Base v3 0.30% | 2s | 236 | 6% | 10 / 11 | $6.53M | $116k | 132k | $0.068 |
+     | Arbitrum v3 0.05% | 0.285s | 527 | 2% | 15 / 17 | $1.66M | $9.7k | 133k | $0.008 |
+     | HyperEVM v3 WHYPE/USDC (busiest) | 0.98s | 676 | 16% | 3 / 5 | $1.91M | $4.6k | 134k | $0.033 |
+
+   - Even the busiest L2 pools see ~1 swap per active block; per-block reconciliation amortizes nothing anywhere — epoch-batched proofs are the right architecture on every chain.
+   - Gas cost per swap is cents; L1 data fees ~0 (blobs). Block space binds nowhere for one pool: Base fills ~10% of a 400M-gas block; Arbitrum's chain is near its ~7M gas/s target but the pool is ~0.3% of it.
+   - **HyperEVM is the tight case:** ~1s small blocks capped at 3M gas (590/600 blocks; fill p50 9%, p99 83%) plus ~1/min big blocks at 30M. One v3 swap ≈ 134k gas → ~20 swaps per small block chain-wide; a hook's per-swap overhead and an epoch proof (~300–400k gas ≈ 10–13% of a small block, or post it in a big block) must be budgeted against that cap.
 11b. ☐ Measure today's actual builder payments by gap-takers: priority fee × gasUsed (receipts) + coinbase transfers (traces or fee-recipient balance deltas). The "before" number the design objective drives toward 0; Supp-1 sees only the priority part (~$1.9M, estimated).
 12. ☐ Study G — L1 gas viability (receipts).
 13. ☐ Layer-1 signed-feed ingestion + §17.5 equivalence test (when dump arrives; do not block). Replaces D's proxy with real LWBA.
