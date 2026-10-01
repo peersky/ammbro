@@ -201,6 +201,35 @@
           "lock_on_1m_user_swap_usd": 4282.0
         }
       ],
+      "block_speed_lock": [
+        {
+          "k": 0.5,
+          "honest_one_trade": 1.0,
+          "split_x10_same_block_per_piece": 0.5247,
+          "split_x10_same_block_pooled": 0.7896,
+          "split_x10_across_blocks_per_piece": 0.3287,
+          "split_x10_across_blocks_pooled": 0.3974,
+          "lock_on_1m_user_swap_usd": 4282.0
+        },
+        {
+          "k": 1.0,
+          "honest_one_trade": 1.0,
+          "split_x10_same_block_per_piece": 0.666,
+          "split_x10_same_block_pooled": 1.0,
+          "split_x10_across_blocks_per_piece": 0.4105,
+          "split_x10_across_blocks_pooled": 0.4947,
+          "lock_on_1m_user_swap_usd": 8364.0
+        },
+        {
+          "k": 2.0,
+          "honest_one_trade": 1.0,
+          "split_x10_same_block_per_piece": 0.8057,
+          "split_x10_same_block_pooled": 1.0,
+          "split_x10_across_blocks_per_piece": 0.557,
+          "split_x10_across_blocks_pooled": 0.6729,
+          "lock_on_1m_user_swap_usd": 16529.0
+        }
+      ],
       "account_bond_by_arb": {
         "arb cost 0.3bp": {
           "days_active": 184,
@@ -533,6 +562,35 @@
           "collected_share_split_x10": 0.3197,
           "user_lock_per_day_usd": 28039.0,
           "lock_on_1m_user_swap_usd": 4282.0
+        }
+      ],
+      "block_speed_lock": [
+        {
+          "k": 0.5,
+          "honest_one_trade": 1.0,
+          "split_x10_same_block_per_piece": 0.5184,
+          "split_x10_same_block_pooled": 0.7849,
+          "split_x10_across_blocks_per_piece": 0.3197,
+          "split_x10_across_blocks_pooled": 0.3883,
+          "lock_on_1m_user_swap_usd": 4282.0
+        },
+        {
+          "k": 1.0,
+          "honest_one_trade": 1.0,
+          "split_x10_same_block_per_piece": 0.6615,
+          "split_x10_same_block_pooled": 1.0,
+          "split_x10_across_blocks_per_piece": 0.4025,
+          "split_x10_across_blocks_pooled": 0.4866,
+          "lock_on_1m_user_swap_usd": 8364.0
+        },
+        {
+          "k": 2.0,
+          "honest_one_trade": 1.0,
+          "split_x10_same_block_per_piece": 0.803,
+          "split_x10_same_block_pooled": 1.0,
+          "split_x10_across_blocks_per_piece": 0.5508,
+          "split_x10_across_blocks_pooled": 0.6668,
+          "lock_on_1m_user_swap_usd": 16529.0
         }
       ],
       "account_bond_by_arb": {

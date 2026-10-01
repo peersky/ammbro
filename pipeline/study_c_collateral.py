@@ -41,6 +41,12 @@ correction into 10 pieces in one block, and costed on real user swaps.
 Any lock driven by a quantity the trader controls (size, count, accounts)
 is gameable; the charge is driven by the gap, which the market sets.
 
+Block-speed lock (author proposal): lock rate = c + k x the pool's
+cumulative price move so far in the block, so many small trades in one
+block grow the lock. Tested per piece and with an account's in-flight
+locks pooled, for a correction split x10 in one block and across 10
+blocks (the in-block move resets each block).
+
 HONESTY: r is assumed (5%/yr); the arb population is Study I's assumed
 one; leak assumes a uniform ρ per trade (the hook cannot see the oracle at
 execution, so it cannot size the tranche to the trade's actual edge).
@@ -142,6 +148,24 @@ def analyse(scenario: str) -> dict:
                           "collected_share_split_x10": round(float(c10 / (c10 + l10)), 4),
                           "user_lock_per_day_usd": round(float((sch(ev, eD) * ev).sum() / n_days), 0),
                           "lock_on_1m_user_swap_usd": round(float(sch(np.array([1e6]), np.array([np.median(Dblk)]))[0] * 1e6), 0)})
+    # block-speed lock: c + k * block-cumulative move; split x10 same block vs across blocks
+    dP = V / D
+    speed_rows = []
+    for kc in (0.5, 1.0, 2.0):
+        lr = lambda move: 2e-4 + kc * move
+        ch1 = np.maximum(a_edge - dP / 2 - m_t, 0.0) * V
+        row = {"k": kc, "honest_one_trade": round(float(np.minimum(ch1, lr(dP) * V).sum() / ch1.sum()), 4)}
+        for label, same_block in (("same_block", True), ("across_blocks", False)):
+            tc = np.zeros_like(V); tl = np.zeros_like(V); pp = tot = 0.0
+            for k in range(1, 11):
+                vk = V / 10
+                ch = np.maximum(a_edge - (k - 0.5) * dP / 10 - m_t, 0.0) * vk
+                lk = lr(k * dP / 10 if same_block else dP / 10) * vk
+                pp += np.minimum(ch, lk).sum(); tot += ch.sum(); tc += ch; tl += lk
+            row[f"split_x10_{label}_per_piece"] = round(float(pp / tot), 4)
+            row[f"split_x10_{label}_pooled"] = round(float(np.minimum(tc, tl).sum() / tc.sum()), 4)
+        row["lock_on_1m_user_swap_usd"] = round(float(lr(1e6 / np.median(Dblk)) * 1e6), 0)
+        speed_rows.append(row)
     # account bond: charges per winning arb (cost type) per epoch
     arb_day = {}
     for h, d, c in zip(t[:, 5], t[:, 1], charge):
@@ -159,6 +183,7 @@ def analyse(scenario: str) -> dict:
         "impact_scaled_tranche_rejected_gameable": impact,
         "last_oracle_tranche": last_oracle,
         "size_based_schedules_vs_splitting": size_rows,
+        "block_speed_lock": speed_rows,
         "account_bond_by_arb": bond, "arb_volume_b": round(float(V.sum()) / 1e9, 3),
         "arb_volume_per_day_m": round(vol_day / 1e6, 2),
         "total_charge_m": round(float(charge.sum()) / 1e6, 3),
