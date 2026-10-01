@@ -13,6 +13,7 @@ import json
 import numpy as np
 import pandas as pd
 
+from . import canonical
 from .config import DATA_DIR, HORIZONS_S, REPO_ROOT
 from .pools import ETH_USDC
 
@@ -42,7 +43,17 @@ def load_joined() -> pd.DataFrame:
 
 
 def run() -> dict:
-    df = load_joined()
+    base = load_joined()
+    out = compute(canonical.apply(base, "canonical"), plot=True)
+    legacy = compute(canonical.apply(base, "legacy_forward"), plot=False)
+    out = {"timeline": canonical.DESCRIPTION["canonical"], **out,
+           "legacy_forward_trade_price": legacy}
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    (OUT_DIR / "metrics.json").write_text(json.dumps(out, indent=2))
+    return out
+
+
+def compute(df: pd.DataFrame, plot: bool) -> dict:
     labeled = df[df["label"].notna()].copy()
     out: dict = {"n_total": len(df), "n_toxic": int((labeled.label == "toxic").sum()),
                  "n_benign": int((labeled.label == "benign").sum())}
@@ -71,9 +82,9 @@ def run() -> dict:
                 -s.loc[s.label == "benign", "q_lp_h0"].to_numpy(),
             )
 
+    if not plot:
+        return out
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    (OUT_DIR / "metrics.json").write_text(json.dumps(out, indent=2))
-
     try:
         import matplotlib
         matplotlib.use("Agg")

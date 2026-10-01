@@ -500,7 +500,24 @@ nothing."
    - Control pool |q| P95 2.25bp under every reconstruction — peg noise, not timing noise.
    - Position-gaming tests committed (`pipeline/timing_gaming.py`, `position_gaming` in results/study_e): orientation of index time planes, pool-internal clocks and their attacks, and the post-swap-distance metric — source of the figures cited in the design objective.
    - CAVEATS: touch proxy (Study D caveat applies); L measured on gap-closing flow only — mid-block swaps show no pool↔CEX relation, so their decision times are not identified and they share the block anchor by assumption.
-9b. ☐ Re-base Study A, Study B, Supp-1 and Study D on the Study E timeline (currently forward `t_norm_us`). Numbers above give the expected direction: AUC up, baseline LP loss deeper, recapture stable.
+9b. ✅ Re-base on one timeline (2026-10-01). `pipeline/canonical.py`: every study now scores with the **canonical q_LP** — arb_exit, 1s window centred on `block_ts + L + h` (L = 1.5s), written by Study E for h ∈ {0, 12, 30, 60}. A, B and Supp-1 keep a `legacy_forward_trade_price` section for comparison; Study D runs its whole benchmark comparison on the canonical window (its arb_exit row equals Study B's canonical baseline, −$1.58M — checked). **Status entries 5–8 above are on the legacy timeline; cite the canonical numbers below.**
+
+     | metric (h0 unless stated) | legacy (forward, trade price) | **canonical** |
+     |---|---|---|
+     | Study A AUC | 0.867 | **0.889** |
+     | Study A AUC, swaps > $100k / $10–100k / < $10k | 0.978 / 0.909 / 0.648 | **0.984 / 0.931 / 0.662** |
+     | Study A AUC h12 / h30 / h60 | 0.798 / 0.732 / 0.683 | 0.799 / 0.732 / 0.683 |
+     | Study B baseline LP net / gross LVR | −$1.93M / $9.91M | **−$1.58M / $9.68M** |
+     | Study B headline (clip α1 cap100): Δ / capture | +$4.07M / 41% | +$4.02M / 41% |
+     | Study B objective (margin m2 cap500): Δ / capture | +$7.25M / 73% | +$7.10M / 73% |
+     | builder-bid ceiling today | $8.68M | $8.51M |
+     | Supp-1 index-10+ extraction / share | $2.11M / 21.3% | $1.98M / 20.5% |
+     | Study D, trade price / mid / arb_exit / literal: baseline LP net | −$1.93 / −1.80 / −0.77 / −2.84M | −$2.67 / −2.62 / **−1.58** / −3.65M |
+     | Study D AUC (same order) | 0.867 / 0.860 / 0.852 / 0.861 | 0.900 / 0.895 / **0.889** / 0.895 |
+
+   - Every conclusion holds; the canonical timeline sharpens Study A (no lookahead noise on mid-block swaps) and slightly shrinks measured extraction. Longer horizons are unaffected (timing matters less once h ≫ L).
+   - On the canonical window the plain trade price separates toxic from benign slightly better (0.900) than arb_exit (0.889), while arb_exit reports the smallest LP loss — consistent with it being the most tolerant rule. arb_exit stays the scoring rule (P§3.6); trade price is the sensitivity.
+   - Study B's tracked schedules are per-swap cash ceilings with the AVERAGE-edge margin form; Study I rejected that form (overshoot) — read B as the ceiling, Study I for the mechanism.
 10. ☐ Study C + Supp-2 (depends on 8, 9). Bootstrap Mar–May, evaluate Jun–Aug.
 11. ☐ Study F — competitor baselines (needs 0.30% ETH/USDC pool extraction).
 11c. ✅ Study H (2026-10-01, `make study-h`). Allowance `m` controller.

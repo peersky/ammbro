@@ -79,6 +79,7 @@ class SidedSeries:
         return {
             "bid": np.minimum(bid_raw, last) * nan,
             "ask": np.maximum(ask_raw, last) * nan,
+            "last": last * nan,
             "crossed_raw": ok & (bid_raw > ask_raw),
             "stale_bid_s": (t - tb) / 1e6,
             "stale_ask_s": (t - ta) / 1e6,

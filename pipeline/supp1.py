@@ -24,6 +24,7 @@ import json
 import numpy as np
 import pandas as pd
 
+from . import canonical
 from .config import DATA_DIR, HORIZONS_S, REPO_ROOT
 from .pools import ETH_USDC
 
@@ -65,7 +66,16 @@ def by_bucket(df: pd.DataFrame, key: pd.Series, edges: list, col: str = "q_lp_h0
 
 
 def run() -> dict:
-    df = load()
+    base = load()
+    res = {"timeline": canonical.DESCRIPTION["canonical"], **compute(canonical.apply(base, "canonical"))}
+    res["legacy_forward_trade_price"] = {
+        "idx10plus_by_horizon": compute(canonical.apply(base, "legacy_forward"))["idx10plus_by_horizon"]}
+    OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / "metrics.json").write_text(json.dumps(res, indent=2))
+    return res
+
+
+def compute(df: pd.DataFrame) -> dict:
     big = df[df.notional_token0 > 100_000]
 
     res: dict = {"idx10plus_by_horizon": [], "by_horizon": {}}
@@ -103,9 +113,6 @@ def run() -> dict:
             "p90_gwei": round(float(s["prio_gwei"].quantile(0.9)), 3),
             "est_total_spend_eth_at_250k_gas": round(float(spend), 1),
         }
-
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "metrics.json").write_text(json.dumps(res, indent=2))
     return res
 
 

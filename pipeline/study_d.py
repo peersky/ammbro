@@ -2,7 +2,10 @@
 
 Re-scores every ETH/USDC swap against a touch-level bid/ask proxy
 (pipeline/directional.py) under three conventions — mid, arb_exit,
-paper_literal — beside the existing trade-price q_LP, then re-runs:
+paper_literal — beside the trade price, then re-runs the studies below.
+Timeline (spec 9b): every benchmark is averaged over the canonical 1s
+window centred on block_ts + L + h (Study E), so the arb_exit row IS the
+canonical q_LP every other study uses. Re-runs:
 
   - share LP-negative, gross LVR, LP net at every horizon
   - Study A AUC (all h; size slices at h0)
@@ -32,6 +35,7 @@ from .pools import ETH_USDC, USDC_USDT
 from .qlp import q_lp
 from .study_a import mann_whitney_auc
 from .study_b import GAS_COST_USD, HEADLINE, baseline, simulate
+from .study_e import C_WIDTH_S, KERNEL_STEP_S
 
 SCORED = DATA_DIR / "onchain" / "scored"
 LABELS_DIR = DATA_DIR / "onchain" / "labels" / ETH_USDC.name
@@ -44,33 +48,54 @@ GATE_CEILING_BPS = 38.4        # control gate ceiling (spec 3b)
 
 
 def _col(bench: str, h: int) -> str:
-    return f"q_lp_h{h}" if bench == "trade" else f"q_{bench}_h{h}"
+    return f"q_{bench}_h{h}"
 
 
-def score_eth_usdc(eth: SidedSeries, usdc: SidedSeries) -> tuple[pd.DataFrame, dict]:
+def _offsets(center_s: float) -> np.ndarray:
+    return np.arange(center_s - C_WIDTH_S / 2, center_s + C_WIDTH_S / 2 + 1e-9, KERNEL_STEP_S)
+
+
+def _kernel(a0, a1, bt_us, center_s, price_fn) -> dict:
+    """Mean q per benchmark over the canonical window. price_fn(t) ->
+    dict benchmark -> token1 price in token0 for every swap."""
+    acc = {}
+    for off in _offsets(center_s):
+        for bench, px in price_fn(bt_us + int(round(off * 1e6))).items():
+            q, _ = q_lp(a0, a1, px)
+            s_, n_ = acc.setdefault(bench, [np.zeros(len(a0)), np.zeros(len(a0))])
+            ok = ~np.isnan(q)
+            s_[ok] += q[ok]; n_[ok] += 1
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return {b: s_ / n_ for b, (s_, n_) in acc.items()}
+
+
+def score_eth_usdc(eth: SidedSeries, usdc: SidedSeries, L: float) -> tuple[pd.DataFrame, dict]:
     DIR_OUT.mkdir(parents=True, exist_ok=True)
-    parts, diag = [], {}
+    parts = []
     for p in sorted((SCORED / ETH_USDC.name).glob("*.scored.parquet")):
         df = pd.read_parquet(p)
         a0 = df["amount0_raw"].astype(float).to_numpy() / 10**ETH_USDC.dec0
         a1 = df["amount1_raw"].astype(float).to_numpy() / 10**ETH_USDC.dec1
-        t = df["t_norm_us"].to_numpy()
-        v = df["notional_token0"].to_numpy()
-        for h in HORIZONS_S:
-            qe, qu = eth.quotes(t, h), usdc.quotes(t, h)
+        bt = df["block_ts"].to_numpy(np.int64) * 1_000_000
+
+        def prices(t):
+            qe, qu = eth.quotes(t), usdc.quotes(t)
             bid, ask = compose_eth_usdc(qe, qu)
-            for c in CONVENTIONS:
-                markout = a0 + a1 * directional_price(a1, bid, ask, c)
-                with np.errstate(invalid="ignore", divide="ignore"):
-                    df[_col(c, h)] = np.where(v > 0, markout / v, np.nan)
-            if h == 0:
-                mid = (bid + ask) / 2
-                df["_spread_bps"] = (ask - bid) / mid * 1e4
-                df["_stale_eth_s"] = np.maximum(qe["stale_bid_s"], qe["stale_ask_s"])
-                df["_stale_usdc_s"] = np.maximum(qu["stale_bid_s"], qu["stale_ask_s"])
-                df["_crossed_eth"] = qe["crossed_raw"]
-                df["_crossed_usdc"] = qu["crossed_raw"]
-        keep = ["tx_hash", "log_index"] + [_col(c, h) for c in CONVENTIONS for h in HORIZONS_S]
+            return {"trade": qe["last"] / qu["last"], "mid": (bid + ask) / 2,
+                    **{c: directional_price(a1, bid, ask, c) for c in ("arb_exit", "paper_literal")}}
+
+        for h in HORIZONS_S:
+            for bench, q in _kernel(a0, a1, bt, L + h, prices).items():
+                df[_col(bench, h)] = q
+        t0 = bt + int(round(L * 1e6))
+        qe, qu = eth.quotes(t0), usdc.quotes(t0)
+        bid, ask = compose_eth_usdc(qe, qu)
+        df["_spread_bps"] = (ask - bid) / ((bid + ask) / 2) * 1e4
+        df["_stale_eth_s"] = np.maximum(qe["stale_bid_s"], qe["stale_ask_s"])
+        df["_stale_usdc_s"] = np.maximum(qu["stale_bid_s"], qu["stale_ask_s"])
+        df["_crossed_eth"] = qe["crossed_raw"]
+        df["_crossed_usdc"] = qu["crossed_raw"]
+        keep = ["tx_hash", "log_index"] + [_col(c, h) for c in BENCHMARKS for h in HORIZONS_S]
         df[keep].to_parquet(DIR_OUT / p.name.replace(".scored.", ".dir."), index=False)
         parts.append(df)
     df = pd.concat(parts, ignore_index=True)
@@ -78,6 +103,7 @@ def score_eth_usdc(eth: SidedSeries, usdc: SidedSeries) -> tuple[pd.DataFrame, d
     sp = df["_spread_bps"].dropna()
     diag = {
         "proxy": "touch (last bid-side / ask-side aggTrades print, bounded by last print)",
+        "measured_at": "block_ts + L",
         "spread_bps_median": round(float(sp.median()), 3),
         "spread_bps_p90": round(float(sp.quantile(0.9)), 3),
         "spread_bps_p99": round(float(sp.quantile(0.99)), 3),
@@ -90,20 +116,25 @@ def score_eth_usdc(eth: SidedSeries, usdc: SidedSeries) -> tuple[pd.DataFrame, d
     return df.drop(columns=[c for c in df.columns if c.startswith("_")]), diag
 
 
-def control_check(usdc: SidedSeries) -> list[dict]:
-    """USDC/USDT pool at h0: USDT priced in USDC from the USDCUSDT book
-    (buy USDT with USDC at 1/USDC_bid, sell at 1/USDC_ask)."""
+def control_check(usdc: SidedSeries, L: float) -> list[dict]:
+    """USDC/USDT pool at h0 on the canonical window: USDT priced in USDC
+    from the USDCUSDT book (buy USDT with USDC at 1/USDC_bid, sell at
+    1/USDC_ask; trade price 1/last)."""
     df = pd.concat(pd.read_parquet(p) for p in sorted((SCORED / USDC_USDT.name).glob("*.scored.parquet")))
     a0 = df["amount0_raw"].astype(float).to_numpy() / 10**USDC_USDT.dec0
     a1 = df["amount1_raw"].astype(float).to_numpy() / 10**USDC_USDT.dec1
-    qu = usdc.quotes(df["t_norm_us"].to_numpy(), 0)
-    bid, ask = 1.0 / qu["ask"], 1.0 / qu["bid"]
+    bt = df["block_ts"].to_numpy(np.int64) * 1_000_000
+
+    def prices(t):
+        qu = usdc.quotes(t)
+        bid, ask = 1.0 / qu["ask"], 1.0 / qu["bid"]
+        return {"trade": 1.0 / qu["last"], "mid": (bid + ask) / 2,
+                **{c: directional_price(a1, bid, ask, c) for c in ("arb_exit", "paper_literal")}}
+
+    qs = _kernel(a0, a1, bt, L, prices)
     out = []
     for bench in BENCHMARKS:
-        if bench == "trade":
-            q = df["q_lp_h0"].to_numpy()
-        else:
-            q, _ = q_lp(a0, a1, directional_price(a1, bid, ask, bench))
+        q = qs[bench]
         aq = np.abs(q[~np.isnan(q)]) * 1e4
         out.append({
             "benchmark": bench,
@@ -155,12 +186,14 @@ def evaluate(df: pd.DataFrame) -> dict:
 
 
 def run() -> dict:
+    L = json.loads((REPO_ROOT / "results" / "study_e" / "metrics.json").read_text())["decision_latency_L_s"]
     eth, usdc = SidedSeries.load("ETHUSDT"), SidedSeries.load("USDCUSDT")
-    df, diag = score_eth_usdc(eth, usdc)
+    df, diag = score_eth_usdc(eth, usdc, L)
     out = {
         "n_swaps": len(df),
+        "timeline": f"every benchmark averaged over a {C_WIDTH_S:g}s window centred on block_ts + {L:g}s + h",
         "proxy_diagnostics_h0": diag,
-        "control_pool_h0": control_check(usdc),
+        "control_pool_h0": control_check(usdc, L),
         **evaluate(df),
     }
     OUT.mkdir(parents=True, exist_ok=True)

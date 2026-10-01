@@ -43,6 +43,7 @@ import json
 import numpy as np
 import pandas as pd
 
+from . import canonical
 from .config import DATA_DIR, HORIZONS_S, REPO_ROOT
 from .pools import ETH_USDC
 
@@ -215,7 +216,16 @@ def hedge_sensitivity(q, v, real_gas) -> list[dict]:
 
 
 def run() -> dict:
-    df = load()
+    base = load()
+    out = {"timeline": canonical.DESCRIPTION["canonical"], **compute(canonical.apply(base, "canonical"))}
+    legacy = compute(canonical.apply(base, "legacy_forward"))
+    out["legacy_forward_trade_price"] = {"tracked_by_horizon": legacy["tracked_by_horizon"]}
+    OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / "metrics.json").write_text(json.dumps(out, indent=2))
+    return out
+
+
+def compute(df: pd.DataFrame) -> dict:
     gas_models = {f"flat_{g:g}usd": g for g in GAS_FLAT_USD}
     tracked = {"headline": HEADLINE, "objective": OBJECTIVE}
 
@@ -274,8 +284,6 @@ def run() -> dict:
         "gas_sensitivity": gas_sens,
         "by_horizon": by_horizon,
     }
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "metrics.json").write_text(json.dumps(out, indent=2))
     return out
 
 

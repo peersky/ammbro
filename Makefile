@@ -43,16 +43,16 @@ labels:
 	$(PY) -m pipeline.labels
 
 # --- Studies (§17.1) ---
-study-a:
+study-a: study-e
 	$(PY) -m pipeline.study_a
 
-study-b:
+study-b: study-e
 	$(PY) -m pipeline.study_b
 
-supp1:
+supp1: study-e
 	$(PY) -m pipeline.supp1
 
-study-d:
+study-d: study-e
 	$(PY) -m pipeline.study_d
 
 study-e:

@@ -59,7 +59,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from .config import DATA_DIR, REPO_ROOT
+from .config import DATA_DIR, HORIZONS_S, REPO_ROOT
 from .directional import SidedSeries, compose_eth_usdc, directional_price
 from .pools import ETH_USDC, USDC_USDT
 from .qlp import q_lp
@@ -80,7 +80,7 @@ L_SWEEP_S = [0.0, 1.0, 1.25, 1.5, 1.75]
 # Chosen scoring timeline for Study C (P§4.2): arb_exit q, kernel centered
 # on block_ts + L + h, width C_WIDTH_S. Written per swap for C to consume.
 C_WIDTH_S = 1.0
-C_HORIZONS_S = [0, 12, 30]
+C_HORIZONS_S = list(HORIZONS_S)
 C_OUT = DATA_DIR / "onchain" / "scored_timing" / ETH_USDC.name
 
 

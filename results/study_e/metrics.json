@@ -8,7 +8,8 @@
     "horizons_s": [
       0,
       12,
-      30
+      30,
+      60
     ]
   },
   "q_convention": "arb_exit (P\u00a73.6/P\u00a74.2)",
