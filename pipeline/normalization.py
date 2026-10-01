@@ -32,6 +32,14 @@ def uniform_normalized_position_s(
 def normalized_time_us(df: pd.DataFrame) -> pd.Series:
     """t_norm in µs epoch from a swaps frame with block_ts, next_block_ts,
     tx_index, tx_count columns."""
+    if "block_ts_us" in df.columns and df["block_ts_us"].notna().all():
+        # L2: blocks are shorter than their 1s timestamps; spread the block's
+        # transactions over the block's own slice of its second (1/N s,
+        # centred on block_ts_us — see subsecond_split), not a whole second.
+        n = df["blocks_in_second"].where(df["blocks_in_second"] > 0, 1)
+        slice_us = 1_000_000 / n
+        frac = df["tx_index"] / df["tx_count"].clip(lower=1)
+        return (df["block_ts_us"] - slice_us / 2 + frac * slice_us).astype("int64")
     dur = (df["next_block_ts"] - df["block_ts"]).fillna(DEFAULT_BLOCK_S).clip(1, 60)
     pos = uniform_normalized_position_s(df["tx_index"], df["tx_count"], dur)
     return ((df["block_ts"] + pos) * 1_000_000).astype("int64")
