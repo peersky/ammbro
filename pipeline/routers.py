@@ -35,3 +35,44 @@ ROUTERS: dict[str, str] = {
 }
 
 ROUTER_SET = frozenset(ROUTERS)
+
+
+# --- Other chains (pipeline/chains.py) -------------------------------------
+# Curated mainnet routers that also exist on L2s at the same address.
+# Evidence (checked 2026-10-02 on Arbitrum): deployed bytecode of identical
+# LENGTH on both chains (hashes differ — routers embed chain-specific WETH /
+# factory addresses as immutables), except the 0x exchange proxy and
+# ParaSwap v5, which are the same protocols at their published cross-chain
+# addresses in slightly different builds. MetaMask's router and both
+# UniswapX reactors do not exist on Arbitrum at these addresses.
+CROSS_CHAIN: dict[str, str] = {
+    a: ROUTERS[a] for a in (
+        "0xe592427a0aece92de3edee1f18e0157c05861564", "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
+        "0x1111111254eeb25477b68fb85ed929f73a960582", "0x111111125421ca6dc452d289314280a0f8842a65",
+        "0xdef1c0ded9bec7f1a1670819833240f027b25eff", "0xdef171fe48cf0115b1d80b88dc8eab59176fee57",
+        "0x6a000f20005980200259b80c5102003040001068", "0x9008d19f58aabd9ed0d60971565aa8510560ab41",
+        "0x6131b5fae19ea4f9d964eac0408e4408b66337b5", "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad",
+        "0x66a9893cc07d91d95644aedd05d03f95e1dba8af",
+    )
+}
+
+# Data-driven detection of public retail-facing contracts (identity axis
+# only — price-independent): a contract many distinct wallets send swaps
+# through, each only a few times. Validated on mainnet (2026-10-02): the
+# rule recovers 6 of 11 curated routers and covers 32% of swaps (curated
+# list: 12%); it misses solver-settled intents (CoW, UniswapX: few
+# senders by design) and routers heavily used by bots (Uniswap SwapRouter:
+# 64 swaps/sender). Loosening it admits multi-wallet searcher contracts
+# (e.g. 107 senders x 1,168 swaps each). Hence: curated ∪ detected.
+DETECT_MIN_SENDERS = 300
+DETECT_MAX_SWAPS_PER_SENDER = 20
+
+
+def detect_routers(tx_to, tx_from) -> dict[str, dict]:
+    import pandas as pd
+    df = pd.DataFrame({"to": pd.Series(tx_to).fillna("").str.lower(), "frm": pd.Series(tx_from).fillna("").str.lower()})
+    g = df.groupby("to").agg(swaps=("frm", "size"), senders=("frm", "nunique"))
+    g["swaps_per_sender"] = g["swaps"] / g["senders"]
+    hit = g[(g["senders"] >= DETECT_MIN_SENDERS) & (g["swaps_per_sender"] <= DETECT_MAX_SWAPS_PER_SENDER) & (g.index != "")]
+    return {a: {"swaps": int(r.swaps), "senders": int(r.senders), "swaps_per_sender": round(float(r.swaps_per_sender), 2)}
+            for a, r in hit.iterrows()}

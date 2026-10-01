@@ -23,9 +23,12 @@ import sys
 import numpy as np
 import pandas as pd
 
-from .config import DATA_DIR, ONCHAIN_DIR
+import json
+
+from .chains import ACTIVE
+from .config import DATA_DIR, ONCHAIN_DIR, RESULTS_DIR
 from .pools import POOLS
-from .routers import ROUTER_SET
+from .routers import CROSS_CHAIN, ROUTER_SET, detect_routers
 
 SWAPS_DIR = ONCHAIN_DIR / "swaps"
 TXS_DIR = ONCHAIN_DIR / "txs"
@@ -91,13 +94,36 @@ def detect_sandwiches(df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
     return attacker, victim
 
 
-def detect_searchers(df: pd.DataFrame) -> pd.Series:
+def chain_router_set(pool_name: str) -> frozenset:
+    """Mainnet: the committed curated list (unchanged). Other chains: the
+    curated routers that also exist there (routers.CROSS_CHAIN) plus
+    contracts detected from the chain's own swaps over the whole window
+    (routers.detect_routers). The detected list is persisted to
+    results/<chain>/routers.json for reproducibility and review."""
+    if ACTIVE.name == "mainnet":
+        return ROUTER_SET
+    frames = []
+    for p in sorted((SWAPS_DIR / pool_name).glob("*.parquet")):
+        txp = TXS_DIR / pool_name / p.name.replace(".parquet", ".txs.parquet")
+        if not txp.exists():
+            raise SystemExit(f"tx meta missing for {p.name}; run extract_txs first (router detection needs every month)")
+        frames.append(pd.read_parquet(p, columns=["tx_hash"]).merge(pd.read_parquet(txp)[["tx_hash", "tx_from", "tx_to"]], on="tx_hash", how="left"))
+    tx = pd.concat(frames)
+    detected = detect_routers(tx["tx_to"], tx["tx_from"])
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    (RESULTS_DIR / f"routers_{pool_name}.json").write_text(json.dumps(
+        {"cross_chain_curated": CROSS_CHAIN, "detected": detected,
+         "rule": "senders >= 300 and swaps per sender <= 20 (routers.py)"}, indent=2))
+    return frozenset(CROSS_CHAIN) | frozenset(detected)
+
+
+def detect_searchers(df: pd.DataFrame, routers: frozenset = ROUTER_SET) -> pd.Series:
     """First-in-direction in block + top-of-block + non-router tx_to +
     repeat actor. Position/identity axes only."""
     d = np.sign(df["amount1_raw"].astype("float64"))
     first_in_dir = ~df.assign(d=d).duplicated(["block_number", "d"], keep="first")
     top = df["tx_index"] <= TOP_OF_BLOCK_MAX_INDEX
-    non_router = ~df["tx_to"].fillna("").str.lower().isin(ROUTER_SET)
+    non_router = ~df["tx_to"].fillna("").str.lower().isin(routers)
     actor_counts = df["tx_from"].str.lower().map(df["tx_from"].str.lower().value_counts())
     repeat = actor_counts >= REPEAT_ACTOR_MIN_SWAPS
     return first_in_dir & top & non_router & repeat
@@ -106,6 +132,7 @@ def detect_searchers(df: pd.DataFrame) -> pd.Series:
 def label_pool(pool_name: str) -> None:
     out_dir = LABELS_DIR / pool_name
     out_dir.mkdir(parents=True, exist_ok=True)
+    routers = chain_router_set(pool_name)
     for p in sorted((SWAPS_DIR / pool_name).glob("*.parquet")):
         out = out_dir / p.name.replace(".parquet", ".labels.parquet")
         if out.exists():
@@ -122,9 +149,9 @@ def label_pool(pool_name: str) -> None:
 
         df["tx_from"] = df["tx_from"].fillna("").str.lower()
         df["tx_to"] = df["tx_to"].fillna("").str.lower()
-        benign = df["tx_to"].isin(ROUTER_SET)
+        benign = df["tx_to"].isin(routers)
         sand_att, sand_vic = detect_sandwiches(df)
-        searcher = detect_searchers(df)
+        searcher = detect_searchers(df, routers)
 
         lab = pd.DataFrame({
             "tx_hash": df["tx_hash"],
