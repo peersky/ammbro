@@ -1,0 +1,145 @@
+{
+  "window_blocks": [
+    24558868,
+    25878704
+  ],
+  "pools": {
+    "v4 ETH/USDC 0.01%": {
+      "swaps": 854569,
+      "volume_usd_b": 0.632,
+      "volume_by_month_usd_b": {
+        "03": 0.135,
+        "04": 0.104,
+        "05": 0.157,
+        "06": 0.06,
+        "07": 0.081,
+        "08": 0.095
+      },
+      "depth_usd_per_bp_median": 78.0,
+      "depth_usd_per_bp_last_month": 110.0
+    },
+    "v4 ETH/USDC 0.05%": {
+      "swaps": 288141,
+      "volume_usd_b": 0.414,
+      "volume_by_month_usd_b": {
+        "03": 0.112,
+        "04": 0.077,
+        "05": 0.058,
+        "06": 0.039,
+        "07": 0.054,
+        "08": 0.073
+      },
+      "depth_usd_per_bp_median": 308.0,
+      "depth_usd_per_bp_last_month": 542.0
+    },
+    "v4 ETH/USDC 0.30%": {
+      "swaps": 75306,
+      "volume_usd_b": 0.657,
+      "volume_by_month_usd_b": {
+        "03": 0.166,
+        "04": 0.072,
+        "05": 0.052,
+        "06": 0.15,
+        "07": 0.102,
+        "08": 0.114
+      },
+      "depth_usd_per_bp_median": 2934.0,
+      "depth_usd_per_bp_last_month": 6427.0
+    },
+    "v4 ETH/USDC 1.00%": {
+      "swaps": 3817,
+      "volume_usd_b": 0.001,
+      "volume_by_month_usd_b": {
+        "03": 0.0,
+        "04": 0.001,
+        "05": 0.0,
+        "06": 0.0,
+        "07": 0.0,
+        "08": 0.0
+      },
+      "depth_usd_per_bp_median": 10.0,
+      "depth_usd_per_bp_last_month": 0.0
+    },
+    "v3 USDC/WETH 0.05% (study pool)": {
+      "swaps": 990555,
+      "volume_usd_b": 19.593,
+      "volume_by_month_usd_b": {
+        "03": 6.788,
+        "04": 2.66,
+        "05": 2.404,
+        "06": 2.717,
+        "07": 2.602,
+        "08": 2.423
+      },
+      "depth_usd_per_bp_median": 12110.0,
+      "depth_usd_per_bp_last_month": 11164.0
+    },
+    "v3 USDC/WETH 0.30%": {
+      "swaps": 98011,
+      "volume_usd_b": 0.669,
+      "volume_by_month_usd_b": {
+        "03": 0.158,
+        "04": 0.106,
+        "05": 0.072,
+        "06": 0.129,
+        "07": 0.073,
+        "08": 0.132
+      },
+      "depth_usd_per_bp_median": 2906.0,
+      "depth_usd_per_bp_last_month": 3289.0
+    }
+  },
+  "v4_busiest_ids_last_300_blocks": [
+    {
+      "pool_id": "0x2287a9620adcbf6250dc71be9ee9b2d3a1ec85a464fc6f5c06669e8d07b61bba",
+      "swaps": 175,
+      "known_as": null
+    },
+    {
+      "pool_id": "0xdb4c4d91f12ce76f5c9ac0eae193cf3b4d6684cd5f09bf35d03dd9ae6d8a43b1",
+      "swaps": 171,
+      "known_as": null
+    },
+    {
+      "pool_id": "0x00b9edc1583bf6ef09ff3a09f6c23ecb57fd7d0bb75625717ec81eed181e22d7",
+      "swaps": 158,
+      "known_as": "v4 ETH/USDC 0.01%"
+    },
+    {
+      "pool_id": "0x0fb0e40cec3bb23e13abc585958a93c796fbea56955e19a23727a716a0423239",
+      "swaps": 85,
+      "known_as": null
+    },
+    {
+      "pool_id": "0x3b1b1f2e775a6db1664f8e7d59ad568605ea2406312c11aef03146c0cf89d5b9",
+      "swaps": 80,
+      "known_as": null
+    },
+    {
+      "pool_id": "0xe500210c7ea6bfd9f69dce044b09ef384ec2b34832f132baec3b418208e3a657",
+      "swaps": 51,
+      "known_as": null
+    },
+    {
+      "pool_id": "0x90078845bceb849b171873cfbc92db8540e9c803ff57d9d21b1215ec158e79b3",
+      "swaps": 47,
+      "known_as": null
+    },
+    {
+      "pool_id": "0xfd89a241eecd9e1f35338f016d4b94b778ae3e5fb7d306a2ff95398fb91c15f3",
+      "swaps": 46,
+      "known_as": null
+    },
+    {
+      "pool_id": "0xd9ca22573437a06a12d5c757b151aa1a76265c1dfdde4b76507233d7ad2b6df0",
+      "swaps": 43,
+      "known_as": null
+    },
+    {
+      "pool_id": "0x20ae5557f7d6ce39a6e5370c331106a87a80ea5c1bec686361bde2d9f5e82631",
+      "swaps": 43,
+      "known_as": null
+    }
+  ],
+  "v4_total_swaps_last_300_blocks": 3692
+}
