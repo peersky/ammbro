@@ -90,6 +90,8 @@ REP-AMM result.**
 
 Replay all swaps in time order through the P§4 mechanism.
 
+**Charge granularity (P§4.3/§4.8, 2026-10-01).** The job charge is computed **per price-correcting swap**, not gated on an account's epoch aggregate: an aggregate gate lets an intermediary net its customers' overpayments against its own extraction (laundering). Non-correcting swaps are never charged. Benign-labelled correcting swaps took at most ~$0.01M over the window, so the cost to ordinary users is negligible. Arbitrage is a role carried by a swap, not an identity.
+
 **Actor.** `tx.from` (the EOA). A v4 hook sees the router as `sender`,
 so the paper must say how the hook identifies the trader (hookData /
 `tx.origin`) — open item below. Until then `tx.from` is the assumption,
@@ -389,14 +391,11 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
 2. ~~**Concave vs convex.**~~ RESOLVED 2026-10-01: P§2.2/§2.7 now say "concave discount curve"; P§4.3's fee stays "decreasing and convex in r".
 3. ~~**`κ`**~~ RESOLVED 2026-10-01: removed; replaced by the job allowance `m` (P§4.3), which the controller discovers and P§4.7 lists as not-a-parameter.
 4. **Horizons.** Paper: +12s/+30s. Pipeline also runs +60s. Align.
-5. **Actor identity in a v4 hook.** `sender` is the router; the paper
-   must say how the trader is identified.
-6. **Bootstrap.** `f_max` = 5% for unstaked flow needs a launch story
-   (retroactive seeding from history?) — P§2.5 mentions a
-   "retroactive-bootstrap means" without specifying it.
+5. **Actor identity in a v4 hook.** Partly addressed 2026-10-01 (P§4.8): the stake backing a swap is the submitting account's, named in hook data; intermediaries back their routed flow with their own stake. Still to specify: how hook data authenticates the account (signature or allowlist of routers).
+6. **Bootstrap.** Partly addressed 2026-10-01 (P§4.8): initial supply sold (proceeds seed the per-pool reserve), priced slightly below the discount it confers; ≈ $16k of active REP per bp of ρ serves all ETH/USDC user flow ($26M/day) near the fee floor; intermediaries (cashiers) as an illustration of how supply reaches users. Still open: how many users stay at `f_max` before supply reaches them (Study C elasticity).
 9. ~~**Virtual time plane (P§3.4).**~~ RESOLVED 2026-10-01: P§3.4 rewritten — measured decision latency, single per-block anchor `t* = block_ts + L`, index-based plane kept as a base-layer proposal conditional on time-enforced ordering, with the measured attacks.
 10. ~~**Kernel window (P§4.2).**~~ RESOLVED 2026-10-01: P§4.2 now centres a ≈1s window on `t*` and cites ε ≈ 1bp.
-11. ~~**Allowance `m` and its controller.**~~ RESOLVED 2026-10-01: P§4.3 "Arbitrage as a paid job" (per-unit path cap + gas allowance, stake-debited, epoch-aggregate gated) and "The allowance is discovered, not set" (feasible controller); P§4.4 burn at the inverse mint scalar; P§4.5 tranche sizing; P§4.6 what reconciliation computes.
+11. ~~**Allowance `m` and its controller.**~~ RESOLVED 2026-10-01: P§4.3 "Arbitrage as a paid job" (per-unit path cap + gas allowance, stake-debited, charged per price-correcting swap since 2026-10-01 — see P§4.8) and "The allowance is discovered, not set" (feasible controller); P§4.4 burn at the inverse mint scalar; P§4.5 tranche sizing; P§4.6 what reconciliation computes.
 8. ~~**Bid/ask assignment reversed relative to its stated purpose.**~~
    RESOLVED 2026-09-30: P§3.6/P§4.2 now read bid-when-pool-sells /
    ask-when-pool-buys, matching `arb_exit`. `arb_exit` is the paper's
