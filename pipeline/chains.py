@@ -51,6 +51,7 @@ class Chain:
     control_pool: Pool
     log_chunk: int = 5_000          # max blocks per eth_getLogs the endpoint accepts
     header_successors: bool = True  # fetch block N+1 headers for next_block_ts (mainnet); L2s use ts + block time
+    resolve_subsecond: bool = False # split same-timestamp blocks across their second (needs neighbour headers)
     layout: str | None = None       # None: legacy mainnet paths; else data/onchain/<layout>, results/<layout>
     notes: tuple = field(default_factory=tuple)
 
@@ -67,7 +68,7 @@ ARBITRUM = Chain(
     study_pool=Pool("eth_usdc_005", "0xC6962004f452bE9203591991D15f6b388e09E8D0", "USDC", "WETH", 6, 18, flip=True),
     control_pool=Pool("usdc_usdt_001", "0xbE3aD6a5669Dc0B8b12FeBC03608860C31E2eef6", "USDC", "USDT0", 6, 6,
                       kind="stable", bench="USDCUSDT"),
-    log_chunk=10_000, header_successors=False, layout="arbitrum",
+    log_chunk=10_000, header_successors=False, resolve_subsecond=True, layout="arbitrum",
     notes=("sequencer ordering (FCFS + Timeboost express lane), not PBS",),
 )
 
@@ -78,6 +79,9 @@ HYPEREVM = Chain(
     control_pool=Pool("usdc_usdt0", "0x46abbdfc675ffa9ddf032c64fee363745204e63e", "USDC", "USDT0", 6, 6,
                       kind="stable", bench="USDCUSDT"),
     log_chunk=10_000, header_successors=False, layout="hyperevm",
+    # resolve_subsecond=False: 97% of seconds hold exactly one block, so the split would place
+    # almost every block at mid-second anyway; skipping it saves ~2/3 of header calls under the
+    # shared 400 rps budget and moves ~3% of block times by up to 0.5s (big blocks).
     notes=("HyperBFT; ~1s small blocks (3M gas) + ~1/min big blocks (30M gas)",
            "HYPE benchmark is the Binance USD-M perp (no spot archive)"),
 )

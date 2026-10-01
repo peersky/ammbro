@@ -18,11 +18,14 @@ _SESSION = requests.Session()
 # Chainstack counts every JSON-RPC call inside a batch toward the RPS
 # quota, so batches must be paced: after a batch of N calls we sleep
 # N / rps before the next one. The rate is adaptive (AIMD): start at
-# ETH_RPC_RPS (default 100, optimistic), multiply by 0.7 on every
-# rate-limit error, creep back up 2% per clean batch, floor 15.
-_rps = float(os.environ.get("ETH_RPC_RPS", "100"))
+# ETH_RPC_RPS (default 300), multiply by 0.7 on every rate-limit error,
+# creep back up 2% per clean batch, floor 15. The Chainstack plan allows
+# 400 requests/s in total, shared by every chain's endpoint and every
+# concurrent job — the ceiling defaults to 380 and must be lowered when
+# jobs run in parallel (their ETH_RPC_RPS_MAX values must sum to <= 380).
+_rps = float(os.environ.get("ETH_RPC_RPS", "300"))
 _RPS_FLOOR = 15.0
-_RPS_CEIL = float(os.environ.get("ETH_RPC_RPS_MAX", "500"))
+_RPS_CEIL = float(os.environ.get("ETH_RPC_RPS_MAX", "380"))
 _last_debt = 0.0  # seconds of quota consumed by the previous batch
 _last_time = 0.0
 

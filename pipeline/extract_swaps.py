@@ -128,7 +128,11 @@ def fetch_block_meta(block_numbers: list[int]) -> pd.DataFrame:
         df["next_block_ts"] = df["block_number"].map(lambda n: nxt.get(n + 1))
     else:
         df["next_block_ts"] = df["block_ts"] + 1
-        df = df.merge(resolve_seconds(df.set_index("block_number")["block_ts"].to_dict()), on="block_number")
+        if ACTIVE.resolve_subsecond:
+            df = df.merge(resolve_seconds(df.set_index("block_number")["block_ts"].to_dict()), on="block_number")
+        else:                                 # one block per second (HyperEVM): mid-second
+            df["block_ts_us"] = df["block_ts"] * 1_000_000 + 500_000
+            df["blocks_in_second"] = 0        # 0 = not resolved (assumed 1)
     return df
 
 
