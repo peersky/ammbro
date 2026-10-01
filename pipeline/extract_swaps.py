@@ -167,6 +167,8 @@ def resolve_seconds(ts: dict[int, int]) -> pd.DataFrame:
                 hi[b] += 1
             else:
                 open_hi.discard(b)
+        print(f"  seconds: round {_ + 1}, {len(want):,} neighbour headers, "
+              f"{len(open_lo) + len(open_hi):,} block edges still open", flush=True)
         if not open_lo and not open_hi:
             break
     rows = []
