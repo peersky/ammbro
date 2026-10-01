@@ -227,6 +227,8 @@ else                              → m ← m × 0.95   default decay
 
 **Collateral (P§4.5, adopted 2026-10-01).** A trade parks `ℓ·V` of active stake, `ℓ = ρ + k·Δ_block` (`Δ_block` = the pool's cumulative price move so far in the block; `k` per pool). Charges are collected from the trade's parked stake, then the rest of the same account's stake, then a per-pool reserve funded by an explicit protocol take; never from other traders. Study C must report: collection share, reserve draws, stake parked per $ of benign volume, and the discount lost to parking.
 
+**Protocol take (P§4.4, adopted 2026-10-01).** REP is minted slightly below the surplus it claims; the withheld share `τ` pays the reconciling bots and funds the per-pool reserve (safety margin). Required by design: reconciliation has a cost no trader pays directly. Estimate at real window base fees (median 0.134 gwei, ETH ≈ $2,031): one report verification per block with a swap (~300k gas, 595,030 blocks) + one state write per swap (~10k gas, 990,555 swaps) ≈ **$0.13M per window ≈ 2.5% of the ~$5.4M recaptured** — gas-unit budgets are assumptions; Study G measures them. Study C reports `τ` needed for reconciliation and the reserve's balance path.
+
 **Mint (P§4.4).** Per epoch, `N = Σfees + Σmarkouts`,
 `S = N − θ*·ΣV`. If `S > 0`, mint `σ·S` pro-rata to actors whose
 `fees + benign markout > θ*·V_actor`. `σ` is a fixed protocol scalar;
@@ -503,7 +505,7 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
      |---|---|---|
      | flat per-trade tranche ρ = 20bp / 100bp | 73% / 87% | leaks the tail |
      | per-trade tranche ∝ the trade's own price move | 100% in sim | **rejected**: an identity of the model (sim arbs correct in one trade); splitting a big gap into small trades shrinks the tranche but not the charge |
-     | per-trade tranche = gap to the last oracle posted on-chain + buffer, 1-block lag, 3–5bp | 98.4–99.3% | needs a report posted every block (~$4k/day ≈ $0.7M/window at 0.5 gwei); 5-block lag → 75–91% |
+     | per-trade tranche = gap to the last oracle posted on-chain + buffer, 1-block lag, 3–5bp | 98.4–99.3% | needs a report posted every block (~$0.27M/window at real 2026 base fees, median 0.13 gwei; an earlier $0.7M figure assumed 0.5 gwei); 5-block lag → 75–91% |
      | **standing per-account bond, debited by charges** | **100%** with a ~$1M bond | dominant arb's daily charge: median $13k, P99 $197k, max $809k; splitting-proof; leak bounded by the bond |
 
    - **Size-based lock schedules are gameable** (author proposal: lock grows exponentially with swap size, tunable). Exponential 2bp·e^(V/$100k), cap 5%: 98.9% collected against honest single-trade arbs, but **51.5% when each correction is split into 10 pieces** (each piece small → tiny lock, while early pieces carry the full edge), and it locks $50k of stake on an ordinary $1M user swap ($194k/day across users). Impact-proportional: 100% → 32.9% under splitting. A flat 20bp lock barely notices splitting (72.7% → 69.3%). Rule: any lock driven by a quantity the trader controls (size, trade count, accounts) is gameable; the charge is driven by the gap, which the market sets. Use the whole-stake burn rule, or tune a lock on the gap to the last posted oracle — never on size.
