@@ -136,7 +136,11 @@ def fetch_block_meta(block_numbers: list[int]) -> pd.DataFrame:
     return df
 
 
-MAX_SECOND_ROUNDS = 12   # Arbitrum makes ~4 blocks/s; give up (and fall back to mid-second) beyond this
+# Arbitrum makes ~4 blocks/s, but when the sequencer's timestamp lags it emits
+# bursts of up to ~20 blocks stamped with one second (March 2026: 0.2% of
+# seconds hold 5-19 blocks). Beyond this many rounds a block falls back to
+# mid-second (blocks_in_second = -1); repair_unresolved() fixes those later.
+MAX_SECOND_ROUNDS = 30
 
 
 def resolve_seconds(ts: dict[int, int]) -> pd.DataFrame:
@@ -263,3 +267,20 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def repair_unresolved(path) -> int:
+    """Re-resolve blocks that fell back to mid-second (blocks_in_second
+    == -1) in an already-written month file, with the current round limit.
+    Cheap: only those blocks' neighbourhoods are fetched. Returns the
+    number of blocks repaired."""
+    df = pd.read_parquet(path)
+    bad = df.loc[df["blocks_in_second"] < 0, ["block_number", "block_ts"]].drop_duplicates("block_number")
+    if bad.empty:
+        return 0
+    fixed = resolve_seconds(dict(zip(bad["block_number"], bad["block_ts"])))
+    df = df.drop(columns=["block_ts_us", "blocks_in_second"]).merge(
+        pd.concat([df.loc[df["blocks_in_second"] >= 0, ["block_number", "block_ts_us", "blocks_in_second"]]
+                     .drop_duplicates("block_number"), fixed]), on="block_number", how="left")
+    df.sort_values(["block_number", "log_index"]).to_parquet(path, index=False)
+    return int((fixed["blocks_in_second"] > 0).sum())
