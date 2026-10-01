@@ -29,18 +29,18 @@ import json
 import numpy as np
 import pandas as pd
 
-from .config import DATA_DIR, HORIZONS_S, REPO_ROOT
+from .config import DATA_DIR, HORIZONS_S, REPO_ROOT, ONCHAIN_DIR, RESULTS_DIR
 from .directional import SidedSeries, compose_eth_usdc, directional_price
-from .pools import ETH_USDC, USDC_USDT
+from .pools import STUDY_POOL, CONTROL_POOL
 from .qlp import q_lp
 from .study_a import mann_whitney_auc
 from .study_b import GAS_COST_USD, HEADLINE, baseline, simulate
 from .study_e import C_WIDTH_S, KERNEL_STEP_S
 
-SCORED = DATA_DIR / "onchain" / "scored"
-LABELS_DIR = DATA_DIR / "onchain" / "labels" / ETH_USDC.name
-DIR_OUT = DATA_DIR / "onchain" / "scored_directional" / ETH_USDC.name
-OUT = REPO_ROOT / "results" / "study_d"
+SCORED = ONCHAIN_DIR / "scored"
+LABELS_DIR = ONCHAIN_DIR / "labels" / STUDY_POOL.name
+DIR_OUT = ONCHAIN_DIR / "scored_directional" / STUDY_POOL.name
+OUT = RESULTS_DIR / "study_d"
 
 CONVENTIONS = ["mid", "arb_exit", "paper_literal"]
 BENCHMARKS = ["trade"] + CONVENTIONS
@@ -72,10 +72,10 @@ def _kernel(a0, a1, bt_us, center_s, price_fn) -> dict:
 def score_eth_usdc(eth: SidedSeries, usdc: SidedSeries, L: float) -> tuple[pd.DataFrame, dict]:
     DIR_OUT.mkdir(parents=True, exist_ok=True)
     parts = []
-    for p in sorted((SCORED / ETH_USDC.name).glob("*.scored.parquet")):
+    for p in sorted((SCORED / STUDY_POOL.name).glob("*.scored.parquet")):
         df = pd.read_parquet(p)
-        a0 = df["amount0_raw"].astype(float).to_numpy() / 10**ETH_USDC.dec0
-        a1 = df["amount1_raw"].astype(float).to_numpy() / 10**ETH_USDC.dec1
+        a0 = df["amount0_raw"].astype(float).to_numpy() / 10**STUDY_POOL.dec0
+        a1 = df["amount1_raw"].astype(float).to_numpy() / 10**STUDY_POOL.dec1
         bt = df["block_ts"].to_numpy(np.int64) * 1_000_000
 
         def prices(t):
@@ -120,9 +120,9 @@ def control_check(usdc: SidedSeries, L: float) -> list[dict]:
     """USDC/USDT pool at h0 on the canonical window: USDT priced in USDC
     from the USDCUSDT book (buy USDT with USDC at 1/USDC_bid, sell at
     1/USDC_ask; trade price 1/last)."""
-    df = pd.concat(pd.read_parquet(p) for p in sorted((SCORED / USDC_USDT.name).glob("*.scored.parquet")))
-    a0 = df["amount0_raw"].astype(float).to_numpy() / 10**USDC_USDT.dec0
-    a1 = df["amount1_raw"].astype(float).to_numpy() / 10**USDC_USDT.dec1
+    df = pd.concat(pd.read_parquet(p) for p in sorted((SCORED / CONTROL_POOL.name).glob("*.scored.parquet")))
+    a0 = df["amount0_raw"].astype(float).to_numpy() / 10**CONTROL_POOL.dec0
+    a1 = df["amount1_raw"].astype(float).to_numpy() / 10**CONTROL_POOL.dec1
     bt = df["block_ts"].to_numpy(np.int64) * 1_000_000
 
     def prices(t):
@@ -186,8 +186,8 @@ def evaluate(df: pd.DataFrame) -> dict:
 
 
 def run() -> dict:
-    L = json.loads((REPO_ROOT / "results" / "study_e" / "metrics.json").read_text())["decision_latency_L_s"]
-    eth, usdc = SidedSeries.load("ETHUSDT"), SidedSeries.load("USDCUSDT")
+    L = json.loads((RESULTS_DIR / "study_e" / "metrics.json").read_text())["decision_latency_L_s"]
+    eth, usdc = SidedSeries.load(STUDY_POOL.bench), SidedSeries.load(STUDY_POOL.numeraire)
     df, diag = score_eth_usdc(eth, usdc, L)
     out = {
         "n_swaps": len(df),

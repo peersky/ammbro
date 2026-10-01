@@ -20,7 +20,8 @@ from pathlib import Path
 import requests
 
 from .config import (
-    BINANCE_BASE,
+    BINANCE_ROOT,
+    market_of,
     CHECKSUM_MANIFEST,
     RAW_DIR,
     SYMBOLS,
@@ -32,25 +33,32 @@ from .config import (
 SESSION = requests.Session()
 
 
+def _base(symbol: str) -> tuple[str, str]:
+    market, ex = market_of(symbol)
+    return f"{BINANCE_ROOT}/{market}", ex
+
+
 def _monthly_available(symbol: str, month: str) -> bool:
-    url = f"{BINANCE_BASE}/monthly/aggTrades/{symbol}/{symbol}-aggTrades-{month}.zip"
+    base, ex = _base(symbol)
+    url = f"{base}/monthly/aggTrades/{ex}/{ex}-aggTrades-{month}.zip"
     return SESSION.head(url, timeout=30).status_code == 200
 
 
 def _urls_for(symbol: str) -> list[str]:
     """Monthly zips where they exist; daily zips otherwise."""
     urls = []
+    base, ex = _base(symbol)
     for month in months_in_window():
         if _monthly_available(symbol, month):
             urls.append(
-                f"{BINANCE_BASE}/monthly/aggTrades/{symbol}/{symbol}-aggTrades-{month}.zip"
+                f"{base}/monthly/aggTrades/{ex}/{ex}-aggTrades-{month}.zip"
             )
         else:
             y, m = map(int, month.split("-"))
             day = dt.date(y, m, 1)
             while day.month == m and WINDOW_START <= day <= WINDOW_END:
                 urls.append(
-                    f"{BINANCE_BASE}/daily/aggTrades/{symbol}/{symbol}-aggTrades-{day.isoformat()}.zip"
+                    f"{base}/daily/aggTrades/{ex}/{ex}-aggTrades-{day.isoformat()}.zip"
                 )
                 day += dt.timedelta(days=1)
     return urls
@@ -82,8 +90,16 @@ def _record_checksum(digest: str, rel_name: str) -> None:
             f.write(line)
 
 
+def _manifest_name(symbol: str, name: str) -> str:
+    """Spot entries keep the original '<SYMBOL>/<file>' form so the
+    committed manifest is unchanged; other markets are prefixed."""
+    market, _ = market_of(symbol)
+    return f"{symbol}/{name}" if market == "spot" else f"{market}/{symbol}/{name}"
+
+
 def download_symbol(symbol: str) -> None:
-    dest_dir = RAW_DIR / "spot" / "aggTrades" / symbol
+    market, _ = market_of(symbol)
+    dest_dir = RAW_DIR / market / "aggTrades" / symbol
     dest_dir.mkdir(parents=True, exist_ok=True)
     urls = _urls_for(symbol)
     print(f"{symbol}: {len(urls)} files")
@@ -93,7 +109,7 @@ def download_symbol(symbol: str) -> None:
         expected = _fetch_checksum(url)
         if dest.exists() and _sha256(dest) == expected:
             print(f"  ok (cached) {name}")
-            _record_checksum(expected, f"{symbol}/{name}")
+            _record_checksum(expected, _manifest_name(symbol, name))
             continue
         print(f"  downloading {name}")
         with SESSION.get(url, stream=True, timeout=300) as r:
@@ -109,7 +125,7 @@ def download_symbol(symbol: str) -> None:
                 f"checksum mismatch {name}: expected {expected}, got {actual}"
             )
         tmp.rename(dest)
-        _record_checksum(expected, f"{symbol}/{name}")
+        _record_checksum(expected, _manifest_name(symbol, name))
         print(f"  verified {name}")
 
 

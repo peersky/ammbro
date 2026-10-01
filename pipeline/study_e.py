@@ -59,16 +59,16 @@ import json
 import numpy as np
 import pandas as pd
 
-from .config import DATA_DIR, HORIZONS_S, REPO_ROOT
+from .config import DATA_DIR, HORIZONS_S, REPO_ROOT, ONCHAIN_DIR, RESULTS_DIR
 from .directional import SidedSeries, compose_eth_usdc, directional_price
-from .pools import ETH_USDC, USDC_USDT
+from .pools import STUDY_POOL, CONTROL_POOL
 from .qlp import q_lp
 from .study_a import mann_whitney_auc
 from .study_b import GAS_COST_USD, HEADLINE, baseline, simulate
 
-SCORED = DATA_DIR / "onchain" / "scored"
-LABELS_DIR = DATA_DIR / "onchain" / "labels" / ETH_USDC.name
-OUT = REPO_ROOT / "results" / "study_e"
+SCORED = ONCHAIN_DIR / "scored"
+LABELS_DIR = ONCHAIN_DIR / "labels" / STUDY_POOL.name
+OUT = RESULTS_DIR / "study_e"
 
 KERNEL_STEP_S = 0.25
 KERNEL_WIDTHS_S = [0.5, 1.0, 2.0, 4.0, 8.0, 12.0]      # trailing (pitfall)
@@ -81,7 +81,7 @@ L_SWEEP_S = [0.0, 1.0, 1.25, 1.5, 1.75]
 # on block_ts + L + h, width C_WIDTH_S. Written per swap for C to consume.
 C_WIDTH_S = 1.0
 C_HORIZONS_S = list(HORIZONS_S)
-C_OUT = DATA_DIR / "onchain" / "scored_timing" / ETH_USDC.name
+C_OUT = ONCHAIN_DIR / "scored_timing" / STUDY_POOL.name
 
 
 def _frame(pool) -> pd.DataFrame:
@@ -158,7 +158,7 @@ def decision_time_profile(df, eth, usdc, lab, a1, nxt: bool = False) -> dict:
     """Median |fee-adjusted residual| between the pool's post-swap price
     and the CEX side an arb hedges at, per offset from block_ts."""
     # tick -> token1/token0 raw; USDC per WETH = 10^(dec1-dec0) / 1.0001^tick
-    lp = (ETH_USDC.dec1 - ETH_USDC.dec0) * np.log(10.0) - df["tick"].to_numpy(dtype=float) * np.log(1.0001)
+    lp = (STUDY_POOL.dec1 - STUDY_POOL.dec0) * np.log(10.0) - df["tick"].to_numpy(dtype=float) * np.log(1.0001)
     sent = a1 < 0
     expected = np.where(sent, -np.log1p(POOL_FEE), -np.log1p(-POOL_FEE))
     bt = df["block_ts"].to_numpy(dtype=np.int64) * 1_000_000
@@ -199,9 +199,9 @@ def decision_time_profile(df, eth, usdc, lab, a1, nxt: bool = False) -> dict:
 
 
 def control(usdc) -> dict:
-    df = _frame(USDC_USDT)
-    a0 = df["amount0_raw"].astype(float).to_numpy() / 10**USDC_USDT.dec0
-    a1 = df["amount1_raw"].astype(float).to_numpy() / 10**USDC_USDT.dec1
+    df = _frame(CONTROL_POOL)
+    a0 = df["amount0_raw"].astype(float).to_numpy() / 10**CONTROL_POOL.dec0
+    a1 = df["amount1_raw"].astype(float).to_numpy() / 10**CONTROL_POOL.dec1
 
     def px(t):
         q = usdc.quotes(t)
@@ -217,13 +217,13 @@ def control(usdc) -> dict:
 
 
 def run() -> dict:
-    eth, usdc = SidedSeries.load("ETHUSDT"), SidedSeries.load("USDCUSDT")
-    df = _frame(ETH_USDC)
+    eth, usdc = SidedSeries.load(STUDY_POOL.bench), SidedSeries.load(STUDY_POOL.numeraire)
+    df = _frame(STUDY_POOL)
     labels = pd.concat(pd.read_parquet(p) for p in sorted(LABELS_DIR.glob("*")))
     df = df.merge(labels[["tx_hash", "log_index", "label"]], on=["tx_hash", "log_index"], how="left")
     lab = df["label"].to_numpy()
-    a0 = df["amount0_raw"].astype(float).to_numpy() / 10**ETH_USDC.dec0
-    a1 = df["amount1_raw"].astype(float).to_numpy() / 10**ETH_USDC.dec1
+    a0 = df["amount0_raw"].astype(float).to_numpy() / 10**STUDY_POOL.dec0
+    a1 = df["amount1_raw"].astype(float).to_numpy() / 10**STUDY_POOL.dec1
     v = df["notional_token0"].to_numpy()
 
     profile = decision_time_profile(df, eth, usdc, lab, a1)

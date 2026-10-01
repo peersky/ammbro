@@ -17,10 +17,10 @@ import numpy as np
 import pandas as pd
 
 from .benchmark import PriceSeries
-from .config import DATA_DIR
-from .pools import USDC_USDT
+from .config import DATA_DIR, ONCHAIN_DIR
+from .pools import CONTROL_POOL
 
-SCORED_DIR = DATA_DIR / "onchain" / "scored" / USDC_USDT.name
+SCORED_DIR = ONCHAIN_DIR / "scored" / CONTROL_POOL.name
 PEG_MULTIPLE = 3.0          # slack for pool fee + microstructure noise
 MEDIAN_BPS_CEILING = 10.0   # "single-digit bps" per spec
 
@@ -32,7 +32,7 @@ def run_gate() -> bool:
     df = pd.concat(pd.read_parquet(p, columns=["t_norm_us", "q_lp_h0"]) for p in src)
     df = df.dropna(subset=["q_lp_h0"])
 
-    peg = PriceSeries("USDCUSDT")
+    peg = PriceSeries(CONTROL_POOL.bench)
     peg_dev = np.abs(peg.px - 1.0)
     peg_p99_bps = np.quantile(peg_dev, 0.99) * 1e4
 

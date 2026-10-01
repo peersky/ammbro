@@ -25,13 +25,13 @@ import numpy as np
 import pandas as pd
 
 from . import canonical
-from .config import DATA_DIR, HORIZONS_S, REPO_ROOT
-from .pools import ETH_USDC
+from .config import DATA_DIR, HORIZONS_S, REPO_ROOT, ONCHAIN_DIR, RESULTS_DIR
+from .pools import STUDY_POOL
 
-SCORED_DIR = DATA_DIR / "onchain" / "scored" / ETH_USDC.name
-LABELS_DIR = DATA_DIR / "onchain" / "labels" / ETH_USDC.name
-TXS_DIR = DATA_DIR / "onchain" / "txs" / ETH_USDC.name
-OUT = REPO_ROOT / "results" / "supp1"
+SCORED_DIR = ONCHAIN_DIR / "scored" / STUDY_POOL.name
+LABELS_DIR = ONCHAIN_DIR / "labels" / STUDY_POOL.name
+TXS_DIR = ONCHAIN_DIR / "txs" / STUDY_POOL.name
+OUT = RESULTS_DIR / "supp1"
 
 GAS_PER_SWAP_EST = 250_000
 

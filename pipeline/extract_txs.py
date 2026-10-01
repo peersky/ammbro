@@ -12,11 +12,11 @@ import sys
 
 import pandas as pd
 
-from .config import DATA_DIR
+from .config import DATA_DIR, ONCHAIN_DIR
 from .extract_swaps import ONCHAIN_DIR, fetch_tx_meta
 from .pools import POOLS
 
-TXS_DIR = DATA_DIR / "onchain" / "txs"
+TXS_DIR = ONCHAIN_DIR / "txs"
 
 
 def main() -> None:

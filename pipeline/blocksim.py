@@ -24,18 +24,19 @@ import json
 import numpy as np
 import pandas as pd
 
-from .config import DATA_DIR, REPO_ROOT
+from .config import DATA_DIR, REPO_ROOT, ONCHAIN_DIR, RESULTS_DIR
 from .directional import SidedSeries, compose_eth_usdc
-from .pools import ETH_USDC
+from .chains import ACTIVE
+from .pools import STUDY_POOL
 from .study_e import LABELS_DIR, _frame
 
-CACHE = DATA_DIR / "onchain" / "sim"
+CACHE = ONCHAIN_DIR / "sim"
 
 
 def build() -> dict:
-    L = json.loads((REPO_ROOT / "results" / "study_e" / "metrics.json").read_text())["decision_latency_L_s"]
-    eth, usdc = SidedSeries.load("ETHUSDT"), SidedSeries.load("USDCUSDT")
-    df = _frame(ETH_USDC)
+    L = json.loads((RESULTS_DIR / "study_e" / "metrics.json").read_text())["decision_latency_L_s"]
+    eth, usdc = SidedSeries.load(STUDY_POOL.bench), SidedSeries.load(STUDY_POOL.numeraire)
+    df = _frame(STUDY_POOL)
     labels = pd.concat(pd.read_parquet(p) for p in sorted(LABELS_DIR.glob("*")))
     df = df.merge(labels[["tx_hash", "log_index", "label"]], on=["tx_hash", "log_index"], how="left")
     df = df.sort_values(["block_number", "tx_index", "log_index"]).reset_index(drop=True)
@@ -45,8 +46,11 @@ def build() -> dict:
     b0, b1 = int(kb.block_number.min()), int(kb.block_number.max())
     num = np.arange(b0, b1 + 1)
     ts = np.interp(num, kb.block_number.to_numpy(), kb.block_ts.to_numpy().astype(float))
-    phase = int(kb.block_ts.iloc[0]) % 12
-    ts = (np.round((ts - phase) / 12) * 12 + phase).astype(np.int64)
+    if ACTIVE.slot_s:                      # mainnet: snap to the fixed slot grid
+        phase = int(kb.block_ts.iloc[0]) % ACTIVE.slot_s
+        ts = (np.round((ts - phase) / ACTIVE.slot_s) * ACTIVE.slot_s + phase).astype(np.int64)
+    else:
+        ts = np.round(ts).astype(np.int64)
     bf = pd.Series(kb.base_fee_wei.to_numpy(float), index=kb.block_number.to_numpy()).reindex(num).ffill().to_numpy()
     t_us = ts * 1_000_000 + int(round(L * 1e6))
     bid, ask = compose_eth_usdc(eth.quotes(t_us), usdc.quotes(t_us))
@@ -54,7 +58,7 @@ def build() -> dict:
     blocks["day"] = blocks.ts // 86400
 
     # --- depth per day ---
-    ln_post = (ETH_USDC.dec1 - ETH_USDC.dec0) * np.log(10.0) - df["tick"].to_numpy(float) * np.log(1.0001)
+    ln_post = (STUDY_POOL.dec1 - STUDY_POOL.dec0) * np.log(10.0) - df["tick"].to_numpy(float) * np.log(1.0001)
     ln_pre = np.r_[np.nan, ln_post[:-1]]
     dln = np.abs(ln_post - ln_pre)
     v = df["notional_token0"].to_numpy()

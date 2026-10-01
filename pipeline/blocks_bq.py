@@ -13,9 +13,9 @@ import subprocess
 
 import pandas as pd
 
-from .config import DATA_DIR, months_in_window
+from .config import DATA_DIR, months_in_window, ONCHAIN_DIR
 
-BLOCKS_PARQUET = DATA_DIR / "onchain" / "blocks" / "blocks.parquet"
+BLOCKS_PARQUET = ONCHAIN_DIR / "blocks" / "blocks.parquet"
 
 _SQL = """
 SELECT

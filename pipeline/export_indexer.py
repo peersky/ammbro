@@ -14,12 +14,12 @@ from __future__ import annotations
 import pandas as pd
 import sqlalchemy as sa
 
-from .config import DATA_DIR
+from .config import DATA_DIR, ONCHAIN_DIR
 from .extract_swaps import load_block_meta
 from .pools import POOLS
 
 PG_URL = "postgresql://postgres:testing@localhost:5433/envio-dev"
-OUT_DIR = DATA_DIR / "onchain" / "swaps_indexer"
+OUT_DIR = ONCHAIN_DIR / "swaps_indexer"
 
 
 def export_tx_meta() -> None:
@@ -28,7 +28,7 @@ def export_tx_meta() -> None:
     RPC extract_txs stage entirely."""
     eng = sa.create_engine(PG_URL)
     for pool in POOLS:
-        out_dir = DATA_DIR / "onchain" / "txs" / pool.name
+        out_dir = ONCHAIN_DIR / "txs" / pool.name
         out_dir.mkdir(parents=True, exist_ok=True)
         df = pd.read_sql(
             sa.text(

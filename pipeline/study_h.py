@@ -48,16 +48,16 @@ import json
 import numpy as np
 import pandas as pd
 
-from .config import DATA_DIR, REPO_ROOT
+from .config import DATA_DIR, REPO_ROOT, ONCHAIN_DIR, RESULTS_DIR
 from .directional import SidedSeries
-from .pools import ETH_USDC
+from .pools import STUDY_POOL
 from .study_a import mann_whitney_auc
 from .study_b import base_fee_gas_usd
 from .study_e import LABELS_DIR, _frame, eth_quotes
 
-OUT = REPO_ROOT / "results" / "study_h"
-Q_C = DATA_DIR / "onchain" / "scored_timing" / ETH_USDC.name / "q_c.parquet"
-TXS_DIR = DATA_DIR / "onchain" / "txs" / ETH_USDC.name
+OUT = RESULTS_DIR / "study_h"
+Q_C = ONCHAIN_DIR / "scored_timing" / STUDY_POOL.name / "q_c.parquet"
+TXS_DIR = ONCHAIN_DIR / "txs" / STUDY_POOL.name
 
 HEDGE_BPS = 1.0                 # rent classification in (1)/(2)
 FLAG_IDX, FLAG_PRIO_GWEI = 2, 2.0   # controller flag = idx <= FLAG_IDX (best Youden J, section 2)
@@ -75,9 +75,9 @@ SEED = 7
 
 
 def prepare() -> tuple[pd.DataFrame, float]:
-    L = json.loads((REPO_ROOT / "results" / "study_e" / "metrics.json").read_text())["decision_latency_L_s"]
-    eth, usdc = SidedSeries.load("ETHUSDT"), SidedSeries.load("USDCUSDT")
-    df = _frame(ETH_USDC)
+    L = json.loads((RESULTS_DIR / "study_e" / "metrics.json").read_text())["decision_latency_L_s"]
+    eth, usdc = SidedSeries.load(STUDY_POOL.bench), SidedSeries.load(STUDY_POOL.numeraire)
+    df = _frame(STUDY_POOL)
     labels = pd.concat(pd.read_parquet(p) for p in sorted(LABELS_DIR.glob("*")))
     txs = pd.concat(pd.read_parquet(p) for p in sorted(TXS_DIR.glob("*")))
     df = (df.merge(labels[["tx_hash", "log_index", "label"]], on=["tx_hash", "log_index"], how="left")

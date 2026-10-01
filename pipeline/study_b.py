@@ -44,12 +44,12 @@ import numpy as np
 import pandas as pd
 
 from . import canonical
-from .config import DATA_DIR, HORIZONS_S, REPO_ROOT
-from .pools import ETH_USDC
+from .config import DATA_DIR, HORIZONS_S, REPO_ROOT, ONCHAIN_DIR, RESULTS_DIR
+from .pools import STUDY_POOL
 
-SCORED_DIR = DATA_DIR / "onchain" / "scored" / ETH_USDC.name
-LABELS_DIR = DATA_DIR / "onchain" / "labels" / ETH_USDC.name
-OUT = REPO_ROOT / "results" / "study_b"
+SCORED_DIR = ONCHAIN_DIR / "scored" / STUDY_POOL.name
+LABELS_DIR = ONCHAIN_DIR / "labels" / STUDY_POOL.name
+OUT = RESULTS_DIR / "study_b"
 
 BASELINE_FEE = 0.0005          # the pool's actual fixed 5 bps
 GAS_COST_USD = 10.0            # flat per-swap cost: original survival proxy
@@ -84,8 +84,8 @@ def load() -> pd.DataFrame:
 def base_fee_gas_usd(df: pd.DataFrame) -> np.ndarray:
     """Per-swap arb cost = base fee × ARB_GAS_UNITS, valued at the swap's
     own execution price (USDC per WETH from the pool deltas)."""
-    a0 = df["amount0_raw"].astype(float).abs() / 10**ETH_USDC.dec0
-    a1 = df["amount1_raw"].astype(float).abs() / 10**ETH_USDC.dec1
+    a0 = df["amount0_raw"].astype(float).abs() / 10**STUDY_POOL.dec0
+    a1 = df["amount1_raw"].astype(float).abs() / 10**STUDY_POOL.dec1
     with np.errstate(invalid="ignore", divide="ignore"):
         eth_usd = (a0 / a1).to_numpy()
     eth_usd = np.where(np.isfinite(eth_usd), eth_usd, np.nanmedian(eth_usd))

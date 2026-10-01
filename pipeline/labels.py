@@ -23,13 +23,13 @@ import sys
 import numpy as np
 import pandas as pd
 
-from .config import DATA_DIR
+from .config import DATA_DIR, ONCHAIN_DIR
 from .pools import POOLS
 from .routers import ROUTER_SET
 
-SWAPS_DIR = DATA_DIR / "onchain" / "swaps"
-TXS_DIR = DATA_DIR / "onchain" / "txs"
-LABELS_DIR = DATA_DIR / "onchain" / "labels"
+SWAPS_DIR = ONCHAIN_DIR / "swaps"
+TXS_DIR = ONCHAIN_DIR / "txs"
+LABELS_DIR = ONCHAIN_DIR / "labels"
 
 # Structure/identity/position columns only. Guard against future edits
 # accidentally leaking a price column into labeling.

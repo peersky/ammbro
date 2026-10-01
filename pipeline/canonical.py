@@ -16,10 +16,10 @@ from __future__ import annotations
 
 import pandas as pd
 
-from .config import DATA_DIR, HORIZONS_S
-from .pools import ETH_USDC
+from .config import DATA_DIR, HORIZONS_S, ONCHAIN_DIR
+from .pools import STUDY_POOL
 
-Q_C = DATA_DIR / "onchain" / "scored_timing" / ETH_USDC.name / "q_c.parquet"
+Q_C = ONCHAIN_DIR / "scored_timing" / STUDY_POOL.name / "q_c.parquet"
 DESCRIPTION = {
     "canonical": "arb_exit q, 1s window centred on block_ts + L + h (Study E)",
     "legacy_forward": "trade-price q at forward t_norm (pre-Study-E pipeline)",

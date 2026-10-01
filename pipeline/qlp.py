@@ -21,12 +21,12 @@ import numpy as np
 import pandas as pd
 
 from .benchmark import NumeraireCorrectedSeries, PriceSeries
-from .config import DATA_DIR, HORIZONS_S
-from .pools import ETH_USDC, POOLS, USDC_USDT, Pool
+from .config import DATA_DIR, HORIZONS_S, ONCHAIN_DIR
+from .pools import STUDY_POOL, POOLS, CONTROL_POOL, Pool
 from .normalization import normalized_time_us
 
-SWAPS_DIR = DATA_DIR / "onchain" / "swaps"
-SCORED_DIR = DATA_DIR / "onchain" / "scored"
+SWAPS_DIR = ONCHAIN_DIR / "swaps"
+SCORED_DIR = ONCHAIN_DIR / "scored"
 
 
 def q_lp(amount0: np.ndarray, amount1: np.ndarray, price1_in_0: np.ndarray):
@@ -51,11 +51,11 @@ class _InverseSeries:
 
 
 def price1_series(pool: Pool):
-    if pool.name == ETH_USDC.name:
-        return NumeraireCorrectedSeries()
-    if pool.name == USDC_USDT.name:
-        return _InverseSeries(PriceSeries("USDCUSDT"))
-    raise ValueError(pool.name)
+    if pool.kind == "risky":
+        return NumeraireCorrectedSeries(PriceSeries(pool.bench), PriceSeries(pool.numeraire))
+    if pool.kind == "stable":
+        return _InverseSeries(PriceSeries(pool.bench))
+    raise ValueError(pool.kind)
 
 
 def score_pool(pool: Pool) -> None:

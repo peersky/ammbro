@@ -10,15 +10,32 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "data"
+
+# Per-chain on-chain data and results (pipeline/chains.py). Mainnet keeps
+# the original layout so committed results stay where they are.
+from .chains import ACTIVE as _CHAIN  # noqa: E402
+
+ONCHAIN_DIR = DATA_DIR / "onchain" / _CHAIN.layout if _CHAIN.layout else DATA_DIR / "onchain"
+RESULTS_DIR = REPO_ROOT / "results" / _CHAIN.layout if _CHAIN.layout else REPO_ROOT / "results"
 RAW_DIR = DATA_DIR / "raw" / "binance"
 PARQUET_DIR = DATA_DIR / "parquet"
 BARS_DIR = DATA_DIR / "bars"
 CHECKSUM_MANIFEST = DATA_DIR / "checksums" / "CHECKSUMS.sha256"
 
-BINANCE_BASE = "https://data.binance.vision/data/spot"
+BINANCE_ROOT = "https://data.binance.vision/data"
+BINANCE_BASE = BINANCE_ROOT + "/spot"   # legacy name (spot)
 
-# Benchmark symbols: ETHUSDT primary, USDCUSDT numeraire correction (§17.6)
-SYMBOLS = ["ETHUSDT", "USDCUSDT"]
+# Benchmark symbols for every chain's pools (shared raw data): ETHUSDT /
+# HYPEUSDT_UM risky legs, USDCUSDT numeraire correction (§17.6). A "_UM"
+# suffix = Binance USD-M perpetual futures archive instead of spot.
+SYMBOLS = ["ETHUSDT", "USDCUSDT", "HYPEUSDT_UM"]
+
+
+def market_of(symbol: str) -> tuple[str, str]:
+    """(binance market path, exchange symbol) for a pipeline symbol."""
+    if symbol.endswith("_UM"):
+        return "futures/um", symbol[: -len("_UM")]
+    return "spot", symbol
 
 # Backtest window (inclusive). Past 6 months at scaffold time (2026-09-01).
 # Extend backward toward post-Merge era (late-2022) per §17.3 once the

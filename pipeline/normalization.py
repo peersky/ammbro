@@ -16,7 +16,9 @@ from __future__ import annotations
 
 import pandas as pd
 
-DEFAULT_BLOCK_S = 12
+from .chains import ACTIVE
+
+DEFAULT_BLOCK_S = ACTIVE.slot_s or 1   # mainnet 12s slots; L2 blocks are <= 1s
 
 
 def uniform_normalized_position_s(

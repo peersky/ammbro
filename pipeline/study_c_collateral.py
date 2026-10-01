@@ -57,11 +57,11 @@ import json
 
 import numpy as np
 
-from .config import REPO_ROOT
+from .config import REPO_ROOT, RESULTS_DIR
 from .blocksim import load
 from .study_i import run_one
 
-OUT = REPO_ROOT / "results" / "study_c"
+OUT = RESULTS_DIR / "study_c"
 RHO_BPS = [2, 5, 10, 20, 50, 100]
 R_ANNUAL = 0.05
 WINDOWS_S = {"1 block": 12, "1 hour": 3600, "1 day (epoch)": 86400, "7 days": 7 * 86400}

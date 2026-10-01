@@ -8,6 +8,14 @@ fields the normalization module (§17.7) and label stage consume.
 
 Deterministic given the window in config.py; re-runnable (skips months
 whose parquet already exists).
+
+Chain-aware (pipeline/chains.py): endpoint, log chunk size and pools come
+from the ACTIVE chain. Pools with flip=True (on-chain order risky/stable)
+are stored in canonical (stable, risky) order: amounts swapped, tick
+negated. Where the endpoint returns `blockTimestamp` in logs it is used
+directly; L2 chains (header_successors=False) fetch headers only for swap
+blocks (tx count, base fee) and set next_block_ts = block_ts + 1s (their
+blocks are <= 1s; timestamps have 1s resolution).
 """
 from __future__ import annotations
 
@@ -17,11 +25,12 @@ import sys
 import pandas as pd
 
 from . import rpc
-from .config import DATA_DIR, months_in_window
+from .config import DATA_DIR, months_in_window, ONCHAIN_DIR
+from .chains import ACTIVE
 from .pools import POOLS, SWAP_TOPIC, Pool
 
-ONCHAIN_DIR = DATA_DIR / "onchain" / "swaps"
-LOG_CHUNK = 5_000     # blocks per getLogs call
+ONCHAIN_DIR = ONCHAIN_DIR / "swaps"
+LOG_CHUNK = ACTIVE.log_chunk   # blocks per getLogs call (endpoint limit per chain)
 BLOCK_BATCH = 200     # blocks per JSON-RPC batch
 TX_BATCH = 200        # txs per JSON-RPC batch (endpoint token bucket ~450/s)
 
@@ -31,20 +40,26 @@ def _int256(hex32: str) -> int:
     return v - (1 << 256) if v >= (1 << 255) else v
 
 
-def _decode_log(log: dict) -> dict:
+def _decode_log(log: dict, pool: Pool | None = None) -> dict:
     data = log["data"][2:]
     words = [data[i : i + 64] for i in range(0, len(data), 64)]
-    return {
+    a0, a1, tick = _int256(words[0]), _int256(words[1]), _int256(words[4])
+    if pool is not None and pool.flip:          # store canonical (stable, risky) order
+        a0, a1, tick = a1, a0, -tick
+    out = {
         "block_number": rpc.hex_int(log["blockNumber"]),
         "tx_hash": log["transactionHash"],
         "tx_index": rpc.hex_int(log["transactionIndex"]),
         "log_index": rpc.hex_int(log["logIndex"]),
         "sender": "0x" + log["topics"][1][-40:],
         "recipient": "0x" + log["topics"][2][-40:],
-        "amount0_raw": _int256(words[0]),
-        "amount1_raw": _int256(words[1]),
-        "tick": _int256(words[4]),
+        "amount0_raw": a0,
+        "amount1_raw": a1,
+        "tick": tick,
     }
+    if log.get("blockTimestamp"):
+        out["log_block_ts"] = rpc.hex_int(log["blockTimestamp"])
+    return out
 
 
 def fetch_logs(pool: Pool, from_block: int, to_block: int) -> list[dict]:
@@ -60,7 +75,7 @@ def fetch_logs(pool: Pool, from_block: int, to_block: int) -> list[dict]:
                 "toBlock": hex(end),
             }],
         )
-        out.extend(_decode_log(l) for l in logs)
+        out.extend(_decode_log(l, pool) for l in logs)
         if (start - from_block) % (LOG_CHUNK * 40) == 0:
             print(f"  logs {pool.name}: block {start:,}/{to_block:,} ({len(out):,} swaps)")
     return out
@@ -85,9 +100,13 @@ def load_block_meta(block_numbers: list[int]) -> pd.DataFrame:
 
 
 def fetch_block_meta(block_numbers: list[int]) -> pd.DataFrame:
-    """Header-only blocks: timestamp, tx count, base fee. Includes each
-    block's successor so next_block_time is available for §17.7."""
-    need = sorted(set(block_numbers) | {b + 1 for b in block_numbers})
+    """Header-only blocks: timestamp, tx count, base fee. On mainnet also
+    each block's successor so next_block_time is available for §17.7; L2
+    chains skip successors (next_block_ts = block_ts + 1s)."""
+    if ACTIVE.header_successors:
+        need = sorted(set(block_numbers) | {b + 1 for b in block_numbers})
+    else:
+        need = sorted(set(block_numbers))
     rows = {}
     for i in range(0, len(need), BLOCK_BATCH):
         chunk = need[i : i + BLOCK_BATCH]
@@ -103,8 +122,11 @@ def fetch_block_meta(block_numbers: list[int]) -> pd.DataFrame:
     df = pd.DataFrame.from_dict(rows, orient="index")
     df.index.name = "block_number"
     df = df.reset_index()
-    nxt = df.set_index("block_number")["block_ts"]
-    df["next_block_ts"] = df["block_number"].map(lambda n: nxt.get(n + 1))
+    if ACTIVE.header_successors:
+        nxt = df.set_index("block_number")["block_ts"]
+        df["next_block_ts"] = df["block_number"].map(lambda n: nxt.get(n + 1))
+    else:
+        df["next_block_ts"] = df["block_ts"] + 1
     return df
 
 
@@ -164,6 +186,11 @@ def extract_pool_month(pool: Pool, month: str) -> None:
     # and would double the RPC call count on the q_LP critical path.
     blocks = load_block_meta(swaps["block_number"].unique().tolist())
     df = swaps.merge(blocks, on="block_number")
+    if "log_block_ts" in df.columns:          # endpoint-provided timestamps must agree with headers
+        bad = (df["log_block_ts"] != df["block_ts"]).sum()
+        if bad:
+            raise RuntimeError(f"{bad} swaps whose log blockTimestamp disagrees with the header")
+        df = df.drop(columns=["log_block_ts"])
     # int256 token deltas overflow parquet int64 (any swap > 9.2 WETH in
     # wei) — persist as lossless strings; consumers cast to float.
     df["amount0_raw"] = df["amount0_raw"].astype(str)

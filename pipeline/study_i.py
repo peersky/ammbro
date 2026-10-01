@@ -95,9 +95,9 @@ import numpy as np
 import pandas as pd
 
 from .blocksim import CACHE, load
-from .config import REPO_ROOT
+from .config import REPO_ROOT, RESULTS_DIR
 
-OUT = REPO_ROOT / "results" / "study_i"
+OUT = RESULTS_DIR / "study_i"
 F = 0.0005
 REB = F + 1e-4
 B_JOB = F + 0.5e-4
@@ -365,6 +365,8 @@ def grid() -> list:
 
 def run() -> dict:
     res = main(grid())
+    for r in res:
+        r.pop("_trades", None)          # per-trade arrays are for Study C, never serialized
     calib = json.loads((CACHE / "calibration_inputs.json").read_text())
     today = {r["scenario"]: r for r in res if r["rule"] == "today" and r["phase"] == "open"}
     for r in res:

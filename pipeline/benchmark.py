@@ -48,11 +48,14 @@ class PriceSeries:
 
 
 class NumeraireCorrectedSeries:
-    """ETH in USDC terms: ETHUSDT / USDCUSDT at the same instant (§17.6)."""
+    """Risky asset in USDC terms: <bench>USDT / USDCUSDT at the same instant
+    (§17.6). Defaults to the active chain's study-pool benchmark
+    (mainnet / Arbitrum: ETHUSDT; HyperEVM: HYPEUSDT perp)."""
 
     def __init__(self, eth: PriceSeries | None = None, usdc: PriceSeries | None = None):
-        self.eth = eth or PriceSeries("ETHUSDT")
-        self.usdc = usdc or PriceSeries("USDCUSDT")
+        from .pools import STUDY_POOL
+        self.eth = eth or PriceSeries(STUDY_POOL.bench)
+        self.usdc = usdc or PriceSeries(STUDY_POOL.numeraire)
 
     def price_at(self, t_us, horizon_s: float = 0.0):
         return self.eth.price_at(t_us, horizon_s) / self.usdc.price_at(t_us, horizon_s)

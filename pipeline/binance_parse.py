@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .config import PARQUET_DIR, RAW_DIR, SYMBOLS
+from .config import PARQUET_DIR, RAW_DIR, SYMBOLS, market_of
 
 # Binance SPOT aggTrades CSV columns (no header in older files; newer
 # files ship a header row — sniffed below).
@@ -82,7 +82,7 @@ def parse_zip(zip_path: Path) -> pd.DataFrame:
 
 
 def parse_symbol(symbol: str) -> None:
-    src_dir = RAW_DIR / "spot" / "aggTrades" / symbol
+    src_dir = RAW_DIR / market_of(symbol)[0] / "aggTrades" / symbol
     out_dir = PARQUET_DIR / "aggTrades" / symbol
     out_dir.mkdir(parents=True, exist_ok=True)
 

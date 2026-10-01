@@ -28,15 +28,19 @@ _last_time = 0.0
 
 
 def rpc_url() -> str:
-    url = os.environ.get("ETH_RPC_URL")
+    """Endpoint of the ACTIVE chain (pipeline/chains.py), from the
+    environment or .env — URLs embed auth keys and never appear in code."""
+    from .chains import ACTIVE
+    key = ACTIVE.rpc_env
+    url = os.environ.get(key)
     if not url:
         env = REPO_ROOT / ".env"
         if env.exists():
             for line in env.read_text().splitlines():
-                if line.startswith("ETH_RPC_URL="):
+                if line.startswith(key + "="):
                     url = line.split("=", 1)[1].strip()
     if not url:
-        raise RuntimeError("ETH_RPC_URL not set (env or .env)")
+        raise RuntimeError(f"{key} not set (env or .env)")
     return url
 
 
