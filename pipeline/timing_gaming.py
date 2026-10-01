@@ -18,6 +18,8 @@ on gap-takers (toxic, pool-first); costs are fee + base-fee gas only, so
 """
 from __future__ import annotations
 
+from .normalization import block_time_us
+
 import numpy as np
 import pandas as pd
 
@@ -34,7 +36,7 @@ def run_gaming(df: pd.DataFrame, lab: np.ndarray, a0, a1, v, L: float, price) ->
     o = np.lexsort((df["log_index"].to_numpy(), df["tx_index"].to_numpy(), df["block_number"].to_numpy()))
     d = df.iloc[o].reset_index(drop=True)
     lab, a0, a1, v = lab[o], a0[o], a1[o], v[o]
-    bt = d["block_ts"].to_numpy(np.int64) * 1_000_000
+    bt = block_time_us(d)
     T = d["dur_s"].to_numpy(); frac = d["frac"].to_numpy(); idx = d["tx_index"].to_numpy()
     g = d.groupby("block_number")
     k = g.cumcount().to_numpy(); K = g["tx_index"].transform("size").to_numpy()

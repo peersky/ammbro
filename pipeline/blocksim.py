@@ -19,6 +19,8 @@ Everything is derived from data already on disk — no extra chain fetches:
 """
 from __future__ import annotations
 
+from .normalization import block_time_us
+
 import json
 
 import numpy as np
@@ -69,8 +71,8 @@ def build() -> dict:
 
     # --- exogenous flow ---
     o_at = np.log((lambda b, a: (b + a) / 2)(*compose_eth_usdc(
-        eth.quotes(df["block_ts"].to_numpy(np.int64) * 1_000_000 + int(round(L * 1e6))),
-        usdc.quotes(df["block_ts"].to_numpy(np.int64) * 1_000_000 + int(round(L * 1e6))))))
+        eth.quotes(block_time_us(df) + int(round(L * 1e6))),
+        usdc.quotes(block_time_us(df) + int(round(L * 1e6))))))
     correcting = (np.abs(ln_post - o_at) - np.abs(ln_pre - o_at)) < 0
     first = df.groupby("block_number").cumcount().to_numpy() == 0
     arb_like = (df["label"].to_numpy() == "toxic") | (first & correcting)

@@ -24,6 +24,8 @@ relaxes scoring on large trades. Layer-1 LWBA replaces it (spec item 13).
 """
 from __future__ import annotations
 
+from .normalization import block_time_us
+
 import json
 
 import numpy as np
@@ -76,7 +78,7 @@ def score_eth_usdc(eth: SidedSeries, usdc: SidedSeries, L: float) -> tuple[pd.Da
         df = pd.read_parquet(p)
         a0 = df["amount0_raw"].astype(float).to_numpy() / 10**STUDY_POOL.dec0
         a1 = df["amount1_raw"].astype(float).to_numpy() / 10**STUDY_POOL.dec1
-        bt = df["block_ts"].to_numpy(np.int64) * 1_000_000
+        bt = block_time_us(df)
 
         def prices(t):
             qe, qu = eth.quotes(t), usdc.quotes(t)
@@ -123,7 +125,7 @@ def control_check(usdc: SidedSeries, L: float) -> list[dict]:
     df = pd.concat(pd.read_parquet(p) for p in sorted((SCORED / CONTROL_POOL.name).glob("*.scored.parquet")))
     a0 = df["amount0_raw"].astype(float).to_numpy() / 10**CONTROL_POOL.dec0
     a1 = df["amount1_raw"].astype(float).to_numpy() / 10**CONTROL_POOL.dec1
-    bt = df["block_ts"].to_numpy(np.int64) * 1_000_000
+    bt = block_time_us(df)
 
     def prices(t):
         qu = usdc.quotes(t)

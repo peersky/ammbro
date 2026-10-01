@@ -54,6 +54,8 @@ a slot, so it bounds peg noise only and cannot calibrate timing noise.
 """
 from __future__ import annotations
 
+from .normalization import block_time_us
+
 import json
 
 import numpy as np
@@ -92,7 +94,7 @@ def _frame(pool) -> pd.DataFrame:
 
 
 def reconstruction_times(df: pd.DataFrame) -> dict[str, np.ndarray]:
-    bt = df["block_ts"].to_numpy(dtype=np.int64) * 1_000_000
+    bt = block_time_us(df)
     shift = (df["frac"] * df["dur_s"] * 1e6).to_numpy().astype(np.int64)
     return {"block": bt, "forward": df["t_norm_us"].to_numpy(dtype=np.int64), "backward": bt - shift}
 
@@ -161,7 +163,7 @@ def decision_time_profile(df, eth, usdc, lab, a1, nxt: bool = False) -> dict:
     lp = (STUDY_POOL.dec1 - STUDY_POOL.dec0) * np.log(10.0) - df["tick"].to_numpy(dtype=float) * np.log(1.0001)
     sent = a1 < 0
     expected = np.where(sent, -np.log1p(POOL_FEE), -np.log1p(-POOL_FEE))
-    bt = df["block_ts"].to_numpy(dtype=np.int64) * 1_000_000
+    bt = block_time_us(df)
     idx = df["tx_index"].to_numpy()
     big = df["notional_token0"].to_numpy() > 1e5
     tox = lab == "toxic"
@@ -240,7 +242,7 @@ def run() -> dict:
         if name != "forward":
             recon[f"{name}_L"] = evaluate(q_at(a0, a1, *price(t + Lus)), v, lab)
 
-    bt = df["block_ts"].to_numpy(dtype=np.int64) * 1_000_000
+    bt = block_time_us(df)
     latency_sweep = [{"L_s": x, **evaluate(q_at(a0, a1, *price(bt + int(round(x * 1e6)))), v, lab)}
                      for x in L_SWEEP_S]
     kernels = []

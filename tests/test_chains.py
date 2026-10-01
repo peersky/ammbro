@@ -36,3 +36,23 @@ def test_registry_consistency():
         assert c.study_pool.kind == "risky" and c.control_pool.kind == "stable"
     assert HYPEREVM.study_pool.bench.endswith("_UM")      # perp benchmark, stated as such
     assert MAINNET.layout is None                          # legacy paths preserved
+
+
+def test_subsecond_split_spreads_blocks_across_their_second():
+    from pipeline.normalization import subsecond_split
+    # four blocks 100..103 share second 1000: midpoints at .125 .375 .625 .875
+    assert [subsecond_split(b, 100, 103, 1000) for b in range(100, 104)] == \
+        [1000_125_000, 1000_375_000, 1000_625_000, 1000_875_000]
+    assert subsecond_split(7, 7, 7, 5) == 5_500_000            # one block per second -> mid-second
+    import pytest
+    with pytest.raises(ValueError):
+        subsecond_split(99, 100, 103, 1000)
+
+
+def test_block_time_us_falls_back_to_slot_timestamp_on_mainnet():
+    import pandas as pd
+    from pipeline.normalization import block_time_us
+    df = pd.DataFrame({"block_ts": [1, 2]})
+    assert list(block_time_us(df)) == [1_000_000, 2_000_000]
+    df["block_ts_us"] = [1_250_000, 2_750_000]
+    assert list(block_time_us(df)) == [1_250_000, 2_750_000]

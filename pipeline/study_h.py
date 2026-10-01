@@ -43,6 +43,8 @@ controller dynamics, not a forecast of dollar outcomes.
 """
 from __future__ import annotations
 
+from .normalization import block_time_us
+
 import json
 
 import numpy as np
@@ -85,7 +87,7 @@ def prepare() -> tuple[pd.DataFrame, float]:
             .merge(txs[["tx_hash", "priority_fee_wei"]].drop_duplicates("tx_hash"), on="tx_hash", how="left"))
     df = df.sort_values(["block_number", "tx_index", "log_index"]).reset_index(drop=True)
     df["k"] = df.groupby("block_number").cumcount()
-    bt = df["block_ts"].to_numpy(np.int64) * 1_000_000
+    bt = block_time_us(df)
     bid, ask = eth_quotes(eth, usdc, bt + int(round(L * 1e6)))
     ln_o = np.log((bid + ask) / 2)
     ln_post = (18 - 6) * np.log(10.0) - df["tick"].to_numpy(float) * np.log(1.0001)

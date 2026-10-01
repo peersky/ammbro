@@ -12,8 +12,8 @@ whose parquet already exists).
 Chain-aware (pipeline/chains.py): endpoint, log chunk size and pools come
 from the ACTIVE chain. Pools with flip=True (on-chain order risky/stable)
 are stored in canonical (stable, risky) order: amounts swapped, tick
-negated. Where the endpoint returns `blockTimestamp` in logs it is used
-directly; L2 chains (header_successors=False) fetch headers only for swap
+negated. A non-zero `blockTimestamp` in logs is cross-checked against the
+header (Arbitrum's endpoint fills it on only ~80% of logs, 0x0 on the rest, so headers are always used); L2 chains (header_successors=False) fetch headers only for swap
 blocks (tx count, base fee) and set next_block_ts = block_ts + 1s (their
 blocks are <= 1s; timestamps have 1s resolution).
 """
@@ -57,8 +57,9 @@ def _decode_log(log: dict, pool: Pool | None = None) -> dict:
         "amount1_raw": a1,
         "tick": tick,
     }
-    if log.get("blockTimestamp"):
-        out["log_block_ts"] = rpc.hex_int(log["blockTimestamp"])
+    lts = rpc.hex_int(log.get("blockTimestamp")) if log.get("blockTimestamp") else 0
+    if lts:                       # Arbitrum's endpoint returns the field as 0x0 — treat as absent
+        out["log_block_ts"] = lts
     return out
 
 
@@ -127,7 +128,50 @@ def fetch_block_meta(block_numbers: list[int]) -> pd.DataFrame:
         df["next_block_ts"] = df["block_number"].map(lambda n: nxt.get(n + 1))
     else:
         df["next_block_ts"] = df["block_ts"] + 1
+        df = df.merge(resolve_seconds(df.set_index("block_number")["block_ts"].to_dict()), on="block_number")
     return df
+
+
+MAX_SECOND_ROUNDS = 12   # Arbitrum makes ~4 blocks/s; give up (and fall back to mid-second) beyond this
+
+
+def resolve_seconds(ts: dict[int, int]) -> pd.DataFrame:
+    """For every block in `ts` (known header timestamps, 1s resolution),
+    find the first and last block sharing its timestamp by fetching
+    neighbouring headers in batched rounds, then place it at the midpoint
+    of its slice of the second (normalization.subsecond_split)."""
+    from .normalization import subsecond_split
+    known = dict(ts)
+    lo = {b: b for b in ts}; hi = {b: b for b in ts}
+    open_lo, open_hi = set(ts), set(ts)
+    for _ in range(MAX_SECOND_ROUNDS):
+        want = sorted({lo[b] - 1 for b in open_lo} | {hi[b] + 1 for b in open_hi})
+        want = [n for n in want if n not in known]
+        for i in range(0, len(want), BLOCK_BATCH):
+            chunk = want[i : i + BLOCK_BATCH]
+            res = rpc.batch([("eth_getBlockByNumber", [hex(n), False]) for n in chunk])
+            for n, blk in zip(chunk, res):
+                if blk is not None:
+                    known[n] = rpc.hex_int(blk["timestamp"])
+        for b in list(open_lo):
+            if known.get(lo[b] - 1) == ts[b]:
+                lo[b] -= 1
+            else:
+                open_lo.discard(b)
+        for b in list(open_hi):
+            if known.get(hi[b] + 1) == ts[b]:
+                hi[b] += 1
+            else:
+                open_hi.discard(b)
+        if not open_lo and not open_hi:
+            break
+    rows = []
+    for b, s in ts.items():
+        resolved = b not in open_lo and b not in open_hi
+        rows.append({"block_number": b,
+                     "block_ts_us": subsecond_split(b, lo[b], hi[b], s) if resolved else s * 1_000_000 + 500_000,
+                     "blocks_in_second": hi[b] - lo[b] + 1 if resolved else -1})
+    return pd.DataFrame(rows)
 
 
 def fetch_tx_meta(tx_hashes: list[str], base_fee_by_block: dict[int, int]) -> pd.DataFrame:
@@ -187,7 +231,8 @@ def extract_pool_month(pool: Pool, month: str) -> None:
     blocks = load_block_meta(swaps["block_number"].unique().tolist())
     df = swaps.merge(blocks, on="block_number")
     if "log_block_ts" in df.columns:          # endpoint-provided timestamps must agree with headers
-        bad = (df["log_block_ts"] != df["block_ts"]).sum()
+        has = df["log_block_ts"].notna()      # Arbitrum fills the field on only some logs
+        bad = (df.loc[has, "log_block_ts"] != df.loc[has, "block_ts"]).sum()
         if bad:
             raise RuntimeError(f"{bad} swaps whose log blockTimestamp disagrees with the header")
         df = df.drop(columns=["log_block_ts"])
