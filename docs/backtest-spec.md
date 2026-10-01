@@ -495,7 +495,18 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
    - Every conclusion holds; the canonical timeline sharpens Study A (no lookahead noise on mid-block swaps) and slightly shrinks measured extraction. Longer horizons are unaffected (timing matters less once h ≫ L).
    - On the canonical window the plain trade price separates toxic from benign slightly better (0.900) than arb_exit (0.889), while arb_exit reports the smallest LP loss — consistent with it being the most tolerant rule. arb_exit stays the scoring rule (P§3.6); trade price is the sensitivity.
    - Study B's tracked schedules are per-swap cash ceilings with the AVERAGE-edge margin form; Study I rejected that form (overshoot) — read B as the ceiling, Study I for the mechanism.
-10. ☐ Study C + Supp-2 (depends on 8, 9). Bootstrap Mar–May, evaluate Jun–Aug.
+10. ◐ Study C + Supp-2. Bootstrap Mar–May, evaluate Jun–Aug.
+   - **C1 collateral ✅ (2026-10-01, `pipeline/study_c_collateral.py`, results/study_c/collateral.json).** The reconciliation charge (extraction beyond the job allowance) is collectable only from stake locked before trading. On the chosen design's simulated trades ($13.4B arb volume, $5.41M charge): the charge is **heavy-tailed** — per trade P50 0.17bp, P99 8.4bp, P99.9 21bp, max 358bp of notional; 27% of all charge comes from trades above 50bp.
+
+     | collateral structure | charge collected | notes |
+     |---|---|---|
+     | flat per-trade tranche ρ = 20bp / 100bp | 73% / 87% | leaks the tail |
+     | per-trade tranche ∝ the trade's own price move | 100% in sim | **rejected**: an identity of the model (sim arbs correct in one trade); splitting a big gap into small trades shrinks the tranche but not the charge |
+     | per-trade tranche = gap to the last oracle posted on-chain + buffer, 1-block lag, 3–5bp | 98.4–99.3% | needs a report posted every block (~$4k/day ≈ $0.7M/window at 0.5 gwei); 5-block lag → 75–91% |
+     | **standing per-account bond, debited by charges** | **100%** with a ~$1M bond | dominant arb's daily charge: median $13k, P99 $197k, max $809k; splitting-proof; leak bounded by the bond |
+
+   - **Capital cost is negligible:** even a 100bp tranche locked 7 days adds 0.096bp per $ traded; fed back into Study I as extra arb cost, LP $2.258M → $2.205M and rebalancing unchanged. A 20bp / 1-day stake changes nothing measurable.
+   - **Design implication (paper P§4.5):** collateral should be the trader's **whole active stake / bond, debited by charges**, sized to the worst epoch — not a per-trade tranche, which either leaks the tail or needs per-block oracle posting. The per-trade in-flight hold can remain as a throughput meter. Sybil accounts each need their own bond; an unbonded account cannot be charged ex-post and must pay the worst-case fee at execution.
 11. ☐ Study F — competitor baselines (needs 0.30% ETH/USDC pool extraction).
 11c. ✅ Study H (2026-10-01, `make study-h`). Allowance `m` controller.
    - **Block thirds are not a rent signal.** Thirds rule (first third → lower) flags 99.4% of rent-bearing gap-takers and 94.0% of no-rent ones (J 0.054). The raise zone (last third) almost never occurs: 0.2% / 2.1%. DEX flow sits high in blocks regardless of rent, and the *fraction* of a block is diluted by block size. The informative boundary is absolute: **`tx_index ≤ 2`** (TPR 0.806, FPR 0.477, J 0.329); `≤ 3` is equivalent (0.324). AUC: lower index 0.697, lower block fraction 0.661, priority fee 0.573.

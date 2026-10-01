@@ -1,0 +1,691 @@
+{
+  "assumptions": {
+    "design": "marginal_cap_gas + ctl_feasible (Study I)",
+    "cost_of_capital_annual": 0.05
+  },
+  "by_scenario": {
+    "stable": {
+      "scenario": "stable",
+      "n_trades": 248110,
+      "impact_scaled_tranche_rejected_gameable": [
+        {
+          "k": 0.5,
+          "c_bps": 0.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 5.22,
+          "locked_capital_usd_1day": 37969.0
+        },
+        {
+          "k": 0.5,
+          "c_bps": 1.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 6.22,
+          "locked_capital_usd_1day": 45248.0
+        },
+        {
+          "k": 0.5,
+          "c_bps": 2.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 7.22,
+          "locked_capital_usd_1day": 52526.0
+        },
+        {
+          "k": 0.75,
+          "c_bps": 0.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 7.82,
+          "locked_capital_usd_1day": 56954.0
+        },
+        {
+          "k": 0.75,
+          "c_bps": 1.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 8.82,
+          "locked_capital_usd_1day": 64232.0
+        },
+        {
+          "k": 0.75,
+          "c_bps": 2.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 9.82,
+          "locked_capital_usd_1day": 71511.0
+        },
+        {
+          "k": 1.0,
+          "c_bps": 0.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 10.43,
+          "locked_capital_usd_1day": 75938.0
+        },
+        {
+          "k": 1.0,
+          "c_bps": 1.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 11.43,
+          "locked_capital_usd_1day": 83217.0
+        },
+        {
+          "k": 1.0,
+          "c_bps": 2.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 12.43,
+          "locked_capital_usd_1day": 90495.0
+        }
+      ],
+      "last_oracle_tranche": [
+        {
+          "oracle_lag_blocks": 1,
+          "buffer_bps": 1.0,
+          "charge_collected_share": 0.9552,
+          "leak_m": 0.242,
+          "trades_fully_covered": 0.954,
+          "mean_tranche_bps": 8.31
+        },
+        {
+          "oracle_lag_blocks": 1,
+          "buffer_bps": 3.0,
+          "charge_collected_share": 0.9835,
+          "leak_m": 0.089,
+          "trades_fully_covered": 0.9927,
+          "mean_tranche_bps": 10.31
+        },
+        {
+          "oracle_lag_blocks": 1,
+          "buffer_bps": 5.0,
+          "charge_collected_share": 0.9931,
+          "leak_m": 0.037,
+          "trades_fully_covered": 0.9979,
+          "mean_tranche_bps": 12.31
+        },
+        {
+          "oracle_lag_blocks": 5,
+          "buffer_bps": 1.0,
+          "charge_collected_share": 0.7459,
+          "leak_m": 1.374,
+          "trades_fully_covered": 0.844,
+          "mean_tranche_bps": 8.57
+        },
+        {
+          "oracle_lag_blocks": 5,
+          "buffer_bps": 3.0,
+          "charge_collected_share": 0.8637,
+          "leak_m": 0.737,
+          "trades_fully_covered": 0.9649,
+          "mean_tranche_bps": 10.57
+        },
+        {
+          "oracle_lag_blocks": 5,
+          "buffer_bps": 5.0,
+          "charge_collected_share": 0.9149,
+          "leak_m": 0.46,
+          "trades_fully_covered": 0.9884,
+          "mean_tranche_bps": 12.57
+        },
+        {
+          "oracle_lag_blocks": 25,
+          "buffer_bps": 1.0,
+          "charge_collected_share": 0.8375,
+          "leak_m": 0.879,
+          "trades_fully_covered": 0.9237,
+          "mean_tranche_bps": 20.45
+        },
+        {
+          "oracle_lag_blocks": 25,
+          "buffer_bps": 3.0,
+          "charge_collected_share": 0.8973,
+          "leak_m": 0.556,
+          "trades_fully_covered": 0.9831,
+          "mean_tranche_bps": 22.45
+        },
+        {
+          "oracle_lag_blocks": 25,
+          "buffer_bps": 5.0,
+          "charge_collected_share": 0.9256,
+          "leak_m": 0.402,
+          "trades_fully_covered": 0.9938,
+          "mean_tranche_bps": 24.45
+        }
+      ],
+      "account_bond_by_arb": {
+        "arb cost 0.3bp": {
+          "days_active": 184,
+          "charge_m": 5.408,
+          "median_day_usd": 12894.0,
+          "p99_day_usd": 197157.0,
+          "max_day_usd": 809151.0
+        }
+      },
+      "arb_volume_b": 13.392,
+      "arb_volume_per_day_m": 72.79,
+      "total_charge_m": 5.408,
+      "lp_net_m": 2.258,
+      "charge_per_trade_bps": {
+        "p50": 0.17,
+        "p90": 2.38,
+        "p99": 8.42,
+        "p99.9": 21.26,
+        "max": 357.7
+      },
+      "share_of_charge_from_trades_above_bps": {
+        ">5bp": 0.7224,
+        ">10bp": 0.5485,
+        ">20bp": 0.3885,
+        ">50bp": 0.2701
+      },
+      "by_rho": [
+        {
+          "rho_bps": 2,
+          "charge_collected_share": 0.2938,
+          "leak_m": 3.819,
+          "trades_fully_covered": 0.8755,
+          "locked_capital_usd_by_window": {
+            "1 block": 2.0,
+            "1 hour": 607.0,
+            "1 day (epoch)": 14557.0,
+            "7 days": 101899.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 1e-05,
+            "1 day (epoch)": 0.00027,
+            "7 days": 0.00192
+          }
+        },
+        {
+          "rho_bps": 5,
+          "charge_collected_share": 0.4904,
+          "leak_m": 2.756,
+          "trades_fully_covered": 0.9709,
+          "locked_capital_usd_by_window": {
+            "1 block": 5.0,
+            "1 hour": 1516.0,
+            "1 day (epoch)": 36393.0,
+            "7 days": 254748.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 3e-05,
+            "1 day (epoch)": 0.00068,
+            "7 days": 0.00479
+          }
+        },
+        {
+          "rho_bps": 10,
+          "charge_collected_share": 0.6259,
+          "leak_m": 2.023,
+          "trades_fully_covered": 0.9931,
+          "locked_capital_usd_by_window": {
+            "1 block": 10.0,
+            "1 hour": 3033.0,
+            "1 day (epoch)": 72785.0,
+            "7 days": 509495.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 6e-05,
+            "1 day (epoch)": 0.00137,
+            "7 days": 0.00959
+          }
+        },
+        {
+          "rho_bps": 20,
+          "charge_collected_share": 0.7271,
+          "leak_m": 1.476,
+          "trades_fully_covered": 0.9988,
+          "locked_capital_usd_by_window": {
+            "1 block": 20.0,
+            "1 hour": 6065.0,
+            "1 day (epoch)": 145570.0,
+            "7 days": 1018990.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 0.00011,
+            "1 day (epoch)": 0.00274,
+            "7 days": 0.01918
+          }
+        },
+        {
+          "rho_bps": 50,
+          "charge_collected_share": 0.8151,
+          "leak_m": 1.0,
+          "trades_fully_covered": 0.9999,
+          "locked_capital_usd_by_window": {
+            "1 block": 51.0,
+            "1 hour": 15164.0,
+            "1 day (epoch)": 363925.0,
+            "7 days": 2547476.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 0.00029,
+            "1 day (epoch)": 0.00685,
+            "7 days": 0.04795
+          }
+        },
+        {
+          "rho_bps": 100,
+          "charge_collected_share": 0.8727,
+          "leak_m": 0.689,
+          "trades_fully_covered": 1.0,
+          "locked_capital_usd_by_window": {
+            "1 block": 101.0,
+            "1 hour": 30327.0,
+            "1 day (epoch)": 727850.0,
+            "7 days": 5094952.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 0.00057,
+            "1 day (epoch)": 0.0137,
+            "7 days": 0.09589
+          }
+        }
+      ]
+    },
+    "costs_x4": {
+      "scenario": "costs_x4",
+      "n_trades": 232011,
+      "impact_scaled_tranche_rejected_gameable": [
+        {
+          "k": 0.5,
+          "c_bps": 0.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 5.33,
+          "locked_capital_usd_1day": 37301.0
+        },
+        {
+          "k": 0.5,
+          "c_bps": 1.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 6.33,
+          "locked_capital_usd_1day": 44300.0
+        },
+        {
+          "k": 0.5,
+          "c_bps": 2.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 7.33,
+          "locked_capital_usd_1day": 51299.0
+        },
+        {
+          "k": 0.75,
+          "c_bps": 0.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 7.99,
+          "locked_capital_usd_1day": 55952.0
+        },
+        {
+          "k": 0.75,
+          "c_bps": 1.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 8.99,
+          "locked_capital_usd_1day": 62951.0
+        },
+        {
+          "k": 0.75,
+          "c_bps": 2.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 9.99,
+          "locked_capital_usd_1day": 69950.0
+        },
+        {
+          "k": 1.0,
+          "c_bps": 0.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 10.66,
+          "locked_capital_usd_1day": 74603.0
+        },
+        {
+          "k": 1.0,
+          "c_bps": 1.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 11.66,
+          "locked_capital_usd_1day": 81602.0
+        },
+        {
+          "k": 1.0,
+          "c_bps": 2.0,
+          "charge_collected_share": 1.0,
+          "leak_m": 0.0,
+          "trades_fully_covered": 1.0,
+          "mean_tranche_bps": 12.66,
+          "locked_capital_usd_1day": 88600.0
+        }
+      ],
+      "last_oracle_tranche": [
+        {
+          "oracle_lag_blocks": 1,
+          "buffer_bps": 1.0,
+          "charge_collected_share": 0.9594,
+          "leak_m": 0.212,
+          "trades_fully_covered": 0.9644,
+          "mean_tranche_bps": 8.78
+        },
+        {
+          "oracle_lag_blocks": 1,
+          "buffer_bps": 3.0,
+          "charge_collected_share": 0.9842,
+          "leak_m": 0.082,
+          "trades_fully_covered": 0.9937,
+          "mean_tranche_bps": 10.78
+        },
+        {
+          "oracle_lag_blocks": 1,
+          "buffer_bps": 5.0,
+          "charge_collected_share": 0.9932,
+          "leak_m": 0.036,
+          "trades_fully_covered": 0.9981,
+          "mean_tranche_bps": 12.78
+        },
+        {
+          "oracle_lag_blocks": 5,
+          "buffer_bps": 1.0,
+          "charge_collected_share": 0.7531,
+          "leak_m": 1.292,
+          "trades_fully_covered": 0.8619,
+          "mean_tranche_bps": 8.79
+        },
+        {
+          "oracle_lag_blocks": 5,
+          "buffer_bps": 3.0,
+          "charge_collected_share": 0.8646,
+          "leak_m": 0.708,
+          "trades_fully_covered": 0.967,
+          "mean_tranche_bps": 10.79
+        },
+        {
+          "oracle_lag_blocks": 5,
+          "buffer_bps": 5.0,
+          "charge_collected_share": 0.9145,
+          "leak_m": 0.447,
+          "trades_fully_covered": 0.9888,
+          "mean_tranche_bps": 12.79
+        },
+        {
+          "oracle_lag_blocks": 25,
+          "buffer_bps": 1.0,
+          "charge_collected_share": 0.8387,
+          "leak_m": 0.844,
+          "trades_fully_covered": 0.931,
+          "mean_tranche_bps": 20.69
+        },
+        {
+          "oracle_lag_blocks": 25,
+          "buffer_bps": 3.0,
+          "charge_collected_share": 0.8965,
+          "leak_m": 0.542,
+          "trades_fully_covered": 0.9837,
+          "mean_tranche_bps": 22.69
+        },
+        {
+          "oracle_lag_blocks": 25,
+          "buffer_bps": 5.0,
+          "charge_collected_share": 0.9245,
+          "leak_m": 0.395,
+          "trades_fully_covered": 0.9939,
+          "mean_tranche_bps": 24.69
+        }
+      ],
+      "account_bond_by_arb": {
+        "arb cost 0.3bp": {
+          "days_active": 92,
+          "charge_m": 3.675,
+          "median_day_usd": 15512.0,
+          "p99_day_usd": 279559.0,
+          "max_day_usd": 809151.0
+        },
+        "arb cost 1.2bp": {
+          "days_active": 92,
+          "charge_m": 1.555,
+          "median_day_usd": 10165.0,
+          "p99_day_usd": 136958.0,
+          "max_day_usd": 185118.0
+        }
+      },
+      "arb_volume_b": 12.878,
+      "arb_volume_per_day_m": 69.99,
+      "total_charge_m": 5.23,
+      "lp_net_m": 1.806,
+      "charge_per_trade_bps": {
+        "p50": 0.08,
+        "p90": 2.28,
+        "p99": 8.48,
+        "p99.9": 21.35,
+        "max": 357.7
+      },
+      "share_of_charge_from_trades_above_bps": {
+        ">5bp": 0.7355,
+        ">10bp": 0.563,
+        ">20bp": 0.4018,
+        ">50bp": 0.2793
+      },
+      "by_rho": [
+        {
+          "rho_bps": 2,
+          "charge_collected_share": 0.2836,
+          "leak_m": 3.747,
+          "trades_fully_covered": 0.8831,
+          "locked_capital_usd_by_window": {
+            "1 block": 2.0,
+            "1 hour": 583.0,
+            "1 day (epoch)": 13998.0,
+            "7 days": 97984.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 1e-05,
+            "1 day (epoch)": 0.00027,
+            "7 days": 0.00192
+          }
+        },
+        {
+          "rho_bps": 5,
+          "charge_collected_share": 0.4771,
+          "leak_m": 2.735,
+          "trades_fully_covered": 0.9713,
+          "locked_capital_usd_by_window": {
+            "1 block": 5.0,
+            "1 hour": 1458.0,
+            "1 day (epoch)": 34994.0,
+            "7 days": 244961.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 3e-05,
+            "1 day (epoch)": 0.00068,
+            "7 days": 0.00479
+          }
+        },
+        {
+          "rho_bps": 10,
+          "charge_collected_share": 0.6139,
+          "leak_m": 2.02,
+          "trades_fully_covered": 0.9931,
+          "locked_capital_usd_by_window": {
+            "1 block": 10.0,
+            "1 hour": 2916.0,
+            "1 day (epoch)": 69989.0,
+            "7 days": 489921.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 6e-05,
+            "1 day (epoch)": 0.00137,
+            "7 days": 0.00959
+          }
+        },
+        {
+          "rho_bps": 20,
+          "charge_collected_share": 0.7177,
+          "leak_m": 1.477,
+          "trades_fully_covered": 0.9987,
+          "locked_capital_usd_by_window": {
+            "1 block": 19.0,
+            "1 hour": 5832.0,
+            "1 day (epoch)": 139977.0,
+            "7 days": 979842.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 0.00011,
+            "1 day (epoch)": 0.00274,
+            "7 days": 0.01918
+          }
+        },
+        {
+          "rho_bps": 50,
+          "charge_collected_share": 0.809,
+          "leak_m": 0.999,
+          "trades_fully_covered": 0.9998,
+          "locked_capital_usd_by_window": {
+            "1 block": 49.0,
+            "1 hour": 14581.0,
+            "1 day (epoch)": 349944.0,
+            "7 days": 2449605.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 0.00029,
+            "1 day (epoch)": 0.00685,
+            "7 days": 0.04795
+          }
+        },
+        {
+          "rho_bps": 100,
+          "charge_collected_share": 0.8684,
+          "leak_m": 0.688,
+          "trades_fully_covered": 1.0,
+          "locked_capital_usd_by_window": {
+            "1 block": 97.0,
+            "1 hour": 29162.0,
+            "1 day (epoch)": 699887.0,
+            "7 days": 4899211.0
+          },
+          "capital_cost_bps_per_dollar_traded": {
+            "1 block": 0.0,
+            "1 hour": 0.00057,
+            "1 day (epoch)": 0.0137,
+            "7 days": 0.09589
+          }
+        }
+      ]
+    }
+  },
+  "feedback": [
+    {
+      "scenario": "stable",
+      "rho_bps": 20,
+      "window": "1 day (epoch)",
+      "extra_cost_bps": 0.00274,
+      "without": {
+        "lp_net_m": 2.258,
+        "builder_payments_m": 1.184,
+        "uncorrected_share_of_correctable": 0.00067,
+        "rebalanced_block_share": 0.99531,
+        "m_bps_final": 2.1079
+      },
+      "with": {
+        "lp_net_m": 2.257,
+        "builder_payments_m": 1.181,
+        "uncorrected_share_of_correctable": 0.00066,
+        "rebalanced_block_share": 0.99528,
+        "m_bps_final": 2.1079
+      }
+    },
+    {
+      "scenario": "stable",
+      "rho_bps": 100,
+      "window": "7 days",
+      "extra_cost_bps": 0.09589,
+      "without": {
+        "lp_net_m": 2.258,
+        "builder_payments_m": 1.184,
+        "uncorrected_share_of_correctable": 0.00067,
+        "rebalanced_block_share": 0.99531,
+        "m_bps_final": 2.1079
+      },
+      "with": {
+        "lp_net_m": 2.205,
+        "builder_payments_m": 1.11,
+        "uncorrected_share_of_correctable": 0.00134,
+        "rebalanced_block_share": 0.99414,
+        "m_bps_final": 2.3357
+      }
+    },
+    {
+      "scenario": "costs_x4",
+      "rho_bps": 20,
+      "window": "1 day (epoch)",
+      "extra_cost_bps": 0.00274,
+      "without": {
+        "lp_net_m": 1.806,
+        "builder_payments_m": 1.067,
+        "uncorrected_share_of_correctable": 0.00284,
+        "rebalanced_block_share": 0.88051,
+        "m_bps_final": 2.588
+      },
+      "with": {
+        "lp_net_m": 1.805,
+        "builder_payments_m": 1.065,
+        "uncorrected_share_of_correctable": 0.00284,
+        "rebalanced_block_share": 0.8804,
+        "m_bps_final": 2.588
+      }
+    },
+    {
+      "scenario": "costs_x4",
+      "rho_bps": 100,
+      "window": "7 days",
+      "extra_cost_bps": 0.09589,
+      "without": {
+        "lp_net_m": 1.806,
+        "builder_payments_m": 1.067,
+        "uncorrected_share_of_correctable": 0.00284,
+        "rebalanced_block_share": 0.88051,
+        "m_bps_final": 2.588
+      },
+      "with": {
+        "lp_net_m": 1.749,
+        "builder_payments_m": 1.026,
+        "uncorrected_share_of_correctable": 0.00352,
+        "rebalanced_block_share": 0.87636,
+        "m_bps_final": 2.4586
+      }
+    }
+  ]
+}

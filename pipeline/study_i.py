@@ -168,6 +168,9 @@ def arb_choice(rule: str, a: float, D: float, h: float, g: float, m: float, gap_
 def run_one(args) -> dict:
     rule, param, scenario, premium = args[:4]
     phase = args[4] if len(args) > 4 else "open"     # open | close | both
+    record = bool(args[5]) if len(args) > 5 else False  # keep per-trade arrays (Study C)
+    extra_cost = (args[6] if len(args) > 6 else 0.0) / 1e4   # added to every arb's cost (e.g. capital cost of stake)
+    trades = []
     if not _DATA:
         _init()
     o, Dd, gas, day = _DATA["o"], _DATA["D"], _DATA["gas"], _DATA["day"]
@@ -239,9 +242,9 @@ def run_one(args) -> dict:
                 p += s * V / D
           G = oi - p; gab = abs(G); a = gab - F
           if a > 0:
-              costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) for c in costs_base]
+              costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) + extra_cost for c in costs_base]
               correctable = arb_choice("today", a, D, costs[0], gas[i], 0.0, gab)[0] > 0
-              res = sorted((arb_choice(rule, a, D, h, gas[i], m, gab) for h in costs), reverse=True)
+              res = sorted(((*arb_choice(rule, a, D, h, gas[i], m, gab), h) for h in costs), reverse=True)
               w, r2 = res[0], res[1]
               traded = w[0] > 0 and w[1] > 0
               if correctable:
@@ -258,6 +261,8 @@ def run_one(args) -> dict:
                   margin += w[0] - max(r2[0], 0.0)
                   arb_vol += V
                   pass_trades[_pass] += 1; pass_vol[_pass] += V
+                  if record:
+                      trades.append((i, day[i], V, E, kept, w[3], m, p, G))   # p = post-trade ln price
                   p += math.copysign(V / D, G)
                   if (oi - p) * G < 0 and abs(oi - p) > 0.5e-4:
                       overshoot += 1
@@ -331,6 +336,7 @@ def run_one(args) -> dict:
         "user_pretrade_staleness_bps_vw": round(exo_gap_w / max(exo_vol, 1) * 1e4, 3),
         "m_bps_final": round(m * 1e4, 4),
         "daily": daily if controlled else None,
+        "_trades": np.array(trades) if record else None,
     }
 
 
