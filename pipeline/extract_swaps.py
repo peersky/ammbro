@@ -29,7 +29,7 @@ from .config import DATA_DIR, months_in_window, ONCHAIN_DIR
 from .chains import ACTIVE
 from .pools import POOLS, SWAP_TOPIC, Pool
 
-ONCHAIN_DIR = ONCHAIN_DIR / "swaps"
+SWAPS_DIR = ONCHAIN_DIR / "swaps"
 LOG_CHUNK = ACTIVE.log_chunk   # blocks per getLogs call (endpoint limit per chain)
 BLOCK_BATCH = 200     # blocks per JSON-RPC batch
 TX_BATCH = 200        # txs per JSON-RPC batch (endpoint token bucket ~450/s)
@@ -218,7 +218,7 @@ def _month_bounds(month: str) -> tuple[int, int]:
 
 
 def extract_pool_month(pool: Pool, month: str) -> None:
-    out_dir = ONCHAIN_DIR / pool.name
+    out_dir = SWAPS_DIR / pool.name
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"{pool.name}-{month}.parquet"
     if out.exists():

@@ -65,3 +65,19 @@ def test_normalized_time_spreads_txs_over_the_block_slice_on_l2():
     df = pd.DataFrame({"block_ts": [1000, 1000], "next_block_ts": [1001, 1001], "tx_index": [0, 5], "tx_count": [10, 10],
                        "block_ts_us": [1000_375_000, 1000_375_000], "blocks_in_second": [4, 4]})
     assert list(normalized_time_us(df)) == [1000_250_000, 1000_375_000]
+
+
+def test_stage_directories_follow_the_active_chain():
+    """Module-level paths are fixed at import, so check each chain in a
+    fresh interpreter. Guards against a stage rebinding the shared
+    ONCHAIN_DIR name (a refactor once sent L2 tx files to swaps/txs/)."""
+    import os, subprocess, sys
+    code = ("import pipeline.config as c, pipeline.extract_swaps as s, pipeline.extract_txs as t, pipeline.labels as l;"
+            "assert s.SWAPS_DIR == c.ONCHAIN_DIR / 'swaps';"
+            "assert t.TXS_DIR == c.ONCHAIN_DIR / 'txs';"
+            "assert l.TXS_DIR == t.TXS_DIR and l.SWAPS_DIR == s.SWAPS_DIR;"
+            "print(c.ONCHAIN_DIR)")
+    for chain, tail in (("mainnet", "data/onchain"), ("arbitrum", "data/onchain/arbitrum"), ("hyperevm", "data/onchain/hyperevm")):
+        out = subprocess.run([sys.executable, "-c", code], env={**os.environ, "AMMBRO_CHAIN": chain},
+                             capture_output=True, text=True, check=True).stdout.strip()
+        assert out.endswith(tail), (chain, out)

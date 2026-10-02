@@ -13,7 +13,7 @@ import sys
 import pandas as pd
 
 from .config import DATA_DIR, ONCHAIN_DIR
-from .extract_swaps import ONCHAIN_DIR, fetch_tx_meta
+from .extract_swaps import SWAPS_DIR, fetch_tx_meta
 from .pools import POOLS
 
 TXS_DIR = ONCHAIN_DIR / "txs"
@@ -26,7 +26,7 @@ def main() -> None:
             continue
         out_dir = TXS_DIR / pool.name
         out_dir.mkdir(parents=True, exist_ok=True)
-        for p in sorted((ONCHAIN_DIR / pool.name).glob("*.parquet")):
+        for p in sorted((SWAPS_DIR / pool.name).glob("*.parquet")):
             out = out_dir / p.name.replace(".parquet", ".txs.parquet")
             if out.exists():
                 print(f"  ok (exists) {out.name}")
