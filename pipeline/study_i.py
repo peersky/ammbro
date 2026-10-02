@@ -67,12 +67,16 @@ CORRECTABLE blocks left uncorrected, where correctable means the cheapest
 arb would profit with no charge at all — a fixed price band would demand
 corrections no arb can afford when costs rise.
 
-Rebalancing is reported two ways: uncorrected share of correctable blocks
-(the binding constraint), and the share of blocks within fee + 1bp after
-the arb phase. Runs that leave more correctable blocks uncorrected than
-`today` does are FAILURES whatever their LP number: with the arb gone
-the pool freezes, and replayed user flow trades against a price no real
-router would route to, which inflates LP P&L artificially.
+Rebalancing (the binding constraint) is judged on quantities that mean the
+same at any block time: the share of blocks within fee + 1bp after the arb
+phase may fall at most REB_TOL below `today`'s, and the volume-weighted gap
+users trade against may rise at most USER_STALE_TOL_BPS. Runs failing
+either are FAILURES whatever their LP number: with the arb gone the pool
+freezes, and replayed user flow trades against a price no real router would
+route to, which inflates LP P&L artificially. Also reported: uncorrected
+share of correctable blocks (the earlier constraint — it counts a standing
+gap once per block, so one stalled hour weighs 300 blocks on mainnet and
+14,400 on Arbitrum) and uncorrected time in hours.
 
 Arb phase position (`phase`): open (before the block's user flow, default),
 close (after it), or both. No time passes inside a block, so open and close
@@ -113,6 +117,8 @@ S_STAR_SR = 0.02
 S_LOW_SR = 0.01                 # daily decay allowed only below this
 MIN_STALE_SR = 5                # hourly raise needs at least this many stale blocks
 RAISE_SR, DECAY_SR = 2.0, 0.95  # feasible controller step sizes
+REB_TOL = 0.005                 # rebalancing constraint: within-band share may drop <= 0.5pp vs today
+USER_STALE_TOL_BPS = 0.1        # ... and user pre-trade gap may rise <= 0.1bp vs today
 
 _DATA = {}
 
@@ -132,7 +138,8 @@ def _init():
     _DATA["exo_s"] = exo["s"].to_numpy()
     _DATA["exo_v"] = exo["v"].to_numpy()
     step_s = json.loads((CACHE / "calibration_inputs.json").read_text()).get("step_s", 12)
-    _DATA["raise_steps"] = int(round(RAISE_S / step_s))   # 300 on mainnet (12s), ~14k on Arbitrum (~0.25s)
+    _DATA["raise_steps"] = int(round(RAISE_S / step_s))
+    _DATA["step_s"] = float(step_s)   # 300 on mainnet (12s), ~14k on Arbitrum (~0.25s)
 
 
 def arb_choice(rule: str, a: float, D: float, h: float, g: float, m: float, gap_abs: float):
@@ -331,6 +338,7 @@ def run_one(args) -> dict:
         "builder_payments_m": round(builder / 1e6, 3), "arb_margin_m": round(margin / 1e6, 3),
         "arb_volume_b": round(arb_vol / 1e9, 3),
         "uncorrected_share_of_correctable": round(n_uncorr / max(n_corr, 1), 5),
+        "uncorrected_hours": round(n_uncorr * _DATA["step_s"] / 3600, 2),
         "correctable_blocks": n_corr,
         "rebalanced_block_share": round(reb / n, 5),
         "blocks_stale_2plus": persist2,
@@ -373,6 +381,11 @@ def grid() -> list:
     return runs
 
 
+def keeps_rebalanced(r: dict, today: dict) -> bool:
+    return bool(r["rebalanced_block_share"] >= today["rebalanced_block_share"] - REB_TOL
+                and r["user_pretrade_staleness_bps_vw"] <= today["user_pretrade_staleness_bps_vw"] + USER_STALE_TOL_BPS)
+
+
 def run() -> dict:
     res = main(grid())
     for r in res:
@@ -383,7 +396,7 @@ def run() -> dict:
         t = today[r["scenario"]]
         r["lp_net_vs_today_m"] = round(r["lp_net_m"] - t["lp_net_m"], 3)
         # binding constraint: no worse rebalancing than today (+0.5pp tolerance)
-        r["keeps_rebalanced"] = bool(r["uncorrected_share_of_correctable"] <= t["uncorrected_share_of_correctable"] + 0.005)
+        r["keeps_rebalanced"] = keeps_rebalanced(r, t)
     for sc in SCENARIOS:
         ok = [r for r in res if r["scenario"] == sc and r["keeps_rebalanced"]]
         best = max(ok, key=lambda r: r["lp_net_m"])

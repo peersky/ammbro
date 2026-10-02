@@ -27,18 +27,6 @@
   {
    "rule": "marginal_cap_gas",
    "param": "ctl_fast",
-   "premium_bps": 0.0,
-   "phase": "close",
-   "worst_lp_vs_today_m": 5.498,
-   "by_scenario": {
-    "stable": 6.136,
-    "costs_x4": 5.796,
-    "costs_x8": 5.498
-   }
-  },
-  {
-   "rule": "marginal_cap_gas",
-   "param": "ctl_fast",
    "premium_bps": 0.1,
    "phase": "open",
    "worst_lp_vs_today_m": 5.497,
@@ -85,15 +73,15 @@
    }
   },
   {
-   "rule": "avg_margin",
-   "param": "ctl_fast",
+   "rule": "marginal_cap",
+   "param": "ctl_feasible",
    "premium_bps": 0.0,
    "phase": "open",
-   "worst_lp_vs_today_m": 4.49,
+   "worst_lp_vs_today_m": 4.812,
    "by_scenario": {
-    "stable": 5.545,
-    "costs_x4": 5.013,
-    "costs_x8": 4.49
+    "stable": 5.135,
+    "costs_x4": 4.896,
+    "costs_x8": 4.812
    }
   },
   {
@@ -121,15 +109,63 @@
    }
   },
   {
-   "rule": "avg_margin",
+   "rule": "job_cap",
    "param": "5.0",
    "premium_bps": 0.0,
    "phase": "open",
-   "worst_lp_vs_today_m": 1.855,
+   "worst_lp_vs_today_m": 3.184,
    "by_scenario": {
-    "stable": 1.855,
-    "costs_x4": 1.896,
-    "costs_x8": 1.969
+    "stable": 3.184,
+    "costs_x4": 3.38,
+    "costs_x8": 3.482
+   }
+  },
+  {
+   "rule": "job_cap",
+   "param": "ctl",
+   "premium_bps": 0.0,
+   "phase": "open",
+   "worst_lp_vs_today_m": 0.976,
+   "by_scenario": {
+    "stable": 0.976,
+    "costs_x4": 1.161,
+    "costs_x8": 1.215
+   }
+  },
+  {
+   "rule": "job_cap",
+   "param": "ctl_tight",
+   "premium_bps": 0.0,
+   "phase": "open",
+   "worst_lp_vs_today_m": 0.976,
+   "by_scenario": {
+    "stable": 0.976,
+    "costs_x4": 1.161,
+    "costs_x8": 1.215
+   }
+  },
+  {
+   "rule": "job_cap",
+   "param": "ctl_comp",
+   "premium_bps": 0.0,
+   "phase": "open",
+   "worst_lp_vs_today_m": 0.976,
+   "by_scenario": {
+    "stable": 0.976,
+    "costs_x4": 1.161,
+    "costs_x8": 1.215
+   }
+  },
+  {
+   "rule": "job_cap",
+   "param": "ctl_fast",
+   "premium_bps": 0.0,
+   "phase": "open",
+   "worst_lp_vs_today_m": 0.859,
+   "by_scenario": {
+    "stable": 0.859,
+    "costs_x4": 1.045,
+    "costs_x8": 1.098
    }
   }
  ],
@@ -234,6 +270,7 @@
    "arb_margin_m": 0.381,
    "arb_volume_b": 13.393,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 248148,
    "rebalanced_block_share": 0.99542,
    "blocks_stale_2plus": 1366,
@@ -283,6 +320,7 @@
    "arb_margin_m": 0.507,
    "arb_volume_b": 26.758,
    "uncorrected_share_of_correctable": 0.04517,
+   "uncorrected_hours": 31.94,
    "correctable_blocks": 212118,
    "rebalanced_block_share": 0.98056,
    "blocks_stale_2plus": 12352,
@@ -332,6 +370,7 @@
    "arb_margin_m": 0.727,
    "arb_volume_b": 24.521,
    "uncorrected_share_of_correctable": 0.00215,
+   "uncorrected_hours": 1.61,
    "correctable_blocks": 224681,
    "rebalanced_block_share": 0.98872,
    "blocks_stale_2plus": 5444,
@@ -350,7 +389,7 @@
    "m_bps_final": 1.0,
    "daily": null,
    "lp_net_vs_today_m": 5.554,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "avg_margin",
@@ -381,6 +420,7 @@
    "arb_margin_m": 0.626,
    "arb_volume_b": 21.354,
    "uncorrected_share_of_correctable": 3e-05,
+   "uncorrected_hours": 0.03,
    "correctable_blocks": 241269,
    "rebalanced_block_share": 0.99064,
    "blocks_stale_2plus": 3970,
@@ -399,7 +439,7 @@
    "m_bps_final": 2.0,
    "daily": null,
    "lp_net_vs_today_m": 3.956,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "avg_margin",
@@ -430,6 +470,7 @@
    "arb_margin_m": 0.497,
    "arb_volume_b": 17.213,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 248517,
    "rebalanced_block_share": 0.99328,
    "blocks_stale_2plus": 2444,
@@ -448,7 +489,7 @@
    "m_bps_final": 5.0,
    "daily": null,
    "lp_net_vs_today_m": 1.855,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "avg_margin",
@@ -479,6 +520,7 @@
    "arb_margin_m": 0.551,
    "arb_volume_b": 25.34,
    "uncorrected_share_of_correctable": 0.01235,
+   "uncorrected_hours": 8.82,
    "correctable_blocks": 214351,
    "rebalanced_block_share": 0.98687,
    "blocks_stale_2plus": 6787,
@@ -1627,6 +1669,7 @@
    "arb_margin_m": 0.595,
    "arb_volume_b": 25.046,
    "uncorrected_share_of_correctable": 0.00638,
+   "uncorrected_hours": 4.62,
    "correctable_blocks": 217497,
    "rebalanced_block_share": 0.98785,
    "blocks_stale_2plus": 6035,
@@ -2775,6 +2818,7 @@
    "arb_margin_m": 0.647,
    "arb_volume_b": 25.129,
    "uncorrected_share_of_correctable": 0.00663,
+   "uncorrected_hours": 4.77,
    "correctable_blocks": 215548,
    "rebalanced_block_share": 0.98766,
    "blocks_stale_2plus": 6178,
@@ -3923,6 +3967,7 @@
    "arb_margin_m": 0.678,
    "arb_volume_b": 24.542,
    "uncorrected_share_of_correctable": 0.00088,
+   "uncorrected_hours": 0.65,
    "correctable_blocks": 220246,
    "rebalanced_block_share": 0.98898,
    "blocks_stale_2plus": 5118,
@@ -5040,7 +5085,7 @@
     ]
    ],
    "lp_net_vs_today_m": 5.545,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "job_cap",
@@ -5071,6 +5116,7 @@
    "arb_margin_m": 0.234,
    "arb_volume_b": 12.939,
    "uncorrected_share_of_correctable": 0.17938,
+   "uncorrected_hours": 169.54,
    "correctable_blocks": 283548,
    "rebalanced_block_share": 0.9736,
    "blocks_stale_2plus": 17647,
@@ -5120,6 +5166,7 @@
    "arb_margin_m": 0.389,
    "arb_volume_b": 13.061,
    "uncorrected_share_of_correctable": 0.06729,
+   "uncorrected_hours": 60.67,
    "correctable_blocks": 270497,
    "rebalanced_block_share": 0.99295,
    "blocks_stale_2plus": 3364,
@@ -5169,6 +5216,7 @@
    "arb_margin_m": 0.391,
    "arb_volume_b": 13.077,
    "uncorrected_share_of_correctable": 0.05744,
+   "uncorrected_hours": 51.56,
    "correctable_blocks": 269292,
    "rebalanced_block_share": 0.99512,
    "blocks_stale_2plus": 1490,
@@ -5187,7 +5235,7 @@
    "m_bps_final": 2.0,
    "daily": null,
    "lp_net_vs_today_m": 4.992,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -5218,6 +5266,7 @@
    "arb_margin_m": 0.391,
    "arb_volume_b": 13.078,
    "uncorrected_share_of_correctable": 0.05717,
+   "uncorrected_hours": 51.32,
    "correctable_blocks": 269265,
    "rebalanced_block_share": 0.99517,
    "blocks_stale_2plus": 1447,
@@ -5236,7 +5285,7 @@
    "m_bps_final": 5.0,
    "daily": null,
    "lp_net_vs_today_m": 3.184,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -5267,6 +5316,7 @@
    "arb_margin_m": 0.391,
    "arb_volume_b": 13.078,
    "uncorrected_share_of_correctable": 0.05717,
+   "uncorrected_hours": 51.32,
    "correctable_blocks": 269265,
    "rebalanced_block_share": 0.99517,
    "blocks_stale_2plus": 1447,
@@ -6384,7 +6434,7 @@
     ]
    ],
    "lp_net_vs_today_m": 0.976,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -6415,6 +6465,7 @@
    "arb_margin_m": 0.391,
    "arb_volume_b": 13.078,
    "uncorrected_share_of_correctable": 0.05717,
+   "uncorrected_hours": 51.32,
    "correctable_blocks": 269265,
    "rebalanced_block_share": 0.99517,
    "blocks_stale_2plus": 1447,
@@ -7532,7 +7583,7 @@
     ]
    ],
    "lp_net_vs_today_m": 0.976,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -7563,6 +7614,7 @@
    "arb_margin_m": 0.391,
    "arb_volume_b": 13.078,
    "uncorrected_share_of_correctable": 0.05717,
+   "uncorrected_hours": 51.32,
    "correctable_blocks": 269265,
    "rebalanced_block_share": 0.99517,
    "blocks_stale_2plus": 1447,
@@ -8680,7 +8732,7 @@
     ]
    ],
    "lp_net_vs_today_m": 0.976,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -8711,6 +8763,7 @@
    "arb_margin_m": 0.391,
    "arb_volume_b": 13.078,
    "uncorrected_share_of_correctable": 0.05717,
+   "uncorrected_hours": 51.32,
    "correctable_blocks": 269265,
    "rebalanced_block_share": 0.99517,
    "blocks_stale_2plus": 1447,
@@ -9828,7 +9881,7 @@
     ]
    ],
    "lp_net_vs_today_m": 0.859,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "marginal_cap",
@@ -9859,6 +9912,7 @@
    "arb_margin_m": 0.231,
    "arb_volume_b": 13.25,
    "uncorrected_share_of_correctable": 0.11873,
+   "uncorrected_hours": 103.7,
    "correctable_blocks": 262008,
    "rebalanced_block_share": 0.97527,
    "blocks_stale_2plus": 16937,
@@ -9908,6 +9962,7 @@
    "arb_margin_m": 0.379,
    "arb_volume_b": 13.373,
    "uncorrected_share_of_correctable": 0.0142,
+   "uncorrected_hours": 11.81,
    "correctable_blocks": 249651,
    "rebalanced_block_share": 0.99262,
    "blocks_stale_2plus": 3530,
@@ -9926,7 +9981,7 @@
    "m_bps_final": 1.0,
    "daily": null,
    "lp_net_vs_today_m": 6.15,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "marginal_cap",
@@ -9957,6 +10012,7 @@
    "arb_margin_m": 0.381,
    "arb_volume_b": 13.392,
    "uncorrected_share_of_correctable": 0.00112,
+   "uncorrected_hours": 0.93,
    "correctable_blocks": 248285,
    "rebalanced_block_share": 0.99522,
    "blocks_stale_2plus": 1545,
@@ -10006,6 +10062,7 @@
    "arb_margin_m": 0.381,
    "arb_volume_b": 13.393,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 248148,
    "rebalanced_block_share": 0.99542,
    "blocks_stale_2plus": 1366,
@@ -10055,6 +10112,7 @@
    "arb_margin_m": 0.326,
    "arb_volume_b": 13.357,
    "uncorrected_share_of_correctable": 0.01715,
+   "uncorrected_hours": 14.26,
    "correctable_blocks": 249337,
    "rebalanced_block_share": 0.99278,
    "blocks_stale_2plus": 2927,
@@ -11172,7 +11230,7 @@
     ]
    ],
    "lp_net_vs_today_m": 6.093,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "marginal_cap",
@@ -11203,6 +11261,7 @@
    "arb_margin_m": 0.351,
    "arb_volume_b": 13.374,
    "uncorrected_share_of_correctable": 0.00796,
+   "uncorrected_hours": 6.6,
    "correctable_blocks": 248699,
    "rebalanced_block_share": 0.99416,
    "blocks_stale_2plus": 2111,
@@ -12320,7 +12379,7 @@
     ]
    ],
    "lp_net_vs_today_m": 5.962,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "marginal_cap",
@@ -12351,6 +12410,7 @@
    "arb_margin_m": 0.347,
    "arb_volume_b": 13.371,
    "uncorrected_share_of_correctable": 0.01265,
+   "uncorrected_hours": 10.5,
    "correctable_blocks": 249119,
    "rebalanced_block_share": 0.99332,
    "blocks_stale_2plus": 2601,
@@ -13468,7 +13528,7 @@
     ]
    ],
    "lp_net_vs_today_m": 6.077,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "marginal_cap",
@@ -13499,6 +13559,7 @@
    "arb_margin_m": 0.372,
    "arb_volume_b": 13.391,
    "uncorrected_share_of_correctable": 0.0009,
+   "uncorrected_hours": 0.75,
    "correctable_blocks": 248202,
    "rebalanced_block_share": 0.9953,
    "blocks_stale_2plus": 1420,
@@ -14647,6 +14708,7 @@
    "arb_margin_m": 0.258,
    "arb_volume_b": 13.393,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 248148,
    "rebalanced_block_share": 0.99542,
    "blocks_stale_2plus": 1366,
@@ -14696,6 +14758,7 @@
    "arb_margin_m": 0.381,
    "arb_volume_b": 13.393,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 248148,
    "rebalanced_block_share": 0.99542,
    "blocks_stale_2plus": 1366,
@@ -14745,6 +14808,7 @@
    "arb_margin_m": 0.381,
    "arb_volume_b": 13.393,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 248148,
    "rebalanced_block_share": 0.99542,
    "blocks_stale_2plus": 1366,
@@ -14794,6 +14858,7 @@
    "arb_margin_m": 0.381,
    "arb_volume_b": 13.393,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 248148,
    "rebalanced_block_share": 0.99542,
    "blocks_stale_2plus": 1366,
@@ -14843,6 +14908,7 @@
    "arb_margin_m": 0.202,
    "arb_volume_b": 12.554,
    "uncorrected_share_of_correctable": 0.2649,
+   "uncorrected_hours": 278.81,
    "correctable_blocks": 315748,
    "rebalanced_block_share": 0.93235,
    "blocks_stale_2plus": 84475,
@@ -15991,6 +16057,7 @@
    "arb_margin_m": 0.202,
    "arb_volume_b": 12.554,
    "uncorrected_share_of_correctable": 0.2649,
+   "uncorrected_hours": 278.81,
    "correctable_blocks": 315748,
    "rebalanced_block_share": 0.93235,
    "blocks_stale_2plus": 84475,
@@ -17139,6 +17206,7 @@
    "arb_margin_m": 0.319,
    "arb_volume_b": 13.393,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 248148,
    "rebalanced_block_share": 0.99542,
    "blocks_stale_2plus": 1366,
@@ -18287,6 +18355,7 @@
    "arb_margin_m": 0.319,
    "arb_volume_b": 13.393,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 248148,
    "rebalanced_block_share": 0.99542,
    "blocks_stale_2plus": 1366,
@@ -19435,6 +19504,7 @@
    "arb_margin_m": 0.319,
    "arb_volume_b": 13.393,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 248148,
    "rebalanced_block_share": 0.99542,
    "blocks_stale_2plus": 1366,
@@ -20583,6 +20653,7 @@
    "arb_margin_m": 0.319,
    "arb_volume_b": 13.393,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 248148,
    "rebalanced_block_share": 0.99542,
    "blocks_stale_2plus": 1366,
@@ -21731,6 +21802,7 @@
    "arb_margin_m": 0.375,
    "arb_volume_b": 13.387,
    "uncorrected_share_of_correctable": 0.00223,
+   "uncorrected_hours": 1.84,
    "correctable_blocks": 248321,
    "rebalanced_block_share": 0.99505,
    "blocks_stale_2plus": 1580,
@@ -22879,6 +22951,7 @@
    "arb_margin_m": 0.356,
    "arb_volume_b": 13.392,
    "uncorrected_share_of_correctable": 0.00067,
+   "uncorrected_hours": 0.56,
    "correctable_blocks": 248277,
    "rebalanced_block_share": 0.99531,
    "blocks_stale_2plus": 1497,
@@ -24027,6 +24100,7 @@
    "arb_margin_m": 0.374,
    "arb_volume_b": 13.17,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 243658,
    "rebalanced_block_share": 0.99531,
    "blocks_stale_2plus": 1483,
@@ -24045,7 +24119,7 @@
    "m_bps_final": 0.0,
    "daily": null,
    "lp_net_vs_today_m": -0.173,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "today",
@@ -24076,6 +24150,7 @@
    "arb_margin_m": 0.385,
    "arb_volume_b": 13.549,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 257990,
    "rebalanced_block_share": 0.9955,
    "blocks_stale_2plus": 1318,
@@ -24125,6 +24200,7 @@
    "arb_margin_m": 0.313,
    "arb_volume_b": 13.17,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 243658,
    "rebalanced_block_share": 0.99531,
    "blocks_stale_2plus": 1483,
@@ -25242,7 +25318,7 @@
     ]
    ],
    "lp_net_vs_today_m": 6.136,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "marginal_cap_gas",
@@ -25273,6 +25349,7 @@
    "arb_margin_m": 0.322,
    "arb_volume_b": 13.549,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 257990,
    "rebalanced_block_share": 0.9955,
    "blocks_stale_2plus": 1318,
@@ -26421,6 +26498,7 @@
    "arb_margin_m": 0.659,
    "arb_volume_b": 12.884,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 232154,
    "rebalanced_block_share": 0.88086,
    "blocks_stale_2plus": 88914,
@@ -26470,6 +26548,7 @@
    "arb_margin_m": 0.345,
    "arb_volume_b": 17.962,
    "uncorrected_share_of_correctable": 0.86988,
+   "uncorrected_hours": 2217.42,
    "correctable_blocks": 764730,
    "rebalanced_block_share": 0.48864,
    "blocks_stale_2plus": 666482,
@@ -26519,6 +26598,7 @@
    "arb_margin_m": 0.489,
    "arb_volume_b": 16.473,
    "uncorrected_share_of_correctable": 0.85663,
+   "uncorrected_hours": 2195.31,
    "correctable_blocks": 768822,
    "rebalanced_block_share": 0.49435,
    "blocks_stale_2plus": 661306,
@@ -26568,6 +26648,7 @@
    "arb_margin_m": 0.94,
    "arb_volume_b": 21.18,
    "uncorrected_share_of_correctable": 0.00039,
+   "uncorrected_hours": 0.28,
    "correctable_blocks": 217347,
    "rebalanced_block_share": 0.92988,
    "blocks_stale_2plus": 37700,
@@ -26586,7 +26667,7 @@
    "m_bps_final": 2.0,
    "daily": null,
    "lp_net_vs_today_m": 4.132,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "avg_margin",
@@ -26617,6 +26698,7 @@
    "arb_margin_m": 0.882,
    "arb_volume_b": 16.788,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 232082,
    "rebalanced_block_share": 0.88654,
    "blocks_stale_2plus": 80653,
@@ -26635,7 +26717,7 @@
    "m_bps_final": 5.0,
    "daily": null,
    "lp_net_vs_today_m": 1.896,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "avg_margin",
@@ -26666,6 +26748,7 @@
    "arb_margin_m": 0.734,
    "arb_volume_b": 23.206,
    "uncorrected_share_of_correctable": 0.06987,
+   "uncorrected_hours": 49.81,
    "correctable_blocks": 213856,
    "rebalanced_block_share": 0.92646,
    "blocks_stale_2plus": 46767,
@@ -27814,6 +27897,7 @@
    "arb_margin_m": 0.827,
    "arb_volume_b": 22.905,
    "uncorrected_share_of_correctable": 0.06493,
+   "uncorrected_hours": 47.01,
    "correctable_blocks": 217196,
    "rebalanced_block_share": 0.92051,
    "blocks_stale_2plus": 50898,
@@ -28962,6 +29046,7 @@
    "arb_margin_m": 0.943,
    "arb_volume_b": 22.848,
    "uncorrected_share_of_correctable": 0.06383,
+   "uncorrected_hours": 46.27,
    "correctable_blocks": 217497,
    "rebalanced_block_share": 0.91722,
    "blocks_stale_2plus": 53690,
@@ -30110,6 +30195,7 @@
    "arb_margin_m": 1.047,
    "arb_volume_b": 22.988,
    "uncorrected_share_of_correctable": 0.00217,
+   "uncorrected_hours": 1.53,
    "correctable_blocks": 211067,
    "rebalanced_block_share": 0.9187,
    "blocks_stale_2plus": 47241,
@@ -31227,7 +31313,7 @@
     ]
    ],
    "lp_net_vs_today_m": 5.013,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "job_cap",
@@ -31258,6 +31344,7 @@
    "arb_margin_m": 0.153,
    "arb_volume_b": 8.321,
    "uncorrected_share_of_correctable": 0.85924,
+   "uncorrected_hours": 2294.1,
    "correctable_blocks": 800981,
    "rebalanced_block_share": 0.4825,
    "blocks_stale_2plus": 672593,
@@ -31307,6 +31394,7 @@
    "arb_margin_m": 0.25,
    "arb_volume_b": 8.387,
    "uncorrected_share_of_correctable": 0.84462,
+   "uncorrected_hours": 2225.09,
    "correctable_blocks": 790331,
    "rebalanced_block_share": 0.4958,
    "blocks_stale_2plus": 661028,
@@ -31356,6 +31444,7 @@
    "arb_margin_m": 0.558,
    "arb_volume_b": 12.926,
    "uncorrected_share_of_correctable": 0.11907,
+   "uncorrected_hours": 93.3,
    "correctable_blocks": 235071,
    "rebalanced_block_share": 0.9568,
    "blocks_stale_2plus": 16992,
@@ -31374,7 +31463,7 @@
    "m_bps_final": 2.0,
    "daily": null,
    "lp_net_vs_today_m": 5.224,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -31405,6 +31494,7 @@
    "arb_margin_m": 0.692,
    "arb_volume_b": 12.929,
    "uncorrected_share_of_correctable": 0.11796,
+   "uncorrected_hours": 92.4,
    "correctable_blocks": 235004,
    "rebalanced_block_share": 0.95702,
    "blocks_stale_2plus": 16822,
@@ -31423,7 +31513,7 @@
    "m_bps_final": 5.0,
    "daily": null,
    "lp_net_vs_today_m": 3.38,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -31454,6 +31544,7 @@
    "arb_margin_m": 0.692,
    "arb_volume_b": 12.929,
    "uncorrected_share_of_correctable": 0.11796,
+   "uncorrected_hours": 92.4,
    "correctable_blocks": 235004,
    "rebalanced_block_share": 0.95702,
    "blocks_stale_2plus": 16822,
@@ -32571,7 +32662,7 @@
     ]
    ],
    "lp_net_vs_today_m": 1.161,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -32602,6 +32693,7 @@
    "arb_margin_m": 0.692,
    "arb_volume_b": 12.929,
    "uncorrected_share_of_correctable": 0.11796,
+   "uncorrected_hours": 92.4,
    "correctable_blocks": 235004,
    "rebalanced_block_share": 0.95702,
    "blocks_stale_2plus": 16822,
@@ -33719,7 +33811,7 @@
     ]
    ],
    "lp_net_vs_today_m": 1.161,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -33750,6 +33842,7 @@
    "arb_margin_m": 0.692,
    "arb_volume_b": 12.929,
    "uncorrected_share_of_correctable": 0.11796,
+   "uncorrected_hours": 92.4,
    "correctable_blocks": 235004,
    "rebalanced_block_share": 0.95702,
    "blocks_stale_2plus": 16822,
@@ -34867,7 +34960,7 @@
     ]
    ],
    "lp_net_vs_today_m": 1.161,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -34898,6 +34991,7 @@
    "arb_margin_m": 0.692,
    "arb_volume_b": 12.929,
    "uncorrected_share_of_correctable": 0.11796,
+   "uncorrected_hours": 92.4,
    "correctable_blocks": 235004,
    "rebalanced_block_share": 0.95702,
    "blocks_stale_2plus": 16822,
@@ -36015,7 +36109,7 @@
     ]
    ],
    "lp_net_vs_today_m": 1.045,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "marginal_cap",
@@ -36046,6 +36140,7 @@
    "arb_margin_m": 0.152,
    "arb_volume_b": 8.517,
    "uncorrected_share_of_correctable": 0.85839,
+   "uncorrected_hours": 2263.54,
    "correctable_blocks": 791093,
    "rebalanced_block_share": 0.48344,
    "blocks_stale_2plus": 672056,
@@ -36095,6 +36190,7 @@
    "arb_margin_m": 0.244,
    "arb_volume_b": 8.583,
    "uncorrected_share_of_correctable": 0.84626,
+   "uncorrected_hours": 2202.84,
    "correctable_blocks": 780908,
    "rebalanced_block_share": 0.49557,
    "blocks_stale_2plus": 661184,
@@ -36144,6 +36240,7 @@
    "arb_margin_m": 0.528,
    "arb_volume_b": 12.879,
    "uncorrected_share_of_correctable": 0.00358,
+   "uncorrected_hours": 2.78,
    "correctable_blocks": 232418,
    "rebalanced_block_share": 0.8806,
    "blocks_stale_2plus": 89255,
@@ -36193,6 +36290,7 @@
    "arb_margin_m": 0.659,
    "arb_volume_b": 12.884,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 232154,
    "rebalanced_block_share": 0.88086,
    "blocks_stale_2plus": 88914,
@@ -36242,6 +36340,7 @@
    "arb_margin_m": 0.465,
    "arb_volume_b": 12.531,
    "uncorrected_share_of_correctable": 0.06567,
+   "uncorrected_hours": 53.2,
    "correctable_blocks": 243046,
    "rebalanced_block_share": 0.87249,
    "blocks_stale_2plus": 100843,
@@ -37390,6 +37489,7 @@
    "arb_margin_m": 0.503,
    "arb_volume_b": 12.752,
    "uncorrected_share_of_correctable": 0.03289,
+   "uncorrected_hours": 26.03,
    "correctable_blocks": 237363,
    "rebalanced_block_share": 0.87695,
    "blocks_stale_2plus": 94546,
@@ -38538,6 +38638,7 @@
    "arb_margin_m": 0.567,
    "arb_volume_b": 12.538,
    "uncorrected_share_of_correctable": 0.06108,
+   "uncorrected_hours": 49.45,
    "correctable_blocks": 242849,
    "rebalanced_block_share": 0.87278,
    "blocks_stale_2plus": 100686,
@@ -39686,6 +39787,7 @@
    "arb_margin_m": 0.612,
    "arb_volume_b": 12.874,
    "uncorrected_share_of_correctable": 0.00217,
+   "uncorrected_hours": 1.68,
    "correctable_blocks": 232458,
    "rebalanced_block_share": 0.88062,
    "blocks_stale_2plus": 89258,
@@ -40834,6 +40936,7 @@
    "arb_margin_m": 0.166,
    "arb_volume_b": 8.595,
    "uncorrected_share_of_correctable": 0.84433,
+   "uncorrected_hours": 2194.12,
    "correctable_blocks": 779597,
    "rebalanced_block_share": 0.49765,
    "blocks_stale_2plus": 659372,
@@ -40883,6 +40986,7 @@
    "arb_margin_m": 0.245,
    "arb_volume_b": 8.595,
    "uncorrected_share_of_correctable": 0.84433,
+   "uncorrected_hours": 2194.12,
    "correctable_blocks": 779597,
    "rebalanced_block_share": 0.49765,
    "blocks_stale_2plus": 659372,
@@ -40932,6 +41036,7 @@
    "arb_margin_m": 0.541,
    "arb_volume_b": 12.884,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 232154,
    "rebalanced_block_share": 0.88086,
    "blocks_stale_2plus": 88914,
@@ -40981,6 +41086,7 @@
    "arb_margin_m": 0.659,
    "arb_volume_b": 12.884,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 232154,
    "rebalanced_block_share": 0.88086,
    "blocks_stale_2plus": 88914,
@@ -41030,6 +41136,7 @@
    "arb_margin_m": 0.326,
    "arb_volume_b": 11.744,
    "uncorrected_share_of_correctable": 0.31157,
+   "uncorrected_hours": 321.92,
    "correctable_blocks": 309958,
    "rebalanced_block_share": 0.81942,
    "blocks_stale_2plus": 176055,
@@ -42178,6 +42285,7 @@
    "arb_margin_m": 0.326,
    "arb_volume_b": 11.744,
    "uncorrected_share_of_correctable": 0.31157,
+   "uncorrected_hours": 321.92,
    "correctable_blocks": 309958,
    "rebalanced_block_share": 0.81942,
    "blocks_stale_2plus": 176055,
@@ -43326,6 +43434,7 @@
    "arb_margin_m": 0.524,
    "arb_volume_b": 12.547,
    "uncorrected_share_of_correctable": 0.05455,
+   "uncorrected_hours": 44.05,
    "correctable_blocks": 242225,
    "rebalanced_block_share": 0.87376,
    "blocks_stale_2plus": 99880,
@@ -44474,6 +44583,7 @@
    "arb_margin_m": 0.551,
    "arb_volume_b": 12.875,
    "uncorrected_share_of_correctable": 0.00151,
+   "uncorrected_hours": 1.17,
    "correctable_blocks": 232414,
    "rebalanced_block_share": 0.88068,
    "blocks_stale_2plus": 89204,
@@ -45622,6 +45732,7 @@
    "arb_margin_m": 0.551,
    "arb_volume_b": 12.875,
    "uncorrected_share_of_correctable": 0.00151,
+   "uncorrected_hours": 1.17,
    "correctable_blocks": 232414,
    "rebalanced_block_share": 0.88068,
    "blocks_stale_2plus": 89204,
@@ -46770,6 +46881,7 @@
    "arb_margin_m": 0.551,
    "arb_volume_b": 12.875,
    "uncorrected_share_of_correctable": 0.00151,
+   "uncorrected_hours": 1.17,
    "correctable_blocks": 232414,
    "rebalanced_block_share": 0.88068,
    "blocks_stale_2plus": 89204,
@@ -47918,6 +48030,7 @@
    "arb_margin_m": 0.572,
    "arb_volume_b": 12.873,
    "uncorrected_share_of_correctable": 0.00385,
+   "uncorrected_hours": 2.99,
    "correctable_blocks": 232575,
    "rebalanced_block_share": 0.88049,
    "blocks_stale_2plus": 89450,
@@ -49066,6 +49179,7 @@
    "arb_margin_m": 0.53,
    "arb_volume_b": 12.878,
    "uncorrected_share_of_correctable": 0.00284,
+   "uncorrected_hours": 2.2,
    "correctable_blocks": 232670,
    "rebalanced_block_share": 0.8805,
    "blocks_stale_2plus": 89451,
@@ -50214,6 +50328,7 @@
    "arb_margin_m": 0.648,
    "arb_volume_b": 12.681,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 228063,
    "rebalanced_block_share": 0.88154,
    "blocks_stale_2plus": 88747,
@@ -50232,7 +50347,7 @@
    "m_bps_final": 0.0,
    "daily": null,
    "lp_net_vs_today_m": -0.162,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "today",
@@ -50263,6 +50378,7 @@
    "arb_margin_m": 0.664,
    "arb_volume_b": 13.03,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 241268,
    "rebalanced_block_share": 0.89577,
    "blocks_stale_2plus": 70615,
@@ -50312,6 +50428,7 @@
    "arb_margin_m": 0.541,
    "arb_volume_b": 12.672,
    "uncorrected_share_of_correctable": 0.00154,
+   "uncorrected_hours": 1.17,
    "correctable_blocks": 228323,
    "rebalanced_block_share": 0.88135,
    "blocks_stale_2plus": 89033,
@@ -51429,7 +51546,7 @@
     ]
    ],
    "lp_net_vs_today_m": 5.796,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "marginal_cap_gas",
@@ -51460,6 +51577,7 @@
    "arb_margin_m": 0.555,
    "arb_volume_b": 13.021,
    "uncorrected_share_of_correctable": 0.0029,
+   "uncorrected_hours": 2.34,
    "correctable_blocks": 241876,
    "rebalanced_block_share": 0.89558,
    "blocks_stale_2plus": 70912,
@@ -52608,6 +52726,7 @@
    "arb_margin_m": 0.856,
    "arb_volume_b": 12.362,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 216123,
    "rebalanced_block_share": 0.8424,
    "blocks_stale_2plus": 145055,
@@ -52657,6 +52776,7 @@
    "arb_margin_m": 0.345,
    "arb_volume_b": 17.962,
    "uncorrected_share_of_correctable": 0.86983,
+   "uncorrected_hours": 2216.44,
    "correctable_blocks": 764436,
    "rebalanced_block_share": 0.48864,
    "blocks_stale_2plus": 666482,
@@ -52706,6 +52826,7 @@
    "arb_margin_m": 0.489,
    "arb_volume_b": 16.473,
    "uncorrected_share_of_correctable": 0.85657,
+   "uncorrected_hours": 2194.33,
    "correctable_blocks": 768529,
    "rebalanced_block_share": 0.49435,
    "blocks_stale_2plus": 661306,
@@ -52755,6 +52876,7 @@
    "arb_margin_m": 0.421,
    "arb_volume_b": 14.33,
    "uncorrected_share_of_correctable": 0.84735,
+   "uncorrected_hours": 2193.16,
    "correctable_blocks": 776481,
    "rebalanced_block_share": 0.49535,
    "blocks_stale_2plus": 660507,
@@ -52804,6 +52926,7 @@
    "arb_margin_m": 1.308,
    "arb_volume_b": 16.413,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 214337,
    "rebalanced_block_share": 0.85124,
    "blocks_stale_2plus": 131359,
@@ -52822,7 +52945,7 @@
    "m_bps_final": 5.0,
    "daily": null,
    "lp_net_vs_today_m": 1.969,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "avg_margin",
@@ -52853,6 +52976,7 @@
    "arb_margin_m": 0.872,
    "arb_volume_b": 21.851,
    "uncorrected_share_of_correctable": 0.12864,
+   "uncorrected_hours": 91.28,
    "correctable_blocks": 212873,
    "rebalanced_block_share": 0.85438,
    "blocks_stale_2plus": 128831,
@@ -54001,6 +54125,7 @@
    "arb_margin_m": 0.988,
    "arb_volume_b": 21.51,
    "uncorrected_share_of_correctable": 0.12812,
+   "uncorrected_hours": 92.78,
    "correctable_blocks": 217247,
    "rebalanced_block_share": 0.84929,
    "blocks_stale_2plus": 135195,
@@ -55149,6 +55274,7 @@
    "arb_margin_m": 1.168,
    "arb_volume_b": 21.408,
    "uncorrected_share_of_correctable": 0.09636,
+   "uncorrected_hours": 68.54,
    "correctable_blocks": 213383,
    "rebalanced_block_share": 0.84586,
    "blocks_stale_2plus": 139333,
@@ -56297,6 +56423,7 @@
    "arb_margin_m": 1.439,
    "arb_volume_b": 21.449,
    "uncorrected_share_of_correctable": 0.00288,
+   "uncorrected_hours": 1.94,
    "correctable_blocks": 201989,
    "rebalanced_block_share": 0.85033,
    "blocks_stale_2plus": 130980,
@@ -57414,7 +57541,7 @@
     ]
    ],
    "lp_net_vs_today_m": 4.49,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "job_cap",
@@ -57445,6 +57572,7 @@
    "arb_margin_m": 0.153,
    "arb_volume_b": 8.321,
    "uncorrected_share_of_correctable": 0.85918,
+   "uncorrected_hours": 2293.13,
    "correctable_blocks": 800689,
    "rebalanced_block_share": 0.4825,
    "blocks_stale_2plus": 672593,
@@ -57494,6 +57622,7 @@
    "arb_margin_m": 0.25,
    "arb_volume_b": 8.387,
    "uncorrected_share_of_correctable": 0.84456,
+   "uncorrected_hours": 2224.11,
    "correctable_blocks": 790039,
    "rebalanced_block_share": 0.4958,
    "blocks_stale_2plus": 661028,
@@ -57543,6 +57672,7 @@
    "arb_margin_m": 0.251,
    "arb_volume_b": 8.396,
    "uncorrected_share_of_correctable": 0.84312,
+   "uncorrected_hours": 2217.33,
    "correctable_blocks": 788976,
    "rebalanced_block_share": 0.49742,
    "blocks_stale_2plus": 659460,
@@ -57592,6 +57722,7 @@
    "arb_margin_m": 0.852,
    "arb_volume_b": 12.501,
    "uncorrected_share_of_correctable": 0.24058,
+   "uncorrected_hours": 181.77,
    "correctable_blocks": 226666,
    "rebalanced_block_share": 0.89306,
    "blocks_stale_2plus": 77573,
@@ -57610,7 +57741,7 @@
    "m_bps_final": 5.0,
    "daily": null,
    "lp_net_vs_today_m": 3.482,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -57641,6 +57772,7 @@
    "arb_margin_m": 0.853,
    "arb_volume_b": 12.501,
    "uncorrected_share_of_correctable": 0.24058,
+   "uncorrected_hours": 181.77,
    "correctable_blocks": 226666,
    "rebalanced_block_share": 0.89306,
    "blocks_stale_2plus": 77573,
@@ -58758,7 +58890,7 @@
     ]
    ],
    "lp_net_vs_today_m": 1.215,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -58789,6 +58921,7 @@
    "arb_margin_m": 0.853,
    "arb_volume_b": 12.501,
    "uncorrected_share_of_correctable": 0.24058,
+   "uncorrected_hours": 181.77,
    "correctable_blocks": 226666,
    "rebalanced_block_share": 0.89306,
    "blocks_stale_2plus": 77573,
@@ -59906,7 +60039,7 @@
     ]
    ],
    "lp_net_vs_today_m": 1.215,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -59937,6 +60070,7 @@
    "arb_margin_m": 0.853,
    "arb_volume_b": 12.501,
    "uncorrected_share_of_correctable": 0.24058,
+   "uncorrected_hours": 181.77,
    "correctable_blocks": 226666,
    "rebalanced_block_share": 0.89306,
    "blocks_stale_2plus": 77573,
@@ -61054,7 +61188,7 @@
     ]
    ],
    "lp_net_vs_today_m": 1.215,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "job_cap",
@@ -61085,6 +61219,7 @@
    "arb_margin_m": 0.853,
    "arb_volume_b": 12.501,
    "uncorrected_share_of_correctable": 0.24058,
+   "uncorrected_hours": 181.77,
    "correctable_blocks": 226666,
    "rebalanced_block_share": 0.89306,
    "blocks_stale_2plus": 77573,
@@ -62202,7 +62337,7 @@
     ]
    ],
    "lp_net_vs_today_m": 1.098,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "marginal_cap",
@@ -62233,6 +62368,7 @@
    "arb_margin_m": 0.152,
    "arb_volume_b": 8.517,
    "uncorrected_share_of_correctable": 0.85833,
+   "uncorrected_hours": 2262.57,
    "correctable_blocks": 790800,
    "rebalanced_block_share": 0.48344,
    "blocks_stale_2plus": 672056,
@@ -62282,6 +62418,7 @@
    "arb_margin_m": 0.244,
    "arb_volume_b": 8.583,
    "uncorrected_share_of_correctable": 0.8462,
+   "uncorrected_hours": 2201.87,
    "correctable_blocks": 780615,
    "rebalanced_block_share": 0.49557,
    "blocks_stale_2plus": 661184,
@@ -62331,6 +62468,7 @@
    "arb_margin_m": 0.245,
    "arb_volume_b": 8.595,
    "uncorrected_share_of_correctable": 0.84439,
+   "uncorrected_hours": 2193.82,
    "correctable_blocks": 779433,
    "rebalanced_block_share": 0.49751,
    "blocks_stale_2plus": 659527,
@@ -62380,6 +62518,7 @@
    "arb_margin_m": 0.855,
    "arb_volume_b": 12.362,
    "uncorrected_share_of_correctable": 4e-05,
+   "uncorrected_hours": 0.03,
    "correctable_blocks": 216123,
    "rebalanced_block_share": 0.8424,
    "blocks_stale_2plus": 145058,
@@ -62429,6 +62568,7 @@
    "arb_margin_m": 0.562,
    "arb_volume_b": 11.954,
    "uncorrected_share_of_correctable": 0.11771,
+   "uncorrected_hours": 93.35,
    "correctable_blocks": 237925,
    "rebalanced_block_share": 0.82802,
    "blocks_stale_2plus": 165837,
@@ -63577,6 +63717,7 @@
    "arb_margin_m": 0.611,
    "arb_volume_b": 12.008,
    "uncorrected_share_of_correctable": 0.09098,
+   "uncorrected_hours": 70.67,
    "correctable_blocks": 233050,
    "rebalanced_block_share": 0.83179,
    "blocks_stale_2plus": 160726,
@@ -64725,6 +64866,7 @@
    "arb_margin_m": 0.711,
    "arb_volume_b": 11.974,
    "uncorrected_share_of_correctable": 0.09171,
+   "uncorrected_hours": 70.99,
    "correctable_blocks": 232224,
    "rebalanced_block_share": 0.83203,
    "blocks_stale_2plus": 160694,
@@ -65873,6 +66015,7 @@
    "arb_margin_m": 0.843,
    "arb_volume_b": 12.349,
    "uncorrected_share_of_correctable": 0.00278,
+   "uncorrected_hours": 2.01,
    "correctable_blocks": 216515,
    "rebalanced_block_share": 0.84213,
    "blocks_stale_2plus": 145431,
@@ -67021,6 +67164,7 @@
    "arb_margin_m": 0.166,
    "arb_volume_b": 8.595,
    "uncorrected_share_of_correctable": 0.84427,
+   "uncorrected_hours": 2193.14,
    "correctable_blocks": 779304,
    "rebalanced_block_share": 0.49765,
    "blocks_stale_2plus": 659372,
@@ -67070,6 +67214,7 @@
    "arb_margin_m": 0.245,
    "arb_volume_b": 8.595,
    "uncorrected_share_of_correctable": 0.84427,
+   "uncorrected_hours": 2193.14,
    "correctable_blocks": 779304,
    "rebalanced_block_share": 0.49765,
    "blocks_stale_2plus": 659372,
@@ -67119,6 +67264,7 @@
    "arb_margin_m": 0.245,
    "arb_volume_b": 8.595,
    "uncorrected_share_of_correctable": 0.84427,
+   "uncorrected_hours": 2193.14,
    "correctable_blocks": 779304,
    "rebalanced_block_share": 0.49765,
    "blocks_stale_2plus": 659372,
@@ -67168,6 +67314,7 @@
    "arb_margin_m": 0.856,
    "arb_volume_b": 12.362,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 216123,
    "rebalanced_block_share": 0.8424,
    "blocks_stale_2plus": 145055,
@@ -67217,6 +67364,7 @@
    "arb_margin_m": 0.431,
    "arb_volume_b": 11.245,
    "uncorrected_share_of_correctable": 0.32474,
+   "uncorrected_hours": 317.87,
    "correctable_blocks": 293656,
    "rebalanced_block_share": 0.78542,
    "blocks_stale_2plus": 226139,
@@ -68365,6 +68513,7 @@
    "arb_margin_m": 0.431,
    "arb_volume_b": 11.245,
    "uncorrected_share_of_correctable": 0.32474,
+   "uncorrected_hours": 317.87,
    "correctable_blocks": 293656,
    "rebalanced_block_share": 0.78542,
    "blocks_stale_2plus": 226139,
@@ -69513,6 +69662,7 @@
    "arb_margin_m": 0.675,
    "arb_volume_b": 11.98,
    "uncorrected_share_of_correctable": 0.0862,
+   "uncorrected_hours": 66.56,
    "correctable_blocks": 231651,
    "rebalanced_block_share": 0.83295,
    "blocks_stale_2plus": 159978,
@@ -70661,6 +70811,7 @@
    "arb_margin_m": 0.728,
    "arb_volume_b": 12.35,
    "uncorrected_share_of_correctable": 0.0023,
+   "uncorrected_hours": 1.66,
    "correctable_blocks": 216478,
    "rebalanced_block_share": 0.84218,
    "blocks_stale_2plus": 145396,
@@ -71809,6 +71960,7 @@
    "arb_margin_m": 0.728,
    "arb_volume_b": 12.35,
    "uncorrected_share_of_correctable": 0.0023,
+   "uncorrected_hours": 1.66,
    "correctable_blocks": 216478,
    "rebalanced_block_share": 0.84218,
    "blocks_stale_2plus": 145396,
@@ -72957,6 +73109,7 @@
    "arb_margin_m": 0.728,
    "arb_volume_b": 12.35,
    "uncorrected_share_of_correctable": 0.0023,
+   "uncorrected_hours": 1.66,
    "correctable_blocks": 216478,
    "rebalanced_block_share": 0.84218,
    "blocks_stale_2plus": 145396,
@@ -74105,6 +74258,7 @@
    "arb_margin_m": 0.643,
    "arb_volume_b": 12.345,
    "uncorrected_share_of_correctable": 0.00633,
+   "uncorrected_hours": 4.58,
    "correctable_blocks": 216870,
    "rebalanced_block_share": 0.84192,
    "blocks_stale_2plus": 145728,
@@ -75222,7 +75376,7 @@
     ]
    ],
    "lp_net_vs_today_m": 4.812,
-   "keeps_rebalanced": false
+   "keeps_rebalanced": true
   },
   {
    "rule": "marginal_cap_gas",
@@ -75253,6 +75407,7 @@
    "arb_margin_m": 0.609,
    "arb_volume_b": 12.351,
    "uncorrected_share_of_correctable": 0.00428,
+   "uncorrected_hours": 3.09,
    "correctable_blocks": 216824,
    "rebalanced_block_share": 0.84196,
    "blocks_stale_2plus": 145732,
@@ -76401,6 +76556,7 @@
    "arb_margin_m": 0.843,
    "arb_volume_b": 12.177,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 212417,
    "rebalanced_block_share": 0.84157,
    "blocks_stale_2plus": 146978,
@@ -76419,7 +76575,7 @@
    "m_bps_final": 0.0,
    "daily": null,
    "lp_net_vs_today_m": -0.151,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "today",
@@ -76450,6 +76606,7 @@
    "arb_margin_m": 0.861,
    "arb_volume_b": 12.5,
    "uncorrected_share_of_correctable": 0.0,
+   "uncorrected_hours": 0.0,
    "correctable_blocks": 224595,
    "rebalanced_block_share": 0.84724,
    "blocks_stale_2plus": 138745,
@@ -76499,6 +76656,7 @@
    "arb_margin_m": 0.716,
    "arb_volume_b": 12.165,
    "uncorrected_share_of_correctable": 0.00234,
+   "uncorrected_hours": 1.66,
    "correctable_blocks": 212770,
    "rebalanced_block_share": 0.84136,
    "blocks_stale_2plus": 147314,
@@ -77616,7 +77774,7 @@
     ]
    ],
    "lp_net_vs_today_m": 5.498,
-   "keeps_rebalanced": true
+   "keeps_rebalanced": false
   },
   {
    "rule": "marginal_cap_gas",
@@ -77647,6 +77805,7 @@
    "arb_margin_m": 0.732,
    "arb_volume_b": 12.487,
    "uncorrected_share_of_correctable": 0.00442,
+   "uncorrected_hours": 3.32,
    "correctable_blocks": 225444,
    "rebalanced_block_share": 0.84702,
    "blocks_stale_2plus": 139084,
