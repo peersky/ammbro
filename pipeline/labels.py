@@ -27,6 +27,7 @@ import json
 
 from .chains import ACTIVE
 from .config import DATA_DIR, ONCHAIN_DIR, RESULTS_DIR
+from .normalization import to_user_positions
 from .pools import POOLS
 from .routers import CROSS_CHAIN, ROUTER_SET, detect_routers
 
@@ -144,7 +145,7 @@ def label_pool(pool_name: str) -> None:
             if not txp.exists():
                 raise SystemExit(f"tx meta missing for {p.name}; run extract_txs or export_indexer")
             df = df.merge(pd.read_parquet(txp), on="tx_hash", how="left")
-        df = df[[c for c in df.columns if c in ALLOWED_COLUMNS]]
+        df = to_user_positions(df[[c for c in df.columns if c in ALLOWED_COLUMNS]])
         assert_price_independent(df.columns)
 
         df["tx_from"] = df["tx_from"].fillna("").str.lower()

@@ -39,6 +39,15 @@ class Pool:
     kind: str = "risky"    # "risky": token1 priced via bench/numeraire; "stable": token1 = USDT via 1/numeraire
     bench: str = "ETHUSDT"
     numeraire: str = "USDCUSDT"
+    big_usd: float = 1e5   # "large swap" cut; per chain = notional of mainnet's top 4.55% of swaps ($100k)
+
+    @property
+    def big_tag(self) -> str:
+        return f"gt{self.big_usd / 1e3:g}k"
+
+    def size_buckets(self) -> list[tuple[float, float, str]]:
+        b = self.big_usd
+        return [(0, b / 10, f"lt{b / 1e4:g}k"), (b / 10, b, f"{b / 1e4:g}k_{b / 1e3:g}k"), (b, 1e12, self.big_tag)]
 
 
 @dataclass(frozen=True)
@@ -53,6 +62,7 @@ class Chain:
     header_successors: bool = True  # fetch block N+1 headers for next_block_ts (mainnet); L2s use ts + block time
     resolve_subsecond: bool = False # split same-timestamp blocks across their second (needs neighbour headers)
     layout: str | None = None       # None: legacy mainnet paths; else data/onchain/<layout>, results/<layout>
+    system_txs: int = 0             # leading protocol txs per block (Arbitrum: ArbOS startBlock at index 0)
     notes: tuple = field(default_factory=tuple)
 
 
@@ -65,10 +75,11 @@ MAINNET = Chain(
 
 ARBITRUM = Chain(
     name="arbitrum", rpc_env="ARB_RPC_URL", block_time_s=0.25, slot_s=None,
-    study_pool=Pool("eth_usdc_005", "0xC6962004f452bE9203591991D15f6b388e09E8D0", "USDC", "WETH", 6, 18, flip=True),
+    study_pool=Pool("eth_usdc_005", "0xC6962004f452bE9203591991D15f6b388e09E8D0", "USDC", "WETH", 6, 18, flip=True,
+                    big_usd=7_000),  # top 4.55% of Arbitrum swaps (26% of notional): flow is chopped into small fills
     control_pool=Pool("usdc_usdt_001", "0xbE3aD6a5669Dc0B8b12FeBC03608860C31E2eef6", "USDC", "USDT0", 6, 6,
                       kind="stable", bench="USDCUSDT"),
-    log_chunk=10_000, header_successors=False, resolve_subsecond=True, layout="arbitrum",
+    log_chunk=10_000, header_successors=False, resolve_subsecond=True, layout="arbitrum", system_txs=1,
     notes=("sequencer ordering (FCFS + Timeboost express lane), not PBS",),
 )
 

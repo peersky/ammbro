@@ -21,6 +21,23 @@ from .chains import ACTIVE
 DEFAULT_BLOCK_S = ACTIVE.slot_s or 1   # mainnet 12s slots; L2 blocks are <= 1s
 
 
+def to_user_positions(df: pd.DataFrame) -> pd.DataFrame:
+    """Re-base tx_index / tx_count onto user transactions. Arbitrum puts
+    an ArbOS internal tx (type 0x6a, from 0x…A4B05) at index 0 of every
+    block, so its first user tx sits at index 1; every position rule
+    (top of block, index buckets, intra-block fraction) means user
+    position. Raw index kept as tx_index_raw. No-op on mainnet."""
+    k = ACTIVE.system_txs
+    if not k or "tx_index_raw" in df.columns:
+        return df
+    df = df.copy()
+    df["tx_index_raw"] = df["tx_index"]
+    df["tx_index"] = df["tx_index"] - k
+    if "tx_count" in df.columns:
+        df["tx_count"] = (df["tx_count"] - k).clip(lower=1)
+    return df
+
+
 def uniform_normalized_position_s(
     tx_index: pd.Series, tx_count: pd.Series, block_duration_s: pd.Series
 ) -> pd.Series:

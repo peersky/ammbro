@@ -23,7 +23,7 @@ import pandas as pd
 from .benchmark import NumeraireCorrectedSeries, PriceSeries
 from .config import DATA_DIR, HORIZONS_S, ONCHAIN_DIR
 from .pools import STUDY_POOL, POOLS, CONTROL_POOL, Pool
-from .normalization import normalized_time_us
+from .normalization import normalized_time_us, to_user_positions
 
 SWAPS_DIR = ONCHAIN_DIR / "swaps"
 SCORED_DIR = ONCHAIN_DIR / "scored"
@@ -71,7 +71,7 @@ def score_pool(pool: Pool) -> None:
         if out.exists():
             print(f"  ok (exists) {out.name}")
             continue
-        df = pd.read_parquet(p)
+        df = to_user_positions(pd.read_parquet(p))
         a0 = df["amount0_raw"].astype(float) / 10**pool.dec0
         a1 = df["amount1_raw"].astype(float) / 10**pool.dec1
         t_us = normalized_time_us(df)

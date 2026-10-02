@@ -132,7 +132,7 @@ def kernel_row(label: str, width: float, mean, std, v, lab) -> dict:
         **evaluate(mean, v, lab),
         "timing_noise_std_bps_p50": round(float(np.median(sd[ok])), 3),
         "timing_noise_std_bps_p90": round(float(np.percentile(sd[ok], 90)), 3),
-        "timing_noise_std_bps_p50_gt100k": round(float(np.median(sd[ok & (v > 1e5)])), 3),
+        f"timing_noise_std_bps_p50_{STUDY_POOL.big_tag}": round(float(np.median(sd[ok & (v > STUDY_POOL.big_usd)])), 3),
         "timing_noise_std_bps_notional_weighted": round(float(np.average(sd[ok], weights=v[ok])), 3),
     }
 
@@ -143,7 +143,7 @@ def evaluate(q, v, lab) -> dict:
     neg = q < 0
     base = baseline(q, v, GAS_COST_USD)
     head = simulate(q, v, lab == "benign", GAS_COST_USD, **HEADLINE)
-    big = v > 1e5
+    big = v > STUDY_POOL.big_usd
     return {
         "n": int(ok.sum()),
         "share_lp_negative": round(float(neg.mean()), 4),
@@ -152,7 +152,7 @@ def evaluate(q, v, lab) -> dict:
         "headline_delta_m": round(head["net_lp_pnl_m"] - base["net_lp_pnl_m"], 2),
         "headline_capture_fraction": head["capture_fraction"],
         "auc": round(mann_whitney_auc(-q[lab == "toxic"], -q[lab == "benign"]), 4),
-        "auc_gt100k": round(mann_whitney_auc(-q[big & (lab == "toxic")], -q[big & (lab == "benign")]), 4),
+        f"auc_{STUDY_POOL.big_tag}": round(mann_whitney_auc(-q[big & (lab == "toxic")], -q[big & (lab == "benign")]), 4),
     }
 
 
@@ -165,15 +165,15 @@ def decision_time_profile(df, eth, usdc, lab, a1, nxt: bool = False) -> dict:
     expected = np.where(sent, -np.log1p(POOL_FEE), -np.log1p(-POOL_FEE))
     bt = block_time_us(df)
     idx = df["tx_index"].to_numpy()
-    big = df["notional_token0"].to_numpy() > 1e5
+    big = df["notional_token0"].to_numpy() > STUDY_POOL.big_usd
     tox = lab == "toxic"
     groups = {
         "toxic_all": tox,
         "toxic_top3": tox & (idx < 3),
-        "idx0_gt100k": (idx == 0) & big,
-        "idx1-2_gt100k": (idx >= 1) & (idx < 3) & big,
-        "idx3-9_gt100k": (idx >= 3) & (idx < 10) & big,
-        "idx10+_gt100k": (idx >= 10) & big,
+        f"idx0_{STUDY_POOL.big_tag}": (idx == 0) & big,
+        f"idx1-2_{STUDY_POOL.big_tag}": (idx >= 1) & (idx < 3) & big,
+        f"idx3-9_{STUDY_POOL.big_tag}": (idx >= 3) & (idx < 10) & big,
+        f"idx10+_{STUDY_POOL.big_tag}": (idx >= 10) & big,
         "benign_all (no-relation reference)": lab == "benign",
     }
     curves = {g: [] for g in groups}

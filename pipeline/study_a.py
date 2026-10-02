@@ -67,7 +67,7 @@ def compute(df: pd.DataFrame, plot: bool) -> dict:
 
     # Slices at h=0
     sub = labeled.dropna(subset=["q_lp_h0"])
-    for lo, hi, name in [(0, 1e4, "lt10k"), (1e4, 1e5, "10k_100k"), (1e5, 1e12, "gt100k")]:
+    for lo, hi, name in STUDY_POOL.size_buckets():
         s = sub[(sub.notional_token0 >= lo) & (sub.notional_token0 < hi)]
         if (s.label == "toxic").sum() > 50 and (s.label == "benign").sum() > 50:
             out[f"auc_h0_size_{name}"] = mann_whitney_auc(

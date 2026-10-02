@@ -180,7 +180,7 @@ def evaluate(df: pd.DataFrame) -> dict:
                 "auc": round(mann_whitney_auc(-q[l == "toxic"], -q[l == "benign"]), 4),
             })
         q0 = df[_col(bench, 0)].to_numpy()
-        for lo, hi, name in [(0, 1e4, "lt10k"), (1e4, 1e5, "10k_100k"), (1e5, 1e12, "gt100k")]:
+        for lo, hi, name in STUDY_POOL.size_buckets():
             m = (v_all >= lo) & (v_all < hi) & ~np.isnan(q0)
             auc_slices[f"{bench}_h0_{name}"] = round(
                 mann_whitney_auc(-q0[m & (lab == "toxic")], -q0[m & (lab == "benign")]), 4)

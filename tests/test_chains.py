@@ -81,3 +81,22 @@ def test_stage_directories_follow_the_active_chain():
         out = subprocess.run([sys.executable, "-c", code], env={**os.environ, "AMMBRO_CHAIN": chain},
                              capture_output=True, text=True, check=True).stdout.strip()
         assert out.endswith(tail), (chain, out)
+
+
+def test_user_positions_offset_by_system_txs():
+    import pandas as pd
+    from pipeline import normalization
+    from pipeline.chains import ARBITRUM, MAINNET
+    df = pd.DataFrame({"tx_index": [1, 2, 5], "tx_count": [3, 3, 6]})
+    old = normalization.ACTIVE
+    try:
+        normalization.ACTIVE = MAINNET
+        assert normalization.to_user_positions(df) is df
+        normalization.ACTIVE = ARBITRUM
+        u = normalization.to_user_positions(df)
+        assert u["tx_index"].tolist() == [0, 1, 4]
+        assert u["tx_count"].tolist() == [2, 2, 5]
+        assert u["tx_index_raw"].tolist() == [1, 2, 5]
+        assert normalization.to_user_positions(u) is u   # idempotent
+    finally:
+        normalization.ACTIVE = old
