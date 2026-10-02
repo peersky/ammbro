@@ -1,0 +1,14 @@
+{
+  "timeline": "arb_exit q, 1s window centred on block_ts + L + h (Study E)",
+  "n_total": 5237793,
+  "n_toxic": 840519,
+  "n_benign": 277812,
+  "auc_h0": 0.8144762842353734,
+  "auc_h12": 0.7176844268461726,
+  "auc_h30": 0.6597155111977714,
+  "auc_h60": 0.6216279811189271,
+  "auc_h0_size_lt0.7k": 0.7104292825654777,
+  "auc_h0_size_0.7k_7k": 0.8043384955944478,
+  "auc_h0_size_gt7k": 0.8971784661456539,
+  "auc_h0_pos_top3": 0.824869721866643
+}
