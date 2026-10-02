@@ -5572,5 +5572,60 @@
         }
       ]
     }
+  },
+  "out_of_sample_h0": {
+    "split": "fit 2026-03..05, test 2026-06..08",
+    "selection": "max net LP among schedules with arb survival >= 0.95 x baseline",
+    "fit_best_on_test": {
+      "schedule": {
+        "alpha": 1.0,
+        "cap": 0.01,
+        "f_benign": 0.0005,
+        "form": "margin",
+        "m": 0.0002
+      },
+      "net_vs_baseline_m": 0.4,
+      "capture_fraction": 0.502,
+      "benign_overcharge_bps": 0.1,
+      "survival_ratio": 0.984
+    },
+    "test_hindsight_best": {
+      "schedule": {
+        "alpha": 1.0,
+        "cap": 0.05,
+        "f_benign": 0.0005,
+        "form": "margin",
+        "m": 0.0002
+      },
+      "net_vs_baseline_m": 0.63,
+      "capture_fraction": 0.8,
+      "benign_overcharge_bps": 0.1,
+      "survival_ratio": 0.984
+    },
+    "headline_on_test": {
+      "schedule": {
+        "alpha": 1.0,
+        "cap": 0.01,
+        "f_benign": 0.0005
+      },
+      "net_vs_baseline_m": 0.31,
+      "capture_fraction": 0.393,
+      "benign_overcharge_bps": 0.05,
+      "survival_ratio": 0.998
+    },
+    "objective_on_test": {
+      "schedule": {
+        "alpha": 1.0,
+        "cap": 0.05,
+        "f_benign": 0.0005,
+        "form": "margin",
+        "m": 0.0002
+      },
+      "net_vs_baseline_m": 0.63,
+      "capture_fraction": 0.8,
+      "benign_overcharge_bps": 0.1,
+      "survival_ratio": 0.984
+    },
+    "test_baseline_net_lp_m": 0.31
   }
 }

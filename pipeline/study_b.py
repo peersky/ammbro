@@ -209,10 +209,48 @@ def hedge_sensitivity(q, v, real_gas) -> list[dict]:
 
 def run() -> dict:
     base = load()
-    out = {"timeline": canonical.DESCRIPTION, **compute(canonical.apply(base))}
+    scored = canonical.apply(base)
+    out = {"timeline": canonical.DESCRIPTION, **compute(scored), "out_of_sample_h0": out_of_sample(scored)}
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "metrics.json").write_text(json.dumps(out, indent=2))
     return out
+
+
+SPLIT_TS = pd.Timestamp("2026-06-01", tz="UTC").value // 10**9   # Mar–May fit, Jun–Aug test
+MIN_SURVIVAL_RATIO = 0.95       # selection keeps arbitrage alive (design objective)
+
+
+def out_of_sample(df: pd.DataFrame) -> dict:
+    """Pick the best schedule (net LP, h0, among schedules keeping real-cost
+    arb survival >= MIN_SURVIVAL_RATIO of baseline) on Mar–May, apply it unchanged to
+    Jun–Aug; compare with the schedule hindsight would pick on Jun–Aug and
+    with the two tracked schedules (fixed a priori)."""
+    sub = df.dropna(subset=["q_lp_h0"])
+    halves = {"fit": sub[sub.block_ts < SPLIT_TS], "test": sub[sub.block_ts >= SPLIT_TS]}
+    res = {}
+    for name, part in halves.items():
+        q, v = part["q_lp_h0"].to_numpy(), part["notional_token0"].to_numpy()
+        benign, gas = (part["label"] == "benign").to_numpy(), base_fee_gas_usd(part)
+        base = baseline(q, v, gas)
+        runs = [(s, simulate(q, v, benign, real_gas=gas, **s)) for s in schedule_grid()]
+        res[name] = {"base": base, "runs": runs, "q": q, "v": v, "benign": benign, "gas": gas}
+    def pick(part):
+        ok = [r for r in part["runs"] if r[1]["arb_survival"] >= MIN_SURVIVAL_RATIO * part["base"]["arb_survival"]]
+        return max(ok, key=lambda r: r[1]["net_lp_pnl_m"])
+    fit_best, test_best = pick(res["fit"]), pick(res["test"])
+    t = res["test"]
+
+    def on_test(sched: dict) -> dict:
+        s = simulate(t["q"], t["v"], t["benign"], real_gas=t["gas"], **sched)
+        return {"schedule": sched, "net_vs_baseline_m": round(s["net_lp_pnl_m"] - t["base"]["net_lp_pnl_m"], 2),
+                "capture_fraction": s["capture_fraction"], "benign_overcharge_bps": s["benign_overcharge_bps"],
+                "survival_ratio": round(s["arb_survival"] / t["base"]["arb_survival"], 3)}
+    return {"split": "fit 2026-03..05, test 2026-06..08",
+            "selection": f"max net LP among schedules with arb survival >= {MIN_SURVIVAL_RATIO} x baseline",
+            "fit_best_on_test": on_test(fit_best[0]),
+            "test_hindsight_best": on_test(test_best[0]),
+            "headline_on_test": on_test(HEADLINE), "objective_on_test": on_test(OBJECTIVE),
+            "test_baseline_net_lp_m": t["base"]["net_lp_pnl_m"]}
 
 
 def compute(df: pd.DataFrame) -> dict:
