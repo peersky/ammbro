@@ -1,0 +1,68 @@
+{
+  "cross_chain_curated": {
+    "0xe592427a0aece92de3edee1f18e0157c05861564": "uniswap_v3_swaprouter",
+    "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45": "uniswap_v3_swaprouter02",
+    "0x1111111254eeb25477b68fb85ed929f73a960582": "1inch_v5",
+    "0x111111125421ca6dc452d289314280a0f8842a65": "1inch_v6",
+    "0xdef1c0ded9bec7f1a1670819833240f027b25eff": "0x_exchange_proxy",
+    "0xdef171fe48cf0115b1d80b88dc8eab59176fee57": "paraswap_v5",
+    "0x6a000f20005980200259b80c5102003040001068": "paraswap_v6_2",
+    "0x9008d19f58aabd9ed0d60971565aa8510560ab41": "cowswap_settlement",
+    "0x6131b5fae19ea4f9d964eac0408e4408b66337b5": "kyberswap_meta_v2",
+    "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad": "uniswap_universal_router",
+    "0x66a9893cc07d91d95644aedd05d03f95e1dba8af": "uniswap_universal_router_v2"
+  },
+  "detected": {
+    "0x0000000000001ff3684f28c67538d4d072c22734": {
+      "swaps": 772,
+      "senders": 432,
+      "swaps_per_sender": 1.79
+    },
+    "0x07964f135f276412b3182a3b2407b8dd45000000": {
+      "swaps": 7572,
+      "senders": 3941,
+      "swaps_per_sender": 1.92
+    },
+    "0x111111125421ca6dc452d289314280a0f8842a65": {
+      "swaps": 6822,
+      "senders": 3828,
+      "swaps_per_sender": 1.78
+    },
+    "0x1231deb6f5749ef6ce6943a275a1d3e7486f4eae": {
+      "swaps": 856,
+      "senders": 511,
+      "swaps_per_sender": 1.68
+    },
+    "0x4582f67698843dfb6a9f195c0ddee05b0a8c973f": {
+      "swaps": 4605,
+      "senders": 1408,
+      "swaps_per_sender": 3.27
+    },
+    "0x69460570c93f9de5e2edbc3052bf10125f0ca22d": {
+      "swaps": 566,
+      "senders": 348,
+      "swaps_per_sender": 1.63
+    },
+    "0x8b844f885672f333bc0042cb669255f93a4c1e6b": {
+      "swaps": 9843,
+      "senders": 4378,
+      "swaps_per_sender": 2.25
+    },
+    "0x9dda6ef3d919c9bc8885d5560999a3640431e8e6": {
+      "swaps": 1998,
+      "senders": 1550,
+      "swaps_per_sender": 1.29
+    },
+    "0xa51afafe0263b40edaef0df8781ea9aa03e381a3": {
+      "swaps": 7029,
+      "senders": 3484,
+      "swaps_per_sender": 2.02
+    },
+    "0xc36442b4a4522e871399cd717abdd847ab11fe88": {
+      "swaps": 1078,
+      "senders": 406,
+      "swaps_per_sender": 2.66
+    }
+  },
+  "rule": "senders >= 300 and swaps per sender <= 20 (routers.py)"
+}

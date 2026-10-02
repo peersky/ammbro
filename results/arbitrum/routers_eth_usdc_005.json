@@ -1,0 +1,113 @@
+{
+  "cross_chain_curated": {
+    "0xe592427a0aece92de3edee1f18e0157c05861564": "uniswap_v3_swaprouter",
+    "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45": "uniswap_v3_swaprouter02",
+    "0x1111111254eeb25477b68fb85ed929f73a960582": "1inch_v5",
+    "0x111111125421ca6dc452d289314280a0f8842a65": "1inch_v6",
+    "0xdef1c0ded9bec7f1a1670819833240f027b25eff": "0x_exchange_proxy",
+    "0xdef171fe48cf0115b1d80b88dc8eab59176fee57": "paraswap_v5",
+    "0x6a000f20005980200259b80c5102003040001068": "paraswap_v6_2",
+    "0x9008d19f58aabd9ed0d60971565aa8510560ab41": "cowswap_settlement",
+    "0x6131b5fae19ea4f9d964eac0408e4408b66337b5": "kyberswap_meta_v2",
+    "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad": "uniswap_universal_router",
+    "0x66a9893cc07d91d95644aedd05d03f95e1dba8af": "uniswap_universal_router_v2"
+  },
+  "detected": {
+    "0x0000000000001ff3684f28c67538d4d072c22734": {
+      "swaps": 3105,
+      "senders": 1690,
+      "swaps_per_sender": 1.84
+    },
+    "0x02e5be68d46dac0b524905bff209cf47ee6db2a9": {
+      "swaps": 698,
+      "senders": 662,
+      "swaps_per_sender": 1.05
+    },
+    "0x10d8b8daa26d307489803e10477de69c0492b610": {
+      "swaps": 408,
+      "senders": 363,
+      "swaps_per_sender": 1.12
+    },
+    "0x111111125421ca6dc452d289314280a0f8842a65": {
+      "swaps": 1164,
+      "senders": 775,
+      "swaps_per_sender": 1.5
+    },
+    "0x1231deb6f5749ef6ce6943a275a1d3e7486f4eae": {
+      "swaps": 1689,
+      "senders": 846,
+      "swaps_per_sender": 2.0
+    },
+    "0x4582f67698843dfb6a9f195c0ddee05b0a8c973f": {
+      "swaps": 3400,
+      "senders": 881,
+      "swaps_per_sender": 3.86
+    },
+    "0x52b6e5e7f28e21b349e29d0ce99b163c545813cf": {
+      "swaps": 6647,
+      "senders": 350,
+      "swaps_per_sender": 18.99
+    },
+    "0x69460570c93f9de5e2edbc3052bf10125f0ca22d": {
+      "swaps": 713,
+      "senders": 587,
+      "swaps_per_sender": 1.21
+    },
+    "0x89c6340b1a1f4b25d36cd8b063d49045caf3f818": {
+      "swaps": 671,
+      "senders": 463,
+      "swaps_per_sender": 1.45
+    },
+    "0x8b844f885672f333bc0042cb669255f93a4c1e6b": {
+      "swaps": 30198,
+      "senders": 10477,
+      "swaps_per_sender": 2.88
+    },
+    "0x90b5f4d2aeca515d368bb73e4b3cd4155dcb42d3": {
+      "swaps": 5765,
+      "senders": 371,
+      "swaps_per_sender": 15.54
+    },
+    "0x9dda6ef3d919c9bc8885d5560999a3640431e8e6": {
+      "swaps": 2369,
+      "senders": 2045,
+      "swaps_per_sender": 1.16
+    },
+    "0xa51afafe0263b40edaef0df8781ea9aa03e381a3": {
+      "swaps": 50073,
+      "senders": 11600,
+      "swaps_per_sender": 4.32
+    },
+    "0xac4c6e212a361c968f1725b4d055b47e63f80b75": {
+      "swaps": 758,
+      "senders": 488,
+      "swaps_per_sender": 1.55
+    },
+    "0xb92fe925dc43a0ecde6c8b1a2709c170ec4fff4f": {
+      "swaps": 3016,
+      "senders": 349,
+      "swaps_per_sender": 8.64
+    },
+    "0xc36442b4a4522e871399cd717abdd847ab11fe88": {
+      "swaps": 1956,
+      "senders": 528,
+      "swaps_per_sender": 3.7
+    },
+    "0xccc88a9d1b4ed6b0eaba998850414b24f1c315be": {
+      "swaps": 3958,
+      "senders": 386,
+      "swaps_per_sender": 10.25
+    },
+    "0xce16f69375520ab01377ce7b88f5ba8c48f8d666": {
+      "swaps": 6758,
+      "senders": 907,
+      "swaps_per_sender": 7.45
+    },
+    "0xf4884a556bb766fe78ab5a1f9c5a1da3535c475d": {
+      "swaps": 1252,
+      "senders": 586,
+      "swaps_per_sender": 2.14
+    }
+  },
+  "rule": "senders >= 300 and swaps per sender <= 20 (routers.py)"
+}
