@@ -7,3 +7,9 @@ solc_version = "0.8.26"
 optimizer = true
 optimizer_runs = 1000000
 evm_version = "cancun"
+remappings = [
+  "forge-std/=lib/forge-std/src/",
+  "v4-core/=lib/v4-core/",
+  "solmate/=lib/v4-core/lib/solmate/",
+  "@openzeppelin/=lib/v4-core/lib/openzeppelin-contracts/",
+]

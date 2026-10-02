@@ -17,6 +17,11 @@ Every input is measured on the chain itself, nothing is assumed:
                  only, rolling hash; marginal gas = call − a no-op call with
                  the same calldata (the intrinsic cost a hook inside a swap
                  does not pay again).
+  G5 v4 hook     contracts/src/RepHook.sol on a real Uniswap v4 PoolManager
+                 (v4-core, local deployment): median swap gas with the event /
+                 rolling-hash afterSwap hook minus a hookless pool, every
+                 swap its own transaction — the hook's real overhead incl.
+                 PoolManager dispatch and state reads. The budget uses it.
   Budget         reconciliation gas vs execution gas over the real window,
                  priced block by block at the real base fee and ETH price:
                  per-block regime (one reconciliation tx per block with a
@@ -119,7 +124,13 @@ def foundry() -> dict:
     sizes = [1, 10, 50, 200]          # tests test_reconcile_n001 … n200 (no name is a prefix of another)
     gas = [_forge(f"test_reconcile_n{n:03d}")["Reconciler"]["reconcile"] for n in sizes]
     slope, fixed = np.polyfit(sizes, gas, 1)
-    return {"hook_marginal_gas_per_swap": hook, "noop_call_gas": base,
+    v4 = {}
+    for name in ("none", "event", "chain"):
+        d = _forge(f"test_swap_{name}")
+        v4[name] = d["PoolSwapTest"]["swap"]
+    return {"v4_swap_gas": v4,
+            "v4_hook_overhead_gas": {"event": v4["event"] - v4["none"], "rolling_hash": v4["chain"] - v4["none"]},
+            "hook_marginal_gas_per_swap": hook, "noop_call_gas": base,
             "reconcile_gas_by_batch": dict(zip(map(str, sizes), gas)),
             "reconcile_fixed_gas_per_tx": int(round(fixed)), "reconcile_gas_per_swap": int(round(slope))}
 
@@ -151,7 +162,7 @@ def budget(meas: dict, fnd: dict) -> dict:
     epoch = EPOCH_BLOCKS[ACTIVE.name]
     rows = {}
     for hook_name in ("event", "rolling_hash"):
-        hook = fnd["hook_marginal_gas_per_swap"][hook_name]
+        hook = fnd["v4_hook_overhead_gas"][hook_name]      # real v4 dispatch + record
         for regime in ("per_block", "epoch"):
             if regime == "per_block":      # one reconciliation tx per block with a swap
                 blk_gas = verify_first + fixed + n * (per_swap + hook)

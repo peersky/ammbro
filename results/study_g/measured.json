@@ -31,6 +31,15 @@
     }
   },
   "foundry": {
+    "v4_swap_gas": {
+      "none": 123689,
+      "event": 134139,
+      "chain": 136948
+    },
+    "v4_hook_overhead_gas": {
+      "event": 10450,
+      "rolling_hash": 13259
+    },
     "hook_marginal_gas_per_swap": {
       "store": 93994,
       "event": 2307,
@@ -58,24 +67,24 @@
     "epoch_blocks": 300,
     "by_design": {
       "event/per_block": {
-        "reconciliation_gas_per_swap": 106543,
-        "ratio_to_execution": 0.565,
-        "usd_window": 74591.0
+        "reconciliation_gas_per_swap": 114686,
+        "ratio_to_execution": 0.608,
+        "usd_window": 80972.0
       },
       "event/epoch": {
-        "reconciliation_gas_per_swap": 52849,
-        "ratio_to_execution": 0.28,
-        "usd_window": 37226.0
+        "reconciliation_gas_per_swap": 60992,
+        "ratio_to_execution": 0.323,
+        "usd_window": 43607.0
       },
       "rolling_hash/per_block": {
-        "reconciliation_gas_per_swap": 114597,
-        "ratio_to_execution": 0.607,
-        "usd_window": 80903.0
+        "reconciliation_gas_per_swap": 117495,
+        "ratio_to_execution": 0.623,
+        "usd_window": 83174.0
       },
       "rolling_hash/epoch": {
-        "reconciliation_gas_per_swap": 60903,
-        "ratio_to_execution": 0.323,
-        "usd_window": 43537.0
+        "reconciliation_gas_per_swap": 63801,
+        "ratio_to_execution": 0.338,
+        "usd_window": 45809.0
       }
     }
   }
