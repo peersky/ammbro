@@ -4,7 +4,6 @@ Ethereum L1 has no per-tx timestamps, so every q_LP depends on a
 reconstructed execution instant. Reconstructions compared:
 
     block     t = block_ts                        (all swaps at slot start)
-    forward   t = block_ts + frac·dur             (current t_norm_us, §17.7)
     backward  t = block_ts − frac·dur             (index 0 latest, deeper txs earlier)
     kernel_w  mean q over t ∈ [block_ts − w, block_ts], 0.25s grid (P§4.2),
               swept over window widths w — the kernel width, not just its
@@ -16,10 +15,10 @@ reconstructed execution instant. Reconstructions compared:
 
 with frac = tx_index / tx_count, dur = next_block_ts − block_ts.
 
-Forward places mid-block swaps AFTER block_ts, but a mainnet block is
-built during the previous slot and sealed around block_ts — so forward
-prices mid-block swaps against CEX prints the swapper could not have
-seen (lookahead).
+The forward plane (t = block_ts + frac·dur, the pre-2026-10 pipeline)
+was removed: a mainnet block is built during the previous slot and sealed
+around block_ts, so it priced mid-block swaps against CEX prints the
+swapper could not have seen (lookahead; spec item 9).
 
 Decision-time profile. An arb that closes the gap stops where the pool
 price net of the 5bp fee equals the CEX price it can hedge at:
@@ -84,6 +83,7 @@ L_SWEEP_S = [0.0, 1.0, 1.25, 1.5, 1.75]
 C_WIDTH_S = 1.0
 C_HORIZONS_S = list(HORIZONS_S)
 C_OUT = ONCHAIN_DIR / "scored_timing" / STUDY_POOL.name
+CONTROL_OUT = ONCHAIN_DIR / "scored_timing" / CONTROL_POOL.name
 
 
 def _frame(pool) -> pd.DataFrame:
@@ -96,7 +96,7 @@ def _frame(pool) -> pd.DataFrame:
 def reconstruction_times(df: pd.DataFrame) -> dict[str, np.ndarray]:
     bt = block_time_us(df)
     shift = (df["frac"] * df["dur_s"] * 1e6).to_numpy().astype(np.int64)
-    return {"block": bt, "forward": df["t_norm_us"].to_numpy(dtype=np.int64), "backward": bt - shift}
+    return {"block": bt, "backward": bt - shift}
 
 
 def eth_quotes(eth, usdc, t_us, nxt: bool = False):
@@ -200,7 +200,9 @@ def decision_time_profile(df, eth, usdc, lab, a1, nxt: bool = False) -> dict:
     return {"offsets_s": offs, "by_group": by_group}
 
 
-def control(usdc) -> dict:
+def control(usdc, L: float) -> dict:
+    """Canonical q for the control pool (USDT valued in USDC: bid/ask of
+    USDCUSDT inverted), written beside the study pool's for control_gate."""
     df = _frame(CONTROL_POOL)
     a0 = df["amount0_raw"].astype(float).to_numpy() / 10**CONTROL_POOL.dec0
     a1 = df["amount1_raw"].astype(float).to_numpy() / 10**CONTROL_POOL.dec1
@@ -209,13 +211,13 @@ def control(usdc) -> dict:
         q = usdc.quotes(t)
         return 1.0 / q["ask"], 1.0 / q["bid"]
 
-    res = {}
-    for name, t in reconstruction_times(df).items():
-        aq = np.abs(q_at(a0, a1, *px(t)))
-        aq = aq[~np.isnan(aq)] * 1e4
-        res[name] = {"abs_q_median_bps": round(float(np.median(aq)), 3),
-                     "abs_q_p95_bps": round(float(np.percentile(aq, 95)), 3)}
-    return res
+    q = kernel_q(a0, a1, block_time_us(df), px, L - C_WIDTH_S / 2, L + C_WIDTH_S / 2)[0]
+    CONTROL_OUT.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({"tx_hash": df["tx_hash"], "log_index": df["log_index"], "q_c_h0": q}).to_parquet(
+        CONTROL_OUT / "q_c.parquet", index=False)
+    aq = np.abs(q[~np.isnan(q)]) * 1e4
+    return {"n": int(len(aq)), "abs_q_median_bps": round(float(np.median(aq)), 3),
+            "abs_q_p95_bps": round(float(np.percentile(aq, 95)), 3)}
 
 
 def run() -> dict:
@@ -239,8 +241,7 @@ def run() -> dict:
     recon = {}
     for name, t in reconstruction_times(df).items():
         recon[name] = evaluate(q_at(a0, a1, *price(t)), v, lab)
-        if name != "forward":
-            recon[f"{name}_L"] = evaluate(q_at(a0, a1, *price(t + Lus)), v, lab)
+        recon[f"{name}_L"] = evaluate(q_at(a0, a1, *price(t + Lus)), v, lab)
 
     bt = block_time_us(df)
     latency_sweep = [{"L_s": x, **evaluate(q_at(a0, a1, *price(bt + int(round(x * 1e6)))), v, lab)}
@@ -273,7 +274,7 @@ def run() -> dict:
         "kernel_grid_s": KERNEL_STEP_S,
         "by_reconstruction": recon,
         "kernel_width_sweep": kernels,
-        "control_pool": control(usdc),
+        "control_pool": control(usdc, L),
         "latency_sweep_block_anchor": latency_sweep,
         "position_gaming": gaming,
         "decision_time_profile": profile,

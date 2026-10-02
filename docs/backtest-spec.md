@@ -261,8 +261,8 @@ listed in P§4.7 but undefined in P§4.3 — excluded until defined.
 **q_LP input.** `arb_exit` directional q (Study D, P§4.2) on the Study E
 timeline: kernel centered on `block_ts + L + h`, width 1s, L = 1.5s
 measured. Columns `q_c_h{0,12,30}` in
-`data/onchain/scored_timing/eth_usdc_005/q_c.parquet`. Forward-timeline
-`q_LP` and `paper_literal` reported beside it as sensitivities.
+`data/onchain/scored_timing/eth_usdc_005/q_c.parquet`. `paper_literal`
+reported beside it as a sensitivity (Study D).
 
 **ε.** 1bp (Study E: per-swap timing noise P90 0.80bp at the chosen
 1s kernel, notional-weighted 0.49bp; epoch aggregates average it down,
@@ -288,9 +288,10 @@ Two conventions (open item 8, resolved in favour of `arb_exit`):
 
 ## Study E — timestamp sensitivity (P§3.4, P§4.2)
 
-Compare `q_LP` from (a) block timestamp, (b) virtual-time point read
-(`t_norm_us`, current), (c) kernel average of the price path over the
-swap's plausible execution window. Measure when swaps were actually
+Compare `q_LP` from (a) block timestamp, (b) the backward index plane,
+(c) kernel average of the price path over the swap's plausible execution
+window. The forward virtual-time plane (`t_norm_us`) was measured here,
+found to be lookahead (status 9), and removed from the code on 2026-10-02. Measure when swaps were actually
 priced (decision-time profile) and set `ε` from the timing noise at the
 chosen kernel. The USDC/USDT control barely moves inside a slot, so it
 bounds peg noise only and cannot calibrate timing noise.
@@ -410,8 +411,8 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
 
 1. ✅ Binance downloader + checksum manifest + benchmark `price_at(t,h)` (ETHUSDT + USDCUSDT, 2026-03→2026-08, 72 files verified)
 2. ✅ Swap extraction via Chainstack RPC (990,555 ETH/USDC + 221,708 USDC/USDT swaps, per-month parquet). Envio self-hosted indexer (indexer/) syncing in parallel as the durable/live source; tx meta (from/to/priority fee) comes with it.
-3. ✅ q_LP join at horizons {0,12,30,60}s — full window scored.
-3b. ✅ Control gate PASS (2026-09-02): |q_LP| median 0.80 bps / P95 2.09 bps on 221,708 control swaps vs 38.4 bps ceiling (3× peg P99 12.8 bps). First-look ETH/USDC (pre-label): size gradient <10k +3.41 bps (16% neg) → >100k −2.40 bps (78% neg); big-swap top-3-position 83.2% neg vs 58.4% mid-block; gross LP-negative markout ≈ $9.9M/6mo.
+3. ✅ Swap preparation (`qlp.py`): user positions and notional at block time. Since 9b the q_LP itself is written by Study E on the canonical timeline; the original trade-price q columns at forward `t_norm` were removed on 2026-10-02.
+3b. ✅ Control gate PASS — canonical q (2026-10-02): |q_LP| median 0.93 bps / P95 2.25 bps (original timeline, 2026-09-02: 0.80 / 2.09 bps) on 221,708 control swaps vs 38.4 bps ceiling (3× peg P99 12.8 bps). First-look ETH/USDC (pre-label): size gradient <10k +3.41 bps (16% neg) → >100k −2.40 bps (78% neg); big-swap top-3-position 83.2% neg vs 58.4% mid-block; gross LP-negative markout ≈ $9.9M/6mo.
 4. ✅ Labels join — DEVIATION: ZeroMEV API is dead (origin DNS gone, 2026-09-02) and Flashbots Dune mev_summary is stale; replaced with committed price-independent detectors (pipeline/labels.py): router-origin benign list, pool-local sandwich detector, searcher heuristic (first-in-direction + top-3 + non-router + repeat actor). 175,410 toxic / 119,114 benign / 665,000 unlabeled middle. Sandwich attacker labels near-zero (~100 victims/6mo) — same-actor sandwiches effectively extinct on this pool; toxic set is searcher-driven.
 5. ✅ Study A (2026-09-02): **AUC(h=0) = 0.867 — gate (>0.75) PASSED.** Size slices: <10k 0.65, 10k–100k 0.91, >100k **0.978** (size is not a label input → clean evidence). Horizon decay 0.87→0.68 (h=0→60s): score at execution-instant truth. CAVEAT: position-sliced AUC is confounded (toxic label conditions on tx_index) — do not cite it as evidence; size slices are the defensible ones. Labels conservative → AUC is a lower-bound estimate. results/study_a/.
 6. ✅ Supp-1 (results/supp1/): top-3 raw positions carry ~60% of extraction (83% LP-neg on >100k swaps) but $2.1M (21%) sits at index 10+ — un-raced adverse flow invisible to priority-keyed taxes. Toxic priority-fee spend ≈783 ETH (~$1.9M) vs $9.9M extracted; CAVEAT: builder payments via coinbase-transfer bundles are invisible to maxPriorityFeePerGas, so this understates builder revenue. Position-label confound noted (toxic label conditions on tx_index; use label-free position aggregates only).
@@ -472,7 +473,7 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
      | block_ts + 1.0s | 23.4% | $9.55M | −$1.38M | +$3.96M | 0.882 | 0.983 |
      | block_ts + 1.5s | 23.9% | $9.72M | −$1.59M | +$4.05M | 0.886 | 0.982 |
      | block_ts + 1.75s | 24.2% | $9.82M | −$1.70M | +$4.12M | 0.886 | 0.982 |
-     | **centered on +1.5s, w=1s (C input)** | — | — | −$1.58M | +$4.02M | **0.889** | **0.984** |
+     | **centered on +1.5s, w=1s (C input)** | — | — | −$1.58M | +$4.02M | **0.889** | **0.983** |
      | trailing [bt−12s, bt] (pitfall) | 10.8% | $5.59M | **+$5.26M** | +$2.51M | 0.753 | 0.931 |
 
    - **Forward timeline (all studies so far) is lookahead for mid-block swaps** and scores slightly worse than a single per-block anchor. Anchoring at the decision instant raises AUC 0.852 → 0.889 and deepens baseline LP loss −$0.77M → −$1.58M; the Study B recapture is stable (+$3.88M → +$4.02M).
@@ -480,19 +481,19 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
    - Control pool |q| P95 2.25bp under every reconstruction — peg noise, not timing noise.
    - Position-gaming tests committed (`pipeline/timing_gaming.py`, `position_gaming` in results/study_e): orientation of index time planes, pool-internal clocks and their attacks, and the post-swap-distance metric — source of the figures cited in the design objective.
    - CAVEATS: touch proxy (Study D caveat applies); L measured on gap-closing flow only — mid-block swaps show no pool↔CEX relation, so their decision times are not identified and they share the block anchor by assumption.
-9b. ✅ Re-base on one timeline (2026-10-01). `pipeline/canonical.py`: every study now scores with the **canonical q_LP** — arb_exit, 1s window centred on `block_ts + L + h` (L = 1.5s), written by Study E for h ∈ {0, 12, 30, 60}. A, B and Supp-1 keep a `legacy_forward_trade_price` section for comparison; Study D runs its whole benchmark comparison on the canonical window (its arb_exit row equals Study B's canonical baseline, −$1.58M — checked). **Status entries 5–8 above are on the legacy timeline; cite the canonical numbers below.**
+9b. ✅ Re-base on one timeline (2026-10-01). `pipeline/canonical.py`: every study now scores with the **canonical q_LP** — arb_exit, 1s window centred on `block_ts + L + h` (L = 1.5s), written by Study E for h ∈ {0, 12, 30, 60}. The original timeline (trade price at forward `t_norm`) was compared once — table below — and removed from the code on 2026-10-02: no study, the scorer or the control gate (which now reads the canonical control-pool q Study E writes) carries it; Study D runs its whole benchmark comparison on the canonical window (its arb_exit row equals Study B's canonical baseline, −$1.58M — checked). **Status entries 5–8 above are on the legacy timeline; cite the canonical numbers below.**
 
      | metric (h0 unless stated) | legacy (forward, trade price) | **canonical** |
      |---|---|---|
      | Study A AUC | 0.867 | **0.889** |
-     | Study A AUC, swaps > $100k / $10–100k / < $10k | 0.978 / 0.909 / 0.648 | **0.984 / 0.931 / 0.662** |
+     | Study A AUC, swaps > $100k / $10–100k / < $10k | 0.978 / 0.909 / 0.648 | **0.983 / 0.931 / 0.662** |
      | Study A AUC h12 / h30 / h60 | 0.798 / 0.732 / 0.683 | 0.799 / 0.732 / 0.683 |
      | Study B baseline LP net / gross LVR | −$1.93M / $9.91M | **−$1.58M / $9.68M** |
      | Study B headline (clip α1 cap100): Δ / capture | +$4.07M / 41% | +$4.02M / 41% |
      | Study B objective (margin m2 cap500): Δ / capture | +$7.25M / 73% | +$7.10M / 73% |
      | builder-bid ceiling today | $8.68M | $8.51M |
      | Supp-1 index-10+ extraction / share | $2.11M / 21.3% | $1.98M / 20.5% |
-     | Study D, trade price / mid / arb_exit / literal: baseline LP net | −$1.93 / −1.80 / −0.77 / −2.84M | −$2.67 / −2.62 / **−1.58** / −3.65M |
+     | Study D, trade price / mid / arb_exit / literal: baseline LP net | −$1.93 / −1.80 / −0.77 / −2.84M | −$2.66 / −2.62 / **−1.58** / −3.65M |
      | Study D AUC (same order) | 0.867 / 0.860 / 0.852 / 0.861 | 0.900 / 0.895 / **0.889** / 0.895 |
 
    - Every conclusion holds; the canonical timeline sharpens Study A (no lookahead noise on mid-block swaps) and slightly shrinks measured extraction. Longer horizons are unaffected (timing matters less once h ≫ L).
@@ -581,7 +582,7 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
    - **Sub-second block times.** Neither chain has sub-second timestamps in headers (verified): Arbitrum stamps ~3–4 blocks per second (sample: 67% of seconds hold 4 blocks, 32% hold 3), HyperEVM one small block per second plus ~1/min big blocks (sample: 97% of seconds hold 1 block, 3% hold 2). Extraction resolves each swap block's second by fetching neighbouring headers in batched rounds and stores `block_ts_us = S + (k + ½)/N` (author's proposal: apply the normalisation to the N same-timestamp blocks); every timing study reads it via `normalization.block_time_us`, falling back to the slot timestamp on mainnet. Framed in paper P§3.4 (blocks, not transactions; sequencer arrival order; measurement only; error ≤ ±1/(2N) s). Decision latency L and the scoring window must be re-measured per chain (Study E) — mainnet's +1.5s comes from PBS and does not transfer.
    - **Arbitrum March 2026 extracted ✅:** 1,038,436 swaps in 422,730 blocks; WETH $1,909–2,385; 98.7% of swap blocks sit in 4-block seconds (the 250 ms cadence), 0.2% in sequencer bursts of 5–19 blocks sharing one timestamp. 145 blocks (0.03%) exceeded the then 12-round limit and fell back to mid-second (≤ 0.5 s off; the only cause of 17 out-of-order block times — header timestamps are monotonic). Limit raised to 30 and `extract_swaps.repair_unresolved()` re-resolves fallback blocks in written months after the run.
    - **Arbitrum extraction complete ✅ (2026-10-02).** Study pool 5,237,793 swaps (Mar 1,038,436 · Apr 669,202 · May 575,631 · Jun 1,405,733 · Jul 783,198 · Aug 765,593 — 5.3× mainnet); control pool 188,668. `repair_unresolved` re-placed 893 of 908 fallback blocks; 15 swaps in bursts beyond 30 rounds stay at mid-second; block times strictly increasing in all 12 files. RPC throughput ~333 calls/s, ~2.2 h per month; pauses for the author's calls via SIGSTOP/SIGCONT.
-   - **Arbitrum q_LP scored; control gate PASS:** USDC/USDT0 |q_LP| median 0.85 bp / P95 2.08 bp vs 38.4 bp ceiling (mainnet 0.80 / 2.09) — benchmark and canonical orientation behave. The legacy normalized time on L2 spreads a block's transactions over the block's own slice of its second (1/N s around `block_ts_us`), not a whole second.
+   - **Arbitrum q_LP scored; control gate PASS:** USDC/USDT0 |q_LP| median 0.85 bp / P95 2.08 bp vs 38.4 bp ceiling (mainnet 0.80 / 2.09) — benchmark and canonical orientation behave. (Original timeline; superseded by the canonical gate re-run.)
    - **Labels on L2 (decided 2026-10-02).** Router list = curated mainnet routers that also exist on Arbitrum at the same address (11 of 14; 9 with identical bytecode length — hashes differ because routers embed chain-specific WETH/factory immutables — plus 0x and ParaSwap v5 in different builds; MetaMask router and UniswapX reactors absent) ∪ contracts detected from Arbitrum's own swaps (≥ 300 distinct senders and ≤ 20 swaps per sender), persisted to `results/arbitrum/routers_*.json`. The detection rule was validated on mainnet first: it recovers 6/11 curated routers and covers 32% of swaps (curated: 12%); it misses solver-settled intents and bot-heavy routers, and a looser rule admits multi-wallet searchers — hence the union. Report a curated-only sensitivity beside Arbitrum Study A. Mainnet labels unchanged. "Top of block" (tx_index ≤ 3) is kept: Arbitrum swap blocks hold a median 14 txs (mainnet 272) and 19.6% of swaps sit at index ≤ 3 (mainnet 24.7%), but on Arbitrum position means sequencer arrival order plus Timeboost, not a builder auction — state it.
    - Next: tx metadata (~5M txs at ~333/s ≈ 4 h, running detached), labels, then Studies E (re-measure L), A, B, D, Supp-1, C1, I.
    - **Arbitrum labels complete ✅ (2026-10-02).** 19 routers detected (incl. Uniswap's Arbitrum Universal Router `0xa51afafe…`) ∪ 11 cross-chain curated. Study pool Mar–Aug (user positions, see next item): toxic 840,519 (16.0%; 676,026 before the index re-base), benign 277,812 (5.3%), unlabeled 78.6%; sandwich victims 4 in six months (FCFS sequencer — no builder to sell ordering). Benign share is low because three bot contracts send ~83% of March swaps (`0x2792…1a70` 504k, `0x96da…ab73` 254k, `0xee2e…c7ba` 104k): Arbitrum flow is bot-dominated, not router-dominated — state it beside Study A, and give the curated-only sensitivity.

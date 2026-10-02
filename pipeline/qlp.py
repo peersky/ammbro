@@ -1,4 +1,9 @@
-"""q_LP scoring (§17.2) — LP-perspective markout, direction-free.
+"""q_LP definition (§17.2) and per-swap preparation for scoring.
+
+`q_lp` is the LP-perspective markout, direction-free. `score_pool`
+prepares each swap for Study E, which writes the canonical q_LP
+(canonical.py): user-based positions and notional valued at the
+benchmark's last trade at block time. No q is written here.
 
     LP_markout(h) = oracle_value(received) − oracle_value(sent)
     q_LP(h)       = LP_markout(h) / notional
@@ -21,9 +26,9 @@ import numpy as np
 import pandas as pd
 
 from .benchmark import NumeraireCorrectedSeries, PriceSeries
-from .config import DATA_DIR, HORIZONS_S, ONCHAIN_DIR
-from .pools import STUDY_POOL, POOLS, CONTROL_POOL, Pool
-from .normalization import normalized_time_us, to_user_positions
+from .config import ONCHAIN_DIR
+from .pools import POOLS, Pool
+from .normalization import block_time_us, to_user_positions
 
 SWAPS_DIR = ONCHAIN_DIR / "swaps"
 SCORED_DIR = ONCHAIN_DIR / "scored"
@@ -74,16 +79,10 @@ def score_pool(pool: Pool) -> None:
         df = to_user_positions(pd.read_parquet(p))
         a0 = df["amount0_raw"].astype(float) / 10**pool.dec0
         a1 = df["amount1_raw"].astype(float) / 10**pool.dec1
-        t_us = normalized_time_us(df)
-        df["t_norm_us"] = t_us
-        for h in HORIZONS_S:
-            p1 = series.price_at(t_us.to_numpy(), horizon_s=h)
-            q, notional = q_lp(a0.to_numpy(), a1.to_numpy(), p1)
-            df[f"q_lp_h{h}"] = q
-            if h == HORIZONS_S[0]:
-                df["notional_token0"] = notional
+        p1 = series.price_at(block_time_us(df))
+        df["notional_token0"] = q_lp(a0.to_numpy(), a1.to_numpy(), p1)[1]
         df.to_parquet(out, index=False)
-        print(f"  wrote {out.name}: {len(df):,} scored")
+        print(f"  wrote {out.name}: {len(df):,} prepared")
 
 
 def main() -> None:

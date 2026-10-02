@@ -5,7 +5,7 @@ extractor defers to extract_txs.py.
 
 Missing vs the RPC path: per-block tx_count / next_block_ts / base_fee —
 joined from the RPC block-meta already present in the extractor output,
-or fetched via load_block_meta when absent.
+or fetched via fetch_block_meta when absent.
 
 Usage: python -m pipeline.export_indexer   (indexer must have synced the window)
 """
@@ -15,7 +15,7 @@ import pandas as pd
 import sqlalchemy as sa
 
 from .config import DATA_DIR, ONCHAIN_DIR
-from .extract_swaps import load_block_meta
+from .extract_swaps import fetch_block_meta
 from .pools import POOLS
 
 PG_URL = "postgresql://postgres:testing@localhost:5433/envio-dev"
@@ -84,7 +84,7 @@ def main() -> None:
                 "amount1": "amount1_raw",
             }
         )
-        blocks = load_block_meta(df["block_number"].unique().tolist())
+        blocks = fetch_block_meta(df["block_number"].unique().tolist())
         df = df.merge(
             blocks[["block_number", "tx_count", "next_block_ts", "base_fee_wei"]],
             on="block_number",

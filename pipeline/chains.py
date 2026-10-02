@@ -61,7 +61,7 @@ class Chain:
     log_chunk: int = 5_000          # max blocks per eth_getLogs the endpoint accepts
     header_successors: bool = True  # fetch block N+1 headers for next_block_ts (mainnet); L2s use ts + block time
     resolve_subsecond: bool = False # split same-timestamp blocks across their second (needs neighbour headers)
-    layout: str | None = None       # None: legacy mainnet paths; else data/onchain/<layout>, results/<layout>
+    layout: str | None = None       # None: original mainnet paths; else data/onchain/<layout>, results/<layout>
     system_txs: int = 0             # leading protocol txs per block (Arbitrum: ArbOS startBlock at index 0)
     notes: tuple = field(default_factory=tuple)
 

@@ -23,7 +23,6 @@ BARS_DIR = DATA_DIR / "bars"
 CHECKSUM_MANIFEST = DATA_DIR / "checksums" / "CHECKSUMS.sha256"
 
 BINANCE_ROOT = "https://data.binance.vision/data"
-BINANCE_BASE = BINANCE_ROOT + "/spot"   # legacy name (spot)
 
 # Benchmark symbols for every chain's pools (shared raw data): ETHUSDT /
 # HYPEUSDT_UM risky legs, USDCUSDT numeraire correction (§17.6). A "_UM"

@@ -1,16 +1,12 @@
 """Canonical q_LP (spec item 9b) — one scoring timeline for every study.
 
-    canonical        arb_exit directional q (Study D, P§3.6/P§4.2), averaged
-                     over a 1s window centred on block_ts + L + h (Study E:
-                     L = measured decision latency, 1.5s). Written by Study E
-                     to data/onchain/scored_timing/.
-    legacy_forward   trade-price q at the forward virtual time
-                     t_norm = block_ts + (tx_index/tx_count)·T (§17.7). Prices
-                     mid-block swaps against prints from after the block was
-                     sealed (lookahead, Study E). Kept only for comparison.
+    arb_exit directional q (Study D, P§3.6/P§4.2), averaged over a 1s
+    window centred on block_ts + L + h (Study E: L = measured decision
+    latency, 1.5s on mainnet). Written by Study E to
+    data/onchain/scored_timing/.
 
-Studies load their scored frame and pass it through `apply`; the q columns
-keep their historical names (q_lp_h{h}) so study code is timeline-agnostic.
+Studies load their prepared swap frame and pass it through `apply`, which
+joins q as columns q_lp_h{h}.
 """
 from __future__ import annotations
 
@@ -20,17 +16,10 @@ from .config import DATA_DIR, HORIZONS_S, ONCHAIN_DIR
 from .pools import STUDY_POOL
 
 Q_C = ONCHAIN_DIR / "scored_timing" / STUDY_POOL.name / "q_c.parquet"
-DESCRIPTION = {
-    "canonical": "arb_exit q, 1s window centred on block_ts + L + h (Study E)",
-    "legacy_forward": "trade-price q at forward t_norm (pre-Study-E pipeline)",
-}
+DESCRIPTION = "arb_exit q, 1s window centred on block_ts + L + h (Study E)"
 
 
-def apply(df: pd.DataFrame, timeline: str = "canonical") -> pd.DataFrame:
-    if timeline == "legacy_forward":
-        return df
-    if timeline != "canonical":
-        raise ValueError(timeline)
+def apply(df: pd.DataFrame) -> pd.DataFrame:
     qc = pd.read_parquet(Q_C)
     missing = [h for h in HORIZONS_S if f"q_c_h{h}" not in qc.columns]
     if missing:

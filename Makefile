@@ -4,14 +4,15 @@ PY := uv run python
         download parse bars extract txs score gate labels \
         study-a study-b study-d study-e study-h sim-inputs study-i supp1 test clean
 
-# Full §17.9 chain: benchmark data -> on-chain swaps -> scoring -> control
-# gate -> labels -> studies. `gate` exits non-zero on failure, so no study
-# target can run against a pool that failed the calm-period control.
+# Full §17.9 chain: benchmark data -> on-chain swaps -> prepare -> labels
+# -> Study E (measures L, writes canonical q for both pools) -> control
+# gate -> studies. `gate` exits non-zero on failure, so no study target can
+# run against a pool that failed the calm-period control.
 all: data onchain studies
 
 data: download parse bars
-onchain: extract txs score gate labels
-studies: study-a study-b supp1 study-d study-e study-h study-i
+onchain: extract txs score labels
+studies: study-a study-b supp1 study-d study-h study-i
 
 setup:
 	uv venv && uv pip install -e ".[dev]"
@@ -36,32 +37,32 @@ txs:
 score:
 	$(PY) -m pipeline.qlp
 
-gate:
+gate: study-e
 	$(PY) -m pipeline.control_gate
 
 labels:
 	$(PY) -m pipeline.labels
 
 # --- Studies (§17.1) ---
-study-a: study-e
+study-a: gate
 	$(PY) -m pipeline.study_a
 
-study-b: study-e
+study-b: gate
 	$(PY) -m pipeline.study_b
 
-supp1: study-e
+supp1: gate
 	$(PY) -m pipeline.supp1
 
-study-d: study-e
+study-d: gate
 	$(PY) -m pipeline.study_d
 
 study-e:
 	$(PY) -m pipeline.study_e
 
-study-h: study-e
+study-h: gate
 	$(PY) -m pipeline.study_h
 
-sim-inputs: study-e
+sim-inputs: gate
 	$(PY) -m pipeline.blocksim
 
 study-i: sim-inputs

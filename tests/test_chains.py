@@ -58,15 +58,6 @@ def test_block_time_us_falls_back_to_slot_timestamp_on_mainnet():
     assert list(block_time_us(df)) == [1_250_000, 2_750_000]
 
 
-def test_normalized_time_spreads_txs_over_the_block_slice_on_l2():
-    import pandas as pd
-    from pipeline.normalization import normalized_time_us
-    # block is 2nd of 4 in second 1000 -> slice [1000.25, 1000.5), midpoint 1000.375
-    df = pd.DataFrame({"block_ts": [1000, 1000], "next_block_ts": [1001, 1001], "tx_index": [0, 5], "tx_count": [10, 10],
-                       "block_ts_us": [1000_375_000, 1000_375_000], "blocks_in_second": [4, 4]})
-    assert list(normalized_time_us(df)) == [1000_250_000, 1000_375_000]
-
-
 def test_stage_directories_follow_the_active_chain():
     """Module-level paths are fixed at import, so check each chain in a
     fresh interpreter. Guards against a stage rebinding the shared

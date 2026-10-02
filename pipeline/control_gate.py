@@ -1,5 +1,6 @@
 """USDC/USDT calm-period control gate (§17.3.2, §17.9) — MUST pass
-before any Study A/B/C result is read.
+before any study result is read. Reads the canonical control-pool q_LP
+Study E writes (arb_exit, 1s window centred on block_ts + L).
 
 Logic: on calm windows, legitimate divergence on the stable-stable pool
 is bounded by the externally-observable peg band. If scored |q_LP| on
@@ -20,23 +21,21 @@ from .benchmark import PriceSeries
 from .config import DATA_DIR, ONCHAIN_DIR
 from .pools import CONTROL_POOL
 
-SCORED_DIR = ONCHAIN_DIR / "scored" / CONTROL_POOL.name
+Q_C = ONCHAIN_DIR / "scored_timing" / CONTROL_POOL.name / "q_c.parquet"
 PEG_MULTIPLE = 3.0          # slack for pool fee + microstructure noise
 MEDIAN_BPS_CEILING = 10.0   # "single-digit bps" per spec
 
 
 def run_gate() -> bool:
-    src = sorted(SCORED_DIR.glob("*.scored.parquet"))
-    if not src:
-        raise SystemExit("no scored USDC/USDT swaps; run qlp first")
-    df = pd.concat(pd.read_parquet(p, columns=["t_norm_us", "q_lp_h0"]) for p in src)
-    df = df.dropna(subset=["q_lp_h0"])
+    if not Q_C.exists():
+        raise SystemExit(f"no canonical control q ({Q_C}); run study_e first")
+    df = pd.read_parquet(Q_C, columns=["q_c_h0"]).dropna()
 
     peg = PriceSeries(CONTROL_POOL.bench)
     peg_dev = np.abs(peg.px - 1.0)
     peg_p99_bps = np.quantile(peg_dev, 0.99) * 1e4
 
-    q_abs_bps = np.abs(df["q_lp_h0"].to_numpy()) * 1e4
+    q_abs_bps = np.abs(df["q_c_h0"].to_numpy()) * 1e4
     p95_bps = float(np.quantile(q_abs_bps, 0.95))
     med_bps = float(np.median(q_abs_bps))
 

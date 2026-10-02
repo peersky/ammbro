@@ -26,7 +26,6 @@ import pandas as pd
 
 from . import canonical
 from .config import DATA_DIR, HORIZONS_S, REPO_ROOT, ONCHAIN_DIR, RESULTS_DIR
-from .chains import ACTIVE
 from .pools import STUDY_POOL
 
 SCORED_DIR = ONCHAIN_DIR / "scored" / STUDY_POOL.name
@@ -68,9 +67,7 @@ def by_bucket(df: pd.DataFrame, key: pd.Series, edges: list, col: str = "q_lp_h0
 
 def run() -> dict:
     base = load()
-    res = {"timeline": canonical.DESCRIPTION["canonical"], **compute(canonical.apply(base, "canonical"))}
-    res["legacy_forward_trade_price"] = {
-        "idx10plus_by_horizon": compute(canonical.apply(base, "legacy_forward"))["idx10plus_by_horizon"]}
+    res = {"timeline": canonical.DESCRIPTION, **compute(canonical.apply(base))}
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "metrics.json").write_text(json.dumps(res, indent=2))
     return res
@@ -81,12 +78,8 @@ def compute(df: pd.DataFrame) -> dict:
 
     res: dict = {"idx10plus_by_horizon": [], "by_horizon": {}}
     idx_edges = [(0, 1, "idx0"), (1, 2, "idx1"), (2, 3, "idx2"), (3, 10, "idx3-9"), (10, 10_000, "idx10+")]
-    if ACTIVE.slot_s:
-        frac = (df["t_norm_us"] / 1e6 - df["block_ts"]) / (df["next_block_ts"] - df["block_ts"]).clip(1)
-        fb = (big["t_norm_us"] / 1e6 - big["block_ts"]) / (big["next_block_ts"] - big["block_ts"]).clip(1)
-    else:  # L2: several blocks share a second, so position-in-block is the index fraction itself
-        frac = df["tx_index"] / df["tx_count"].clip(lower=1)
-        fb = big["tx_index"] / big["tx_count"].clip(lower=1)
+    frac = df["tx_index"] / df["tx_count"].clip(lower=1)
+    fb = big["tx_index"] / big["tx_count"].clip(lower=1)
     dec_edges = [(i / 10, (i + 1) / 10, f"pos_{i*10}-{(i+1)*10}%") for i in range(10)]
 
     for h in HORIZONS_S:

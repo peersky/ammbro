@@ -217,9 +217,7 @@ def hedge_sensitivity(q, v, real_gas) -> list[dict]:
 
 def run() -> dict:
     base = load()
-    out = {"timeline": canonical.DESCRIPTION["canonical"], **compute(canonical.apply(base, "canonical"))}
-    legacy = compute(canonical.apply(base, "legacy_forward"))
-    out["legacy_forward_trade_price"] = {"tracked_by_horizon": legacy["tracked_by_horizon"]}
+    out = {"timeline": canonical.DESCRIPTION, **compute(canonical.apply(base))}
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "metrics.json").write_text(json.dumps(out, indent=2))
     return out

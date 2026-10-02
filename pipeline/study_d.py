@@ -12,11 +12,8 @@ canonical q_LP every other study uses. Re-runs:
   - Study B baseline + headline schedule (all h)
   - the control-pool |q_LP| check under each convention (h0)
 
-Notional is held at the trade-price value for every benchmark, so dollar
-figures differ only through the markout.
-
-Writes directional q columns to data/onchain/scored_directional/ for
-Study C, whose primary q_LP is directional (P§4.2).
+Notional is held at its block-time value (qlp.py) for every benchmark,
+so dollar figures differ only through the markout.
 
 HONESTY (bind to writeup): touch proxy, not LWBA. Depth-weighted spreads
 are wider for size, so this understates how far the directional rule
@@ -41,7 +38,6 @@ from .study_e import C_WIDTH_S, KERNEL_STEP_S
 
 SCORED = ONCHAIN_DIR / "scored"
 LABELS_DIR = ONCHAIN_DIR / "labels" / STUDY_POOL.name
-DIR_OUT = ONCHAIN_DIR / "scored_directional" / STUDY_POOL.name
 OUT = RESULTS_DIR / "study_d"
 
 CONVENTIONS = ["mid", "arb_exit", "paper_literal"]
@@ -72,7 +68,6 @@ def _kernel(a0, a1, bt_us, center_s, price_fn) -> dict:
 
 
 def score_eth_usdc(eth: SidedSeries, usdc: SidedSeries, L: float) -> tuple[pd.DataFrame, dict]:
-    DIR_OUT.mkdir(parents=True, exist_ok=True)
     parts = []
     for p in sorted((SCORED / STUDY_POOL.name).glob("*.scored.parquet")):
         df = pd.read_parquet(p)
@@ -97,8 +92,6 @@ def score_eth_usdc(eth: SidedSeries, usdc: SidedSeries, L: float) -> tuple[pd.Da
         df["_stale_usdc_s"] = np.maximum(qu["stale_bid_s"], qu["stale_ask_s"])
         df["_crossed_eth"] = qe["crossed_raw"]
         df["_crossed_usdc"] = qu["crossed_raw"]
-        keep = ["tx_hash", "log_index"] + [_col(c, h) for c in BENCHMARKS for h in HORIZONS_S]
-        df[keep].to_parquet(DIR_OUT / p.name.replace(".scored.", ".dir."), index=False)
         parts.append(df)
     df = pd.concat(parts, ignore_index=True)
 

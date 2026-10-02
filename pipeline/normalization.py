@@ -1,24 +1,20 @@
-"""Intra-block position normalization (§17.7) — standalone, pluggable.
+"""Block instants and positions on every chain.
 
-Ethereum L1 has no per-tx timestamps; reconstruct a synthetic intra-block
-timeline:
+    block_time_us      the instant a swap is scored at (canonical.py): the
+                       slot timestamp on mainnet, a sub-second reconstruction
+                       on L2s whose blocks are shorter than their timestamps
+    subsecond_split    that reconstruction: the N blocks sharing a second
+                       placed at S + (k + ½)/N (paper §3.4)
+    to_user_positions  tx_index / tx_count counted over user transactions
 
-    block_duration      = next_block_ts − block_ts        # typically 12s
-    normalized_position = tx_index / tx_count × block_duration
-    t_norm              = block_ts + normalized_position
-
-This is a NOISY PROXY (builders reorder; execution is not uniform in
-time). Any position↔divergence correlation survives the noise, it is not
-precise. Alternative strategies (e.g. gas-weighted) plug in here without
-touching the rest of the pipeline.
+Every swap in a block is scored at one instant (position-invariant,
+P§3.4); intra-block position is only used to describe ordering.
 """
 from __future__ import annotations
 
 import pandas as pd
 
 from .chains import ACTIVE
-
-DEFAULT_BLOCK_S = ACTIVE.slot_s or 1   # mainnet 12s slots; L2 blocks are <= 1s
 
 
 def to_user_positions(df: pd.DataFrame) -> pd.DataFrame:
@@ -36,30 +32,6 @@ def to_user_positions(df: pd.DataFrame) -> pd.DataFrame:
     if "tx_count" in df.columns:
         df["tx_count"] = (df["tx_count"] - k).clip(lower=1)
     return df
-
-
-def uniform_normalized_position_s(
-    tx_index: pd.Series, tx_count: pd.Series, block_duration_s: pd.Series
-) -> pd.Series:
-    """Seconds into the block under the uniform-time assumption."""
-    frac = tx_index / tx_count.clip(lower=1)
-    return frac * block_duration_s
-
-
-def normalized_time_us(df: pd.DataFrame) -> pd.Series:
-    """t_norm in µs epoch from a swaps frame with block_ts, next_block_ts,
-    tx_index, tx_count columns."""
-    if "block_ts_us" in df.columns and df["block_ts_us"].notna().all():
-        # L2: blocks are shorter than their 1s timestamps; spread the block's
-        # transactions over the block's own slice of its second (1/N s,
-        # centred on block_ts_us — see subsecond_split), not a whole second.
-        n = df["blocks_in_second"].where(df["blocks_in_second"] > 0, 1)
-        slice_us = 1_000_000 / n
-        frac = df["tx_index"] / df["tx_count"].clip(lower=1)
-        return (df["block_ts_us"] - slice_us / 2 + frac * slice_us).astype("int64")
-    dur = (df["next_block_ts"] - df["block_ts"]).fillna(DEFAULT_BLOCK_S).clip(1, 60)
-    pos = uniform_normalized_position_s(df["tx_index"], df["tx_count"], dur)
-    return ((df["block_ts"] + pos) * 1_000_000).astype("int64")
 
 
 def subsecond_split(block: int, lo: int, hi: int, ts_s: int) -> int:

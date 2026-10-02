@@ -82,24 +82,6 @@ def fetch_logs(pool: Pool, from_block: int, to_block: int) -> list[dict]:
     return out
 
 
-def load_block_meta(block_numbers: list[int]) -> pd.DataFrame:
-    """Prefer the BigQuery-sourced local blocks table (blocks_bq.py);
-    fall back to paced RPC header fetches when it is absent or does not
-    cover the requested range."""
-    from .blocks_bq import BLOCKS_PARQUET
-
-    if BLOCKS_PARQUET.exists():
-        blocks = pd.read_parquet(BLOCKS_PARQUET)
-        need = pd.Series(sorted(set(block_numbers)))
-        covered = need.isin(blocks["block_number"])
-        if covered.all():
-            out = blocks[blocks["block_number"].isin(need)].copy()
-            print(f"  blocks: {len(out):,} from local BigQuery table")
-            return out[["block_number", "block_ts", "tx_count", "base_fee_wei", "next_block_ts"]]
-        print(f"  blocks table missing {(~covered).sum():,} blocks; falling back to RPC")
-    return fetch_block_meta(block_numbers)
-
-
 def fetch_block_meta(block_numbers: list[int]) -> pd.DataFrame:
     """Header-only blocks: timestamp, tx count, base fee. On mainnet also
     each block's successor so next_block_time is available for §17.7; L2
@@ -238,7 +220,7 @@ def extract_pool_month(pool: Pool, month: str) -> None:
     # Tx-level meta (from/to/priority fee) is fetched later by
     # extract_txs.py — it is only needed at the labels/redirection stage
     # and would double the RPC call count on the q_LP critical path.
-    blocks = load_block_meta(swaps["block_number"].unique().tolist())
+    blocks = fetch_block_meta(swaps["block_number"].unique().tolist())
     df = swaps.merge(blocks, on="block_number")
     if "log_block_ts" in df.columns:          # endpoint-provided timestamps must agree with headers
         has = df["log_block_ts"].notna()      # Arbitrum fills the field on only some logs
