@@ -66,7 +66,9 @@ OUT = RESULTS_DIR / "study_c"
 RHO_BPS = [2, 5, 10, 20, 50, 100]
 R_ANNUAL = 0.05
 WINDOWS_S = {"1 block": ACTIVE.block_time_s, "1 hour": 3600, "1 day (epoch)": 86400, "7 days": 7 * 86400}
-DESIGN = ("marginal_cap_gas", "ctl_feasible")
+# feasible controller per ordering model (Study I): winner diversity under
+# first-come-first-served sequencing, self-referential staleness under auctions
+DESIGN = ("marginal_cap_gas", "ctl_div" if ACTIVE.ordering == "fcfs" else "ctl_feasible")
 
 
 def analyse(scenario: str) -> dict:
@@ -207,7 +209,7 @@ def feedback(scenario: str, rho_bps: float, window: str) -> dict:
 
 
 def run() -> dict:
-    res = {"assumptions": {"design": "marginal_cap_gas + ctl_feasible (Study I)", "cost_of_capital_annual": R_ANNUAL},
+    res = {"assumptions": {"design": f"{DESIGN[0]} + {DESIGN[1]} (Study I)", "cost_of_capital_annual": R_ANNUAL},
            "by_scenario": {sc: analyse(sc) for sc in ("stable", "costs_x4")}}
     res["feedback"] = [feedback(sc, rho, w) for sc in ("stable", "costs_x4")
                        for rho, w in ((20, "1 day (epoch)"), (100, "7 days"))]

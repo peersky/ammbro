@@ -63,6 +63,7 @@ class Chain:
     resolve_subsecond: bool = False # split same-timestamp blocks across their second (needs neighbour headers)
     layout: str | None = None       # None: original mainnet paths; else data/onchain/<layout>, results/<layout>
     system_txs: int = 0             # leading protocol txs per block (Arbitrum: ArbOS startBlock at index 0)
+    ordering: str = "auction"       # "auction" (PBS builders sell position) | "fcfs" (sequencer arrival order)
     notes: tuple = field(default_factory=tuple)
 
 
@@ -80,6 +81,7 @@ ARBITRUM = Chain(
     control_pool=Pool("usdc_usdt_001", "0xbE3aD6a5669Dc0B8b12FeBC03608860C31E2eef6", "USDC", "USDT0", 6, 6,
                       kind="stable", bench="USDCUSDT"),
     log_chunk=10_000, header_successors=False, resolve_subsecond=True, layout="arbitrum", system_txs=1,
+    ordering="fcfs",
     notes=("sequencer ordering (FCFS + Timeboost express lane), not PBS",),
 )
 

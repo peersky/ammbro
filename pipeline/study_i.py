@@ -59,6 +59,23 @@ Parameter m: static grid, or a controller per UTC day:
              USER first swaps push the pool off and ratchet m up.) Hourly x2
              raise on it, daily decay x0.95 otherwise — no "contested" signal,
              no arb cost knowledge, no index proofs.
+  ctl_div    ctl_feasible with the blind daily decay replaced by an on-chain
+             competition signal: winner diversity. On a first-come-first-
+             served chain whichever profitable arb arrives first wins, so when
+             several can profit the wins spread across several addresses; when
+             m nears the cheapest arb's cost only that arb can profit and wins
+             everything. The reconciler sees each correcting swap's sender.
+             Lower m x0.95 at the day's end only if > DIV_TAU of the day's arb
+             wins went to someone other than the day's top winner; otherwise
+             hold. Raise as ctl_feasible. The race is simulated for the signal
+             only (winner drawn uniformly among the arbs that would profit);
+             payouts keep the second-price model. The signal presumes a race:
+             under a builder auction (mainnet PBS) the cheapest arb outbids
+             the rest and wins every block it can profit from, so wins
+             concentrate and the signal under-reports competition — there the
+             feasible choice is ctl_feasible (Chain.ordering). Faking competition with
+             extra addresses only lowers the faker's own allowance; hiding it
+             needs a cartel that any arb with cost < m can break.
   ctl_fast   ctl_comp with asymmetric timing: staleness checked every
              RAISE_S (1h) and raised x2 immediately; lowering stays
              on the daily competition signal. Recovers from a cost shock
@@ -117,6 +134,7 @@ S_STAR_SR = 0.02
 S_LOW_SR = 0.01                 # daily decay allowed only below this
 MIN_STALE_SR = 5                # hourly raise needs at least this many stale blocks
 RAISE_SR, DECAY_SR = 2.0, 0.95  # feasible controller step sizes
+DIV_TAU = 0.25                  # ctl_div: lower m only if > this share of wins went past the top winner
 REB_TOL = 0.005                 # rebalancing constraint: within-band share may drop <= 0.5pp vs today
 USER_STALE_TOL_BPS = 0.1        # ... and user pre-trade gap may rise <= 0.1bp vs today
 
@@ -190,14 +208,18 @@ def run_one(args) -> dict:
     es, ee, xs, xv = _DATA["exo_start"], _DATA["exo_end"], _DATA["exo_s"], _DATA["exo_v"]
     controlled = isinstance(param, str) and param.startswith("ctl")
     comp_only = param in ("ctl_comp", "ctl_fast")
-    feasible = param == "ctl_feasible"
-    fast = param in ("ctl_fast", "ctl_feasible")
+    diverse = param == "ctl_div"
+    feasible = param in ("ctl_feasible", "ctl_div")
+    fast = param in ("ctl_fast", "ctl_feasible", "ctl_div")
+    rng = np.random.default_rng(7)
     sr_obs = sr_stale = w_sr_obs = w_sr_stale = 0
     w_corr = w_uncorr = w_n = 0
     s_star, s_low = (0.005, 0.001) if param == "ctl_tight" else (S_STAR, S_LOW)
     m = 5e-4 if controlled else (param / 1e4 if param is not None else 0.0)
-    costs_base = [c / 1e4 for c in ARB_COSTS_BPS]
+    costs_base = [c / 1e4 for c in POPULATIONS.get(scenario, ARB_COSTS_BPS)]
+    d_wins = np.zeros(len(costs_base), dtype=np.int64)
     shift = float(scenario.split("_x")[1]) if scenario.startswith("costs_x") else 1.0
+    depth_x = float(scenario.split("_x")[1]) if scenario.startswith("depth_x") else 1.0
 
     p = o[0]
     lp_arb = lp_exo = builder = margin = charge_tot = arb_vol = 0.0
@@ -217,7 +239,11 @@ def run_one(args) -> dict:
             st = d_stale / max(d_n, 1); ct = d_cont / max(d_arb, 1)
             daily.append((int(d_cur), round(d_m * 1e4, 4), round(st, 4), round(ct, 4)))
             if controlled:
-                if feasible:
+                if diverse:
+                    tot = d_wins.sum()
+                    if tot and 1.0 - d_wins.max() / tot > DIV_TAU:
+                        m *= DECAY_SR
+                elif feasible:
                     d_sr = d_sr_stale / max(d_sr_obs, 1)
                     if d_sr < S_LOW_SR:
                         m *= DECAY_SR
@@ -232,7 +258,8 @@ def run_one(args) -> dict:
                 m = min(max(m, 0.02e-4), 50e-4)
             d_cur = day[i]; d_stale = d_n = d_arb = d_cont = 0; d_m = m
             d_sr_obs = d_sr_stale = 0
-        oi = o[i]; D = Dd[i]
+            d_wins[:] = 0
+        oi = o[i]; D = Dd[i] * depth_x
         _trades_before = pass_trades[0] + pass_trades[1]
         G = oi - p; gab = abs(G)
         _pre_gap = gab; _pre_sign = 1.0 if G > 0 else -1.0     # +1: pool below oracle, a buy corrects
@@ -258,13 +285,16 @@ def run_one(args) -> dict:
               costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) + extra_cost for c in costs_base]
               correctable = arb_choice("today", a, D, costs[0], gas[i], 0.0, gab)[0] > 0
               res = sorted(((*arb_choice(rule, a, D, h, gas[i], m, gab), h) for h in costs), reverse=True)
-              w, r2 = res[0], res[1]
+              w, r2 = res[0], (res[1] if len(res) > 1 else (0.0, 0.0, 0.0, 0.0))   # monopoly: no runner-up
               traded = w[0] > 0 and w[1] > 0
               if correctable:
                   n_corr += 1; d_n += 1; w_corr += 1
                   if not traded:
                       n_uncorr += 1; d_stale += 1; w_uncorr += 1
               if traded:
+                  if diverse:     # FCFS race: any arb that would profit can be first
+                      prof = [k for k, x in enumerate(res) if x[0] > 0 and x[1] > 0]
+                      d_wins[costs.index(res[prof[rng.integers(len(prof))]][3])] += 1
                   V, kept = w[1], w[2]
                   E = (a - V / (2 * D)) * V
                   bid = max(r2[0], 0.0) + premium / 1e4 * V
@@ -365,6 +395,12 @@ def main(runs: list, workers: int = 8) -> list:
 
 GRID_M = [0.5, 1.0, 2.0, 5.0]
 SCENARIOS = ("stable", "costs_x4", "costs_x8")
+# Sensitivity scenarios (Study I assumptions): arb cost population (bp) and pool depth
+POPULATIONS = {
+    "pop_monopoly": [0.3], "pop_duo": [0.3, 0.6], "pop_ten": [0.3, 0.45, 0.6, 0.8, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0],
+    "pop_cheap": [c * 0.5 for c in ARB_COSTS_BPS], "pop_dear": [c * 2.0 for c in ARB_COSTS_BPS],
+}
+SENSITIVITY = tuple(POPULATIONS) + ("depth_x0.5", "depth_x2")
 RULES = ["avg_margin", "job_cap", "marginal_cap", "marginal_cap_gas"]
 
 
@@ -375,7 +411,7 @@ def grid() -> list:
         for r in RULES:
             runs += [(r, mm, sc, 0.0) for mm in GRID_M] + [(r, c, sc, 0.0) for c in ("ctl", "ctl_tight", "ctl_comp", "ctl_fast")]
         runs += [("marginal_cap_gas", "ctl_fast", sc, pr) for pr in (0.1, 0.5)]
-        runs += [(r, "ctl_feasible", sc, 0.0) for r in ("marginal_cap", "marginal_cap_gas")]
+        runs += [(r, c, sc, 0.0) for r in ("marginal_cap", "marginal_cap_gas") for c in ("ctl_feasible", "ctl_div")]
         runs += [(r, prm, sc, 0.0, ph) for r, prm in (("today", None), ("marginal_cap_gas", "ctl_fast"))
                  for ph in ("close", "both")]
     return runs
@@ -435,8 +471,35 @@ def run() -> dict:
     return out
 
 
+def run_sensitivity() -> dict:
+    """Assumption sensitivity: arb cost population and pool depth, for the
+    feasible controllers and a static allowance. Written beside metrics.json."""
+    runs = []
+    for sc in ("stable",) + SENSITIVITY:
+        runs.append(("today", None, sc, 0.0))
+        runs += [("marginal_cap_gas", p, sc, 0.0) for p in ("ctl_feasible", "ctl_div", 5.0)]
+    res = main(runs)
+    today = {r["scenario"]: r for r in res if r["rule"] == "today"}
+    rows = []
+    for r in res:
+        r.pop("_trades", None)
+        t = today[r["scenario"]]
+        rows.append({k: r[k] for k in ("scenario", "rule", "param", "lp_net_m", "builder_payments_m", "rebalanced_block_share",
+                                       "user_pretrade_staleness_bps_vw", "uncorrected_hours", "m_bps_final")}
+                    | {"lp_net_vs_today_m": round(r["lp_net_m"] - t["lp_net_m"], 3), "keeps_rebalanced": keeps_rebalanced(r, t)})
+    out = {"populations_bps": POPULATIONS, "depth_scenarios": ["depth_x0.5", "depth_x2"], "runs": rows}
+    OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / "sensitivity.json").write_text(json.dumps(out, indent=1))
+    return out
+
+
 if __name__ == "__main__":
+    import sys
     import time
+    if sys.argv[1:] == ["sensitivity"]:
+        for r in run_sensitivity()["runs"]:
+            print(r)
+        raise SystemExit(0)
     t = time.time()
     out = run()
     print(json.dumps(out["calibration"], indent=1))
