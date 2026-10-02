@@ -16,3 +16,8 @@ data/onchain/
 __pycache__/
 *.egg-info/
 .pytest_cache/
+
+# Foundry build output
+contracts/out/
+contracts/cache/
+contracts/lib/

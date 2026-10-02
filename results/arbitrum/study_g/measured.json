@@ -1,0 +1,86 @@
+{
+  "chain": "arbitrum",
+  "execution": {
+    "n_receipts": 400,
+    "gas_per_swap_tx": {
+      "10": 119345,
+      "50": 136315,
+      "90": 195460
+    },
+    "gas_single_swap_tx": {
+      "10": 119130,
+      "50": 136171,
+      "90": 145785
+    },
+    "share_multi_swap_tx": 0.06
+  },
+  "report_verification": {
+    "verifier_proxy": "0x478aa2ac9f6d65f84e09d9185d126c3a17c2a93c",
+    "n_tx": 40,
+    "n_verify_calls": 116,
+    "gas_first_in_tx": {
+      "10": 62544,
+      "50": 62544,
+      "90": 62544
+    },
+    "gas_later_in_same_tx": {
+      "10": 37544,
+      "50": 37544,
+      "90": 43544
+    },
+    "calldata_bytes": {
+      "10": 1156,
+      "50": 1156,
+      "90": 1156
+    }
+  },
+  "foundry": {
+    "hook_marginal_gas_per_swap": {
+      "store": 93994,
+      "event": 2307,
+      "rolling_hash": 10361
+    },
+    "noop_call_gas": 22456,
+    "reconcile_gas_by_batch": {
+      "1": 78612,
+      "10": 165701,
+      "50": 418225,
+      "200": 1365064
+    },
+    "reconcile_fixed_gas_per_tx": 90051,
+    "reconcile_gas_per_swap": 6388
+  },
+  "budget": {
+    "swaps": 5237793,
+    "blocks_with_swap": 1868277,
+    "swaps_per_block_mean": 2.8,
+    "execution_gas_per_swap_median": 136171,
+    "execution_usd_window": 29571.0,
+    "verify_gas_first_incl_calldata": 81040,
+    "verify_gas_later_incl_calldata": 56040,
+    "base_fee_gwei_median": 0.0201,
+    "epoch_blocks": 14400,
+    "by_design": {
+      "event/per_block": {
+        "reconciliation_gas_per_swap": 69721,
+        "ratio_to_execution": 0.512,
+        "usd_window": 15146.0
+      },
+      "event/epoch": {
+        "reconciliation_gas_per_swap": 28780,
+        "ratio_to_execution": 0.211,
+        "usd_window": 6252.0
+      },
+      "rolling_hash/per_block": {
+        "reconciliation_gas_per_swap": 77775,
+        "ratio_to_execution": 0.571,
+        "usd_window": 16895.0
+      },
+      "rolling_hash/epoch": {
+        "reconciliation_gas_per_swap": 36834,
+        "ratio_to_execution": 0.271,
+        "usd_window": 8001.0
+      }
+    }
+  }
+}

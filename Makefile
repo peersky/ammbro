@@ -2,7 +2,7 @@ PY := uv run python
 
 .PHONY: all setup data onchain studies \
         download parse bars extract txs score gate labels \
-        study-a study-b study-d study-e study-h sim-inputs study-i supp1 test clean
+        study-a study-b study-d study-e study-g study-h study-j sim-inputs study-i supp1 test clean
 
 # Full §17.9 chain: benchmark data -> on-chain swaps -> prepare -> labels
 # -> Study E (measures L, writes canonical q for both pools) -> control
@@ -58,6 +58,12 @@ study-d: gate
 
 study-e:
 	$(PY) -m pipeline.study_e
+
+study-g:                 # RPC (receipts, traces) + Foundry (contracts/)
+	$(PY) -m pipeline.study_g
+
+study-j: gate
+	$(PY) -m pipeline.study_j
 
 study-h: gate
 	$(PY) -m pipeline.study_h
