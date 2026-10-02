@@ -92,7 +92,7 @@
       ],
       "last_oracle_tranche": [
         {
-          "oracle_lag_blocks": 1,
+          "oracle_lag_steps": 1,
           "buffer_bps": 1.0,
           "charge_collected_share": 0.9553,
           "leak_m": 0.242,
@@ -100,7 +100,7 @@
           "mean_tranche_bps": 8.31
         },
         {
-          "oracle_lag_blocks": 1,
+          "oracle_lag_steps": 1,
           "buffer_bps": 3.0,
           "charge_collected_share": 0.9835,
           "leak_m": 0.089,
@@ -108,7 +108,7 @@
           "mean_tranche_bps": 10.31
         },
         {
-          "oracle_lag_blocks": 1,
+          "oracle_lag_steps": 1,
           "buffer_bps": 5.0,
           "charge_collected_share": 0.9931,
           "leak_m": 0.037,
@@ -116,7 +116,7 @@
           "mean_tranche_bps": 12.31
         },
         {
-          "oracle_lag_blocks": 5,
+          "oracle_lag_steps": 5,
           "buffer_bps": 1.0,
           "charge_collected_share": 0.746,
           "leak_m": 1.373,
@@ -124,7 +124,7 @@
           "mean_tranche_bps": 8.57
         },
         {
-          "oracle_lag_blocks": 5,
+          "oracle_lag_steps": 5,
           "buffer_bps": 3.0,
           "charge_collected_share": 0.8637,
           "leak_m": 0.736,
@@ -132,7 +132,7 @@
           "mean_tranche_bps": 10.57
         },
         {
-          "oracle_lag_blocks": 5,
+          "oracle_lag_steps": 5,
           "buffer_bps": 5.0,
           "charge_collected_share": 0.9149,
           "leak_m": 0.46,
@@ -140,7 +140,7 @@
           "mean_tranche_bps": 12.57
         },
         {
-          "oracle_lag_blocks": 25,
+          "oracle_lag_steps": 25,
           "buffer_bps": 1.0,
           "charge_collected_share": 0.8376,
           "leak_m": 0.878,
@@ -148,7 +148,7 @@
           "mean_tranche_bps": 20.44
         },
         {
-          "oracle_lag_blocks": 25,
+          "oracle_lag_steps": 25,
           "buffer_bps": 3.0,
           "charge_collected_share": 0.8973,
           "leak_m": 0.555,
@@ -156,7 +156,7 @@
           "mean_tranche_bps": 22.44
         },
         {
-          "oracle_lag_blocks": 25,
+          "oracle_lag_steps": 25,
           "buffer_bps": 5.0,
           "charge_collected_share": 0.9256,
           "leak_m": 0.402,
@@ -455,7 +455,7 @@
       ],
       "last_oracle_tranche": [
         {
-          "oracle_lag_blocks": 1,
+          "oracle_lag_steps": 1,
           "buffer_bps": 1.0,
           "charge_collected_share": 0.9594,
           "leak_m": 0.212,
@@ -463,7 +463,7 @@
           "mean_tranche_bps": 8.78
         },
         {
-          "oracle_lag_blocks": 1,
+          "oracle_lag_steps": 1,
           "buffer_bps": 3.0,
           "charge_collected_share": 0.9842,
           "leak_m": 0.082,
@@ -471,7 +471,7 @@
           "mean_tranche_bps": 10.78
         },
         {
-          "oracle_lag_blocks": 1,
+          "oracle_lag_steps": 1,
           "buffer_bps": 5.0,
           "charge_collected_share": 0.9932,
           "leak_m": 0.036,
@@ -479,7 +479,7 @@
           "mean_tranche_bps": 12.78
         },
         {
-          "oracle_lag_blocks": 5,
+          "oracle_lag_steps": 5,
           "buffer_bps": 1.0,
           "charge_collected_share": 0.7531,
           "leak_m": 1.291,
@@ -487,7 +487,7 @@
           "mean_tranche_bps": 8.79
         },
         {
-          "oracle_lag_blocks": 5,
+          "oracle_lag_steps": 5,
           "buffer_bps": 3.0,
           "charge_collected_share": 0.8646,
           "leak_m": 0.708,
@@ -495,7 +495,7 @@
           "mean_tranche_bps": 10.79
         },
         {
-          "oracle_lag_blocks": 5,
+          "oracle_lag_steps": 5,
           "buffer_bps": 5.0,
           "charge_collected_share": 0.9145,
           "leak_m": 0.447,
@@ -503,7 +503,7 @@
           "mean_tranche_bps": 12.79
         },
         {
-          "oracle_lag_blocks": 25,
+          "oracle_lag_steps": 25,
           "buffer_bps": 1.0,
           "charge_collected_share": 0.8387,
           "leak_m": 0.844,
@@ -511,7 +511,7 @@
           "mean_tranche_bps": 20.69
         },
         {
-          "oracle_lag_blocks": 25,
+          "oracle_lag_steps": 25,
           "buffer_bps": 3.0,
           "charge_collected_share": 0.8965,
           "leak_m": 0.541,
@@ -519,7 +519,7 @@
           "mean_tranche_bps": 22.69
         },
         {
-          "oracle_lag_blocks": 25,
+          "oracle_lag_steps": 25,
           "buffer_bps": 5.0,
           "charge_collected_share": 0.9245,
           "leak_m": 0.395,

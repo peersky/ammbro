@@ -2,13 +2,21 @@
 
 Everything is derived from data already on disk — no extra chain fetches:
 
-  blocks     every block in the window. Timestamps for blocks without a
-             pool swap are interpolated on the 12s slot grid from the
-             ~595k blocks that have one (missed slots inside a gap are
-             spread uniformly — a few seconds of error on ~1% of blocks).
+  blocks     every block in the window, one simulation step each.
+             Mainnet: timestamps for blocks without a pool swap are
+             interpolated on the 12s slot grid from the ~595k blocks that
+             have one (missed slots inside a gap are spread uniformly — a
+             few seconds of error on ~1% of blocks).
+             L2s (blocks shorter than their 1s timestamps): blocks with a
+             pool swap carry the sub-second time from extraction (the N
+             blocks sharing second S placed at S + (k + ½)/N, P§3.4);
+             blocks between them get a time interpolated linearly by block
+             number between their neighbours (Arbitrum: 63.4M blocks, 1.87M
+             anchors, ~34 blocks apart at a steady ~0.25s cadence).
              Base fee forward-filled (it moves <= 12.5% per block).
-  oracle     ln ETH/USDC mid at block_ts + L (Study E decision latency),
-             composed from ETHUSDT / USDCUSDT touch quotes (Study D).
+  oracle     ln ETH/USDC mid at each block's own time + L (Study E decision
+             latency), composed from ETHUSDT / USDCUSDT touch quotes
+             (Study D), µs resolution.
   depth      D = USD notional per unit ln-price move, per UTC day: median
              of V / |Δ ln price| over real swaps that moved the pool >= 3bp
              (tick resolution is 1bp).
@@ -43,20 +51,31 @@ def build() -> dict:
     df = df.merge(labels[["tx_hash", "log_index", "label"]], on=["tx_hash", "log_index"], how="left")
     df = df.sort_values(["block_number", "tx_index", "log_index"]).reset_index(drop=True)
 
-    # --- blocks: interpolate ts on the slot grid, forward-fill base fee ---
-    kb = df.drop_duplicates("block_number")[["block_number", "block_ts", "base_fee_wei"]]
+    # --- blocks: one per block; time on the slot grid (mainnet) or the
+    # sub-second reconstruction (L2), base fee forward-filled ---
+    df["_bt_us"] = block_time_us(df)
+    kb = df.drop_duplicates("block_number")[["block_number", "block_ts", "base_fee_wei", "_bt_us"]]
     b0, b1 = int(kb.block_number.min()), int(kb.block_number.max())
     num = np.arange(b0, b1 + 1)
-    ts = np.interp(num, kb.block_number.to_numpy(), kb.block_ts.to_numpy().astype(float))
     if ACTIVE.slot_s:                      # mainnet: snap to the fixed slot grid
+        ts = np.interp(num, kb.block_number.to_numpy(), kb.block_ts.to_numpy().astype(float))
         phase = int(kb.block_ts.iloc[0]) % ACTIVE.slot_s
         ts = (np.round((ts - phase) / ACTIVE.slot_s) * ACTIVE.slot_s + phase).astype(np.int64)
-    else:
-        ts = np.round(ts).astype(np.int64)
+        t_blk = ts * 1_000_000
+    else:                                  # L2: sub-second anchors, linear in block number between them
+        t_blk = np.round(np.interp(num, kb.block_number.to_numpy(), kb["_bt_us"].to_numpy(float))).astype(np.int64)
+        ts = t_blk // 1_000_000
     bf = pd.Series(kb.base_fee_wei.to_numpy(float), index=kb.block_number.to_numpy()).reindex(num).ffill().to_numpy()
-    t_us = ts * 1_000_000 + int(round(L * 1e6))
-    bid, ask = compose_eth_usdc(eth.quotes(t_us), usdc.quotes(t_us))
-    blocks = pd.DataFrame({"block_number": num, "ts": ts, "base_fee_wei": bf, "ln_o": np.log((bid + ask) / 2)})
+    ln_o = np.empty(len(num))
+    Lus = int(round(L * 1e6))
+    for a in range(0, len(num), 4_000_000):    # chunked: quote lookups on 63M L2 blocks
+        t_us = t_blk[a:a + 4_000_000] + Lus
+        bid, ask = compose_eth_usdc(eth.quotes(t_us), usdc.quotes(t_us))
+        ln_o[a:a + 4_000_000] = np.log((bid + ask) / 2)
+    # a block before the window's first quote print (Arbitrum's first block sits
+    # at 00:00:00) has no oracle; take the next one — a NaN would poison the run
+    ln_o = pd.Series(ln_o).bfill().ffill().to_numpy()
+    blocks = pd.DataFrame({"block_number": num, "ts": ts, "base_fee_wei": bf, "ln_o": ln_o})
     blocks["day"] = blocks.ts // 86400
 
     # --- depth per day ---
@@ -87,7 +106,9 @@ def build() -> dict:
     blocks.to_parquet(CACHE / "blocks.parquet", index=False)
     exo.to_parquet(CACHE / "exogenous.parquet", index=False)
     real = {
-        "L_s": L, "n_blocks": len(blocks), "blocks_with_pool_swap": int(len(kb)),
+        "L_s": L, "n_blocks": len(blocks),
+        "step_s": ACTIVE.slot_s or round(float((t_blk[-1] - t_blk[0]) / 1e6 / max(len(num) - 1, 1)), 4),
+        "block_interval_s": round(float((t_blk[-1] - t_blk[0]) / 1e6 / max(len(num) - 1, 1)), 4), "blocks_with_pool_swap": int(len(kb)),
         "n_swaps": len(df), "n_exogenous": len(exo), "n_arb_like": int(arb_like.sum()),
         "arb_like_volume_b": round(float(v[arb_like].sum()) / 1e9, 2),
         "exogenous_volume_b": round(float(v[~arb_like].sum()) / 1e9, 2),

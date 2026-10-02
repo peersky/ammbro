@@ -190,7 +190,11 @@ def simulate(df: pd.DataFrame, cost_shift: float) -> dict:
     p_flag_rent = float(gt.loc[gt.rent_today > 0, "flag"].mean())
     p_flag_norent = float(gt.loc[gt.rent_today <= 0, "flag"].mean())
     tau = (p_flag_rent + p_flag_norent) / 2
-    busy = pd.qcut(gt["base_fee_wei"].astype(float), N_BUSY, labels=False).to_numpy()
+    bf = gt["base_fee_wei"].astype(float)
+    try:
+        busy = pd.qcut(bf, N_BUSY, labels=False).to_numpy()
+    except ValueError:   # L2: base fee sits at its floor in most blocks -> tied edges; split by rank
+        busy = pd.qcut(bf.rank(method="first"), N_BUSY, labels=False).to_numpy()
     gt = gt.assign(busy=busy)
     pr_q = np.array([gt.loc[(gt.busy == b) & (gt.rent_today > 0), "flag"].mean() for b in range(N_BUSY)])
     pn_q = np.array([gt.loc[(gt.busy == b) & (gt.rent_today <= 0), "flag"].mean() for b in range(N_BUSY)])

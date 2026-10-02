@@ -3,7 +3,8 @@
 Goal (user): the rule with the best overall LP outcome while the pool
 stays rebalanced every block.
 
-Model. Every block in the window (1.32M) in order:
+Model. Every block in the window in order (mainnet 1.32M; Arbitrum 63.4M
+at their reconstructed sub-second times, blocksim):
   1. Arb phase (pool-first). Gap G = ln oracle − ln pool at block_ts + L.
      Each arb j (hedge cost h_j) picks the trade size maximizing its
      profit under the payout rule; the most profitable wins and pays the
@@ -59,7 +60,7 @@ Parameter m: static grid, or a controller per UTC day:
              raise on it, daily decay x0.95 otherwise — no "contested" signal,
              no arb cost knowledge, no index proofs.
   ctl_fast   ctl_comp with asymmetric timing: staleness checked every
-             RAISE_BLOCKS (~1h) and raised x2 immediately; lowering stays
+             RAISE_S (1h) and raised x2 immediately; lowering stays
              on the daily competition signal. Recovers from a cost shock
              within hours instead of days. Staleness = share of
 CORRECTABLE blocks left uncorrected, where correctable means the cheapest
@@ -76,7 +77,7 @@ router would route to, which inflates LP P&L artificially.
 Arb phase position (`phase`): open (before the block's user flow, default),
 close (after it), or both. No time passes inside a block, so open and close
 act on the same information; close only undoes the users' own in-block
-impact, which the next block's open also does with 12s fresher data. Close
+impact, which the next block's open also does with one block's fresher data. Close
 matters for the pool's RESTING price between blocks (what TWAP-style
 readers, lending protocols and next-block routers see).
 
@@ -89,6 +90,7 @@ from __future__ import annotations
 
 import json
 import math
+import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
@@ -105,7 +107,7 @@ ARB_COSTS_BPS = [0.3, 0.6, 1.0, 1.5, 2.5]
 ARB_GAS_UNITS = 250_000
 SHIFT_DAY = pd.Timestamp("2026-06-01").value // 10**9 // 86400
 S_STAR, S_LOW, TAU_C = 0.02, 0.005, 0.5
-RAISE_BLOCKS = 300              # ~1 hour
+RAISE_S = 3600                  # fast controllers check staleness hourly
 EPS_SR = 0.5e-4                 # self-referential staleness tolerance above f + m
 S_STAR_SR = 0.02
 S_LOW_SR = 0.01                 # daily decay allowed only below this
@@ -117,6 +119,8 @@ _DATA = {}
 
 def _init():
     blocks, exo = load()
+    if blocks[["ln_o", "D", "base_fee_wei"]].isna().any().any():
+        raise SystemExit("NaN in block inputs; one NaN poisons every later block — rebuild blocksim")
     _DATA["o"] = blocks["ln_o"].to_numpy()
     _DATA["D"] = blocks["D"].to_numpy()
     _DATA["gas"] = (blocks["base_fee_wei"].to_numpy() / 1e18 * ARB_GAS_UNITS * np.exp(blocks["ln_o"].to_numpy()))
@@ -127,6 +131,8 @@ def _init():
     _DATA["exo_end"] = np.searchsorted(idx, np.arange(len(blocks)), side="right")
     _DATA["exo_s"] = exo["s"].to_numpy()
     _DATA["exo_v"] = exo["v"].to_numpy()
+    step_s = json.loads((CACHE / "calibration_inputs.json").read_text()).get("step_s", 12)
+    _DATA["raise_steps"] = int(round(RAISE_S / step_s))   # 300 on mainnet (12s), ~14k on Arbitrum (~0.25s)
 
 
 def arb_choice(rule: str, a: float, D: float, h: float, g: float, m: float, gap_abs: float):
@@ -279,7 +285,7 @@ def run_one(args) -> dict:
                 sr_stale += 1; w_sr_stale += 1; d_sr_stale += 1
         if fast:
             w_n += 1
-            if w_n >= RAISE_BLOCKS:
+            if w_n >= _DATA["raise_steps"]:
                 if feasible:
                     if w_sr_stale >= MIN_STALE_SR and w_sr_stale / w_sr_obs > S_STAR_SR:
                         m = min(m * RAISE_SR, 50e-4)
@@ -341,7 +347,11 @@ def run_one(args) -> dict:
 
 
 def main(runs: list, workers: int = 8) -> list:
-    with ProcessPoolExecutor(max_workers=workers, initializer=_init) as ex:
+    """Workers fork from a parent that already holds the block arrays, so
+    they share them copy-on-write (63M blocks on Arbitrum, ~3.5 GB)."""
+    if not _DATA:
+        _init()
+    with ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("fork")) as ex:
         return list(ex.map(run_one, runs))
 
 

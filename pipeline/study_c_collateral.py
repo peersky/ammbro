@@ -25,7 +25,7 @@ Findings drive two alternatives to a flat per-trade ρ, both feasible:
                          (released at reconciliation, never charged).
   last-oracle tranche    ρ_trade = max(|path midpoint − last posted oracle| − f, 0)
                          + buffer: the gap to the oracle price the previous
-                         reconciliation already stored on-chain (12s+ old,
+                         reconciliation already stored on-chain (≥ one step old,
                          readable at execution). Splitting a big gap into small
                          trades does not shrink it — each piece still sees the
                          gap. (The impact-scaled tranche covers 100% in this
@@ -57,6 +57,7 @@ import json
 
 import numpy as np
 
+from .chains import ACTIVE
 from .config import REPO_ROOT, RESULTS_DIR
 from .blocksim import load
 from .study_i import run_one
@@ -64,7 +65,7 @@ from .study_i import run_one
 OUT = RESULTS_DIR / "study_c"
 RHO_BPS = [2, 5, 10, 20, 50, 100]
 R_ANNUAL = 0.05
-WINDOWS_S = {"1 block": 12, "1 hour": 3600, "1 day (epoch)": 86400, "7 days": 7 * 86400}
+WINDOWS_S = {"1 block": ACTIVE.block_time_s, "1 hour": 3600, "1 day (epoch)": 86400, "7 days": 7 * 86400}
 DESIGN = ("marginal_cap_gas", "ctl_feasible")
 
 
@@ -116,7 +117,7 @@ def analyse(scenario: str) -> dict:
         for buf in (1.0, 3.0, 5.0):
             tranche = (edge_lag_bps + buf) / 1e4 * V
             cover = np.minimum(charge, tranche)
-            last_oracle.append({"oracle_lag_blocks": lag, "buffer_bps": buf,
+            last_oracle.append({"oracle_lag_steps": lag, "buffer_bps": buf,
                                 "charge_collected_share": round(float(cover.sum() / charge.sum()), 4),
                                 "leak_m": round(float((charge - cover).sum()) / 1e6, 3),
                                 "trades_fully_covered": round(float((charge <= tranche).mean()), 4),
@@ -222,7 +223,7 @@ if __name__ == "__main__":
         print("   charge per trade (bp of notional):", a["charge_per_trade_bps"])
         print("   share of total charge from trades above:", a["share_of_charge_from_trades_above_bps"])
         for r in a["last_oracle_tranche"]:
-            print(f"   last-oracle tranche lag {r['oracle_lag_blocks']:>2} blk buf {r['buffer_bps']}bp: collected {r['charge_collected_share']*100:6.2f}%  leak ${r['leak_m']}M  covered {r['trades_fully_covered']*100:6.2f}%  mean tranche {r['mean_tranche_bps']}bp")
+            print(f"   last-oracle tranche lag {r['oracle_lag_steps']:>2} steps buf {r['buffer_bps']}bp: collected {r['charge_collected_share']*100:6.2f}%  leak ${r['leak_m']}M  covered {r['trades_fully_covered']*100:6.2f}%  mean tranche {r['mean_tranche_bps']}bp")
         for r in a["impact_scaled_tranche_rejected_gameable"][:0]:
             print(f"   impact tranche k={r['k']} c={r['c_bps']}bp: collected {r['charge_collected_share']*100:6.2f}%  leak ${r['leak_m']}M  covered {r['trades_fully_covered']*100:6.2f}%  mean tranche {r['mean_tranche_bps']}bp  locked/day ${r['locked_capital_usd_1day']:,.0f}")
         for k, v in a["account_bond_by_arb"].items():
