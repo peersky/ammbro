@@ -33,7 +33,7 @@ from .directional import SidedSeries, compose_eth_usdc, directional_price
 from .pools import STUDY_POOL, CONTROL_POOL
 from .qlp import q_lp
 from .study_a import mann_whitney_auc
-from .study_b import GAS_COST_USD, HEADLINE, baseline, simulate
+from .study_b import HEADLINE, base_fee_gas_usd, baseline, simulate
 from .study_e import C_WIDTH_S, KERNEL_STEP_S
 
 SCORED = ONCHAIN_DIR / "scored"
@@ -148,6 +148,7 @@ def evaluate(df: pd.DataFrame) -> dict:
     v_all = df["notional_token0"].to_numpy()
     lab = df["label"].to_numpy()
     benign_all = lab == "benign"
+    gas_all = base_fee_gas_usd(df)
 
     rows, auc_slices = [], {}
     for bench in BENCHMARKS:
@@ -156,8 +157,9 @@ def evaluate(df: pd.DataFrame) -> dict:
             ok = ~np.isnan(q_all)
             q, v, benign = q_all[ok], v_all[ok], benign_all[ok]
             neg = q < 0
-            base = baseline(q, v, GAS_COST_USD)
-            head = simulate(q, v, benign, GAS_COST_USD, **HEADLINE)
+            gas = gas_all[ok]
+            base = baseline(q, v, gas)
+            head = simulate(q, v, benign, real_gas=gas, **HEADLINE)
             l = lab[ok]
             rows.append({
                 "benchmark": bench, "horizon_s": h, "n": int(ok.sum()),

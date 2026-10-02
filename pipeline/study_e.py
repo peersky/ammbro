@@ -65,7 +65,7 @@ from .directional import SidedSeries, compose_eth_usdc, directional_price
 from .pools import STUDY_POOL, CONTROL_POOL
 from .qlp import q_lp
 from .study_a import mann_whitney_auc
-from .study_b import GAS_COST_USD, HEADLINE, baseline, simulate
+from .study_b import HEADLINE, baseline, simulate
 
 SCORED = ONCHAIN_DIR / "scored"
 LABELS_DIR = ONCHAIN_DIR / "labels" / STUDY_POOL.name
@@ -141,8 +141,8 @@ def evaluate(q, v, lab) -> dict:
     ok = ~np.isnan(q)
     q, v, lab = q[ok], v[ok], lab[ok]
     neg = q < 0
-    base = baseline(q, v, GAS_COST_USD)
-    head = simulate(q, v, lab == "benign", GAS_COST_USD, **HEADLINE)
+    base = baseline(q, v)
+    head = simulate(q, v, lab == "benign", **HEADLINE)
     big = v > STUDY_POOL.big_usd
     return {
         "n": int(ok.sum()),

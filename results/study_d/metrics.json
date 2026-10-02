@@ -56,7 +56,7 @@
       "headline_capture_fraction": 0.406,
       "headline_residual_m": 6.18,
       "headline_benign_overcharge_bps": 0.04,
-      "headline_survival_ratio": 0.965,
+      "headline_survival_ratio": 0.996,
       "auc": 0.8995
     },
     {
@@ -71,7 +71,7 @@
       "headline_capture_fraction": 0.482,
       "headline_residual_m": 6.15,
       "headline_benign_overcharge_bps": 0.15,
-      "headline_survival_ratio": 0.922,
+      "headline_survival_ratio": 0.986,
       "auc": 0.7974
     },
     {
@@ -86,7 +86,7 @@
       "headline_capture_fraction": 0.531,
       "headline_residual_m": 6.35,
       "headline_benign_overcharge_bps": 0.39,
-      "headline_survival_ratio": 0.875,
+      "headline_survival_ratio": 0.976,
       "auc": 0.7318
     },
     {
@@ -101,7 +101,7 @@
       "headline_capture_fraction": 0.575,
       "headline_residual_m": 6.55,
       "headline_benign_overcharge_bps": 0.75,
-      "headline_survival_ratio": 0.822,
+      "headline_survival_ratio": 0.963,
       "auc": 0.683
     },
     {
@@ -116,7 +116,7 @@
       "headline_capture_fraction": 0.409,
       "headline_residual_m": 6.13,
       "headline_benign_overcharge_bps": 0.04,
-      "headline_survival_ratio": 0.965,
+      "headline_survival_ratio": 0.996,
       "auc": 0.895
     },
     {
@@ -131,7 +131,7 @@
       "headline_capture_fraction": 0.483,
       "headline_residual_m": 6.16,
       "headline_benign_overcharge_bps": 0.15,
-      "headline_survival_ratio": 0.922,
+      "headline_survival_ratio": 0.986,
       "auc": 0.8013
     },
     {
@@ -146,7 +146,7 @@
       "headline_capture_fraction": 0.531,
       "headline_residual_m": 6.36,
       "headline_benign_overcharge_bps": 0.39,
-      "headline_survival_ratio": 0.875,
+      "headline_survival_ratio": 0.976,
       "auc": 0.7333
     },
     {
@@ -161,7 +161,7 @@
       "headline_capture_fraction": 0.575,
       "headline_residual_m": 6.55,
       "headline_benign_overcharge_bps": 0.75,
-      "headline_survival_ratio": 0.825,
+      "headline_survival_ratio": 0.963,
       "auc": 0.6836
     },
     {
@@ -176,7 +176,7 @@
       "headline_capture_fraction": 0.415,
       "headline_residual_m": 5.66,
       "headline_benign_overcharge_bps": 0.03,
-      "headline_survival_ratio": 0.959,
+      "headline_survival_ratio": 0.996,
       "auc": 0.8886
     },
     {
@@ -191,7 +191,7 @@
       "headline_capture_fraction": 0.483,
       "headline_residual_m": 5.84,
       "headline_benign_overcharge_bps": 0.14,
-      "headline_survival_ratio": 0.923,
+      "headline_survival_ratio": 0.988,
       "auc": 0.7992
     },
     {
@@ -206,7 +206,7 @@
       "headline_capture_fraction": 0.53,
       "headline_residual_m": 6.12,
       "headline_benign_overcharge_bps": 0.36,
-      "headline_survival_ratio": 0.872,
+      "headline_survival_ratio": 0.977,
       "auc": 0.732
     },
     {
@@ -221,7 +221,7 @@
       "headline_capture_fraction": 0.573,
       "headline_residual_m": 6.36,
       "headline_benign_overcharge_bps": 0.7,
-      "headline_survival_ratio": 0.825,
+      "headline_survival_ratio": 0.964,
       "auc": 0.6827
     },
     {
@@ -236,7 +236,7 @@
       "headline_capture_fraction": 0.405,
       "headline_residual_m": 6.64,
       "headline_benign_overcharge_bps": 0.04,
-      "headline_survival_ratio": 0.968,
+      "headline_survival_ratio": 0.996,
       "auc": 0.8948
     },
     {
@@ -251,7 +251,7 @@
       "headline_capture_fraction": 0.483,
       "headline_residual_m": 6.5,
       "headline_benign_overcharge_bps": 0.17,
-      "headline_survival_ratio": 0.922,
+      "headline_survival_ratio": 0.986,
       "auc": 0.8012
     },
     {
@@ -266,7 +266,7 @@
       "headline_capture_fraction": 0.533,
       "headline_residual_m": 6.6,
       "headline_benign_overcharge_bps": 0.43,
-      "headline_survival_ratio": 0.871,
+      "headline_survival_ratio": 0.976,
       "auc": 0.7336
     },
     {
@@ -281,7 +281,7 @@
       "headline_capture_fraction": 0.578,
       "headline_residual_m": 6.75,
       "headline_benign_overcharge_bps": 0.81,
-      "headline_survival_ratio": 0.822,
+      "headline_survival_ratio": 0.963,
       "auc": 0.684
     }
   ],

@@ -52,9 +52,8 @@ LABELS_DIR = ONCHAIN_DIR / "labels" / STUDY_POOL.name
 OUT = RESULTS_DIR / "study_b"
 
 BASELINE_FEE = 0.0005          # the pool's actual fixed 5 bps
-GAS_COST_USD = 10.0            # flat per-swap cost: original survival proxy
 ARB_GAS_UNITS = 250_000        # real-gas model: base fee × this (same as supp1)
-HEDGE_COST_BPS = 1.0           # assumed CEX hedge cost for real-cost metrics
+HEDGE_COST_BPS = 1.0           # assumed CEX hedge cost; arb survival = edge covers gas + hedge
 HEDGE_GRID_BPS = [0.0, 1.0, 2.0]
 
 ALPHAS = [0.25, 0.5, 0.75, 1.0]
@@ -64,14 +63,12 @@ ADDITIVE_ALPHAS = [0.5, 0.75, 0.9, 1.0]
 MARGINS_BPS = [0.5, 1.0, 2.0, 5.0]
 FORM_CAPS_BPS = [100, 500]
 
-# Tracked schedules, held fixed across horizons and gas models.
+# Tracked schedules, held fixed across horizons.
 # HEADLINE: best net LP of the original clip grid (caps ≤ 100bp) — kept for
 # continuity with earlier results. OBJECTIVE: margin schedule serving the
 # design objective, m = assumed hedge cost + 1bp buffer, cap = f_max.
 HEADLINE = {"alpha": 1.0, "cap": 100 / 1e4, "f_benign": 5 / 1e4}
 OBJECTIVE = {"alpha": 1.0, "cap": 500 / 1e4, "f_benign": 5 / 1e4, "form": "margin", "m": 2 / 1e4}
-
-GAS_FLAT_USD = [2.0, 10.0, 25.0, 50.0]
 
 
 def load() -> pd.DataFrame:
@@ -113,7 +110,7 @@ def rent(residual_usd, v, real_gas, hedge_bps: float) -> tuple[float, float]:
     return float(np.maximum(net, 0.0).sum()), float((net >= 0).mean())
 
 
-def simulate(q, v, benign_mask, gas_usd, alpha: float, cap: float, f_benign: float,
+def simulate(q, v, benign_mask, alpha: float, cap: float, f_benign: float,
              form: str = "clip", m: float = 0.0, real_gas=None) -> dict:
     """INCREMENTAL accounting: v3 Swap deltas already embed the pool's
     actual 5bp fee, so q_LP is net of it. A schedule's effect on LP P&L
@@ -133,8 +130,6 @@ def simulate(q, v, benign_mask, gas_usd, alpha: float, cap: float, f_benign: flo
         if benign_mask.any() else None
     )
 
-    gas = gas_usd[neg] if np.ndim(gas_usd) else gas_usd
-    arb_pnl = (-q[neg] - delta[neg]) * v[neg] - gas
     out = {
         "form": form, "alpha": alpha, "m_bps": round(m * 1e4, 2),
         "cap_bps": cap * 1e4, "f_benign_bps": f_benign * 1e4,
@@ -145,12 +140,11 @@ def simulate(q, v, benign_mask, gas_usd, alpha: float, cap: float, f_benign: flo
         "capture_fraction": round(captured / gross_lvr, 3),
         "net_lp_pnl_m": round(net_lp / 1e6, 2),
         "benign_overcharge_bps": round(benign_overcharge_bps, 2),
-        "arb_survival": round(float((arb_pnl > 0).mean()), 3),
     }
     if real_gas is not None:
         bid, surv = rent(resid_i, v[neg], real_gas[neg], HEDGE_COST_BPS)
         out["builder_bid_ceiling_m"] = round(bid / 1e6, 2)
-        out["arb_survival_real_cost"] = round(surv, 3)
+        out["arb_survival"] = round(surv, 3)
     return out
 
 
@@ -167,20 +161,18 @@ def captured_by_label(q, v, label, alpha: float, cap: float, f_benign: float,
     return {k: round(float(cap_usd[lab == k].sum()) / 1e6, 2) for k in ("toxic", "benign", "unlabeled")}
 
 
-def baseline(q, v, gas_usd, real_gas=None) -> dict:
+def baseline(q, v, real_gas=None) -> dict:
     neg = q < 0
-    gas = gas_usd[neg] if np.ndim(gas_usd) else gas_usd
     out = {
         "schedule": "fixed_5bp_baseline (as lived; markout already nets the fee)",
         "gross_lvr_m": round(float(-(q[neg] * v[neg]).sum()) / 1e6, 2),
         "net_lp_pnl_m": round(float((q * v).sum()) / 1e6, 2),
         "residual_extraction_m": round(float(-(q[neg] * v[neg]).sum()) / 1e6, 2),
-        "arb_survival": round(float(((-q[neg]) * v[neg] - gas > 0).mean()), 3),
     }
     if real_gas is not None:
         bid, surv = rent(-q[neg] * v[neg], v[neg], real_gas[neg], HEDGE_COST_BPS)
         out["builder_bid_ceiling_m"] = round(bid / 1e6, 2)
-        out["arb_survival_real_cost"] = round(surv, 3)
+        out["arb_survival"] = round(surv, 3)
     return out
 
 
@@ -209,7 +201,7 @@ def hedge_sensitivity(q, v, real_gas) -> list[dict]:
                 "m_bps": mb, "hedge_bps": h,
                 "builder_bid_ceiling_m": round(bid / 1e6, 2),
                 "bid_ceiling_vs_today": round(bid / b_bid, 3) if b_bid else None,
-                "arb_survival_real_cost": round(surv, 3),
+                "arb_survival": round(surv, 3),
                 "survival_vs_today": round(surv / b_surv, 3) if b_surv else None,
             })
     return rows
@@ -224,10 +216,9 @@ def run() -> dict:
 
 
 def compute(df: pd.DataFrame) -> dict:
-    gas_models = {f"flat_{g:g}usd": g for g in GAS_FLAT_USD}
     tracked = {"headline": HEADLINE, "objective": OBJECTIVE}
 
-    by_horizon, tracked_by_h, gas_sens, hedge_by_h = {}, [], [], {}
+    by_horizon, tracked_by_h, hedge_by_h = {}, [], {}
     for h in HORIZONS_S:
         sub = df.dropna(subset=[f"q_lp_h{h}"])
         q = sub[f"q_lp_h{h}"].to_numpy()
@@ -235,9 +226,9 @@ def compute(df: pd.DataFrame) -> dict:
         benign = (sub["label"] == "benign").to_numpy()
         real_gas = base_fee_gas_usd(sub)
 
-        sweep = [simulate(q, v, benign, GAS_COST_USD, real_gas=real_gas, **s) for s in schedule_grid()]
+        sweep = [simulate(q, v, benign, real_gas=real_gas, **s) for s in schedule_grid()]
         sweep.sort(key=lambda r: -r["net_lp_pnl_m"])
-        base = baseline(q, v, GAS_COST_USD, real_gas)
+        base = baseline(q, v, real_gas)
         by_horizon[f"h{h}"] = {
             "n_swaps": len(sub), "baseline": base,
             "sweep_top10": sweep[:10],
@@ -247,7 +238,7 @@ def compute(df: pd.DataFrame) -> dict:
         hedge_by_h[f"h{h}"] = hedge_sensitivity(q, v, real_gas)
 
         for name, sched in tracked.items():
-            s = simulate(q, v, benign, GAS_COST_USD, real_gas=real_gas, **sched)
+            s = simulate(q, v, benign, real_gas=real_gas, **sched)
             s["captured_by_label_m"] = captured_by_label(q, v, sub["label"].to_numpy(), **sched)
             tracked_by_h.append({
                 "schedule": name, "horizon_s": h,
@@ -256,30 +247,18 @@ def compute(df: pd.DataFrame) -> dict:
                 **s,
                 "net_vs_baseline_m": round(s["net_lp_pnl_m"] - base["net_lp_pnl_m"], 2),
                 "survival_ratio": round(s["arb_survival"] / base["arb_survival"], 3),
-                "survival_ratio_real_cost": round(s["arb_survival_real_cost"] / base["arb_survival_real_cost"], 3),
                 "bid_ceiling_vs_today": round(s["builder_bid_ceiling_m"] / base["builder_bid_ceiling_m"], 3),
             })
 
-            models = dict(gas_models, base_fee_x250k_gas=real_gas)
-            for gname, gas in models.items():
-                b = baseline(q, v, gas)
-                t = simulate(q, v, benign, gas, **sched)
-                gas_sens.append({
-                    "schedule": name, "horizon_s": h, "gas_model": gname,
-                    "baseline_survival": b["arb_survival"],
-                    "schedule_survival": t["arb_survival"],
-                    "survival_ratio": round(t["arb_survival"] / b["arb_survival"], 3) if b["arb_survival"] else None,
-                })
 
     out = {
         "n_swaps_total": len(df),
-        "assumptions": {"flat_gas_usd": GAS_COST_USD, "real_gas": f"base fee x {ARB_GAS_UNITS:,} gas",
+        "assumptions": {"arb_cost": f"base fee x {ARB_GAS_UNITS:,} gas + {HEDGE_COST_BPS:g}bp hedge",
                         "hedge_cost_bps": HEDGE_COST_BPS},
         "tracked_schedules": {"headline": {"form": "clip", "alpha": 1.0, "cap_bps": 100.0, "f_benign_bps": 5.0},
                               "objective": {"form": "margin", "m_bps": 2.0, "cap_bps": 500.0, "f_benign_bps": 5.0}},
         "tracked_by_horizon": tracked_by_h,
         "hedge_sensitivity_margin_cap500": hedge_by_h,
-        "gas_sensitivity": gas_sens,
         "by_horizon": by_horizon,
     }
     return out

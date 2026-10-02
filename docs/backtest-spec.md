@@ -423,7 +423,7 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
    - GATE: net-surplus PASS; survival read as relative (22.8/23.8 = most price-correcting arb stays profitable). CAVEAT: static replay, no behavioral response — capture is an upper bound on this schedule.
    - Horizon sweep (2026-09-30, headline schedule held fixed, all 990,555 swaps scored at every h):
 
-     | h | baseline net | headline net | Δ vs baseline | capture | residual | benign overcharge | survival ratio ($10 gas) |
+     | h | baseline net | headline net | Δ vs baseline | capture | residual | benign overcharge | survival ratio (flat $10 gas†) |
      |---|---|---|---|---|---|---|---|
      | 0s | −$1.93M | +$2.14M | +$4.07M | 41% | $5.84M | 0.05bp | 0.958 |
      | 12s | −$2.96M | +$2.70M | +$5.66M | 48% | $6.20M | 0.17bp | 0.920 |
@@ -431,8 +431,9 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
      | 60s | −$3.20M | +$5.63M | +$8.83M | 57% | $6.55M | 0.77bp | 0.821 |
 
      Net-surplus gate PASSES at every horizon, and the headline schedule stays best at every h *within the original clip grid (caps ≤ 100bp)*; the 2026-10-01 grid below adds forms that beat it. Surplus GROWS with h rather than decaying. Checked it is not an asymmetric-fee noise tax: benign-labeled capture is ≤$0.06M at every h, and the growth lands on toxic-labeled flow (2.15→5.76M, 53%→65% of capture). Reading: toxic markout keeps deepening for ~60s after execution (informed flow), matching baseline LP loss deepening −1.93→−3.20M. Unlabeled middle carries 34–47% of capture, composition unknown.
-     The cost of longer horizons is on the survival side, not surplus: survival ratio falls 0.958→0.821 at $10 gas. **h0 stays the headline** — smallest claim, fastest settlement, best arb survival. Longer-horizon surplus must not be cited as upside without the survival cost beside it.
-   - Gas sensitivity (survival ratio headline/baseline): h0 holds ≥0.85 across flat $2–$50 and the base-fee model (0.996). Fragile corner is long horizon × high gas: h60 at $50 → 0.509, h30 at $50 → 0.588 — roughly half of profitable arbs killed. Base-fee model (base fee × 250k gas) is a LOWER bound on cost: omits priority fees and coinbase-transfer builder payments; true cost sits between it and the flat sweep.
+     † Flat $10-per-swap gas was the first survival proxy; it overstates real cost ~100× (2026 mainnet base-fee gas per swap: P50 $0.07, P90 $0.38) and was removed from the code on 2026-10-02. Survival is now reported only at real cost (base fee × 250k gas + 1bp hedge) — see the design-objective sweep below and 9b.
+     The cost of longer horizons is on the survival side, not surplus (real-cost survival of the objective schedule 0.96 → 0.88 at h60, below). **h0 stays the headline** — smallest claim, fastest settlement, best arb survival. Longer-horizon surplus must not be cited as upside without the survival cost beside it.
+   - Gas cost model: base fee × 250k gas per arb, valued at the swap's price. A lower bound on cost — it omits priority fees and coinbase-transfer builder payments, which are the extras being measured, not costs. (A flat $2–$50 sweep was run against it and removed with the flat proxy, 2026-10-02.)
    - **Design-objective sweep (2026-10-01).** Forms `clip` / `additive` / `margin`, caps up to 500bp (= f_max), real-cost survival (base fee × 250k gas + hedge `h` = 1bp assumed), builder-bid ceiling. Today (baseline, h0): ceiling **$8.68M** of $9.91M LVR; 47.6% of LP-negative swaps cover real costs incl. a 1bp hedge (LP-negative ≠ arb — half are too small to be arbs).
 
      | h0 schedule | capture | LP net | builder-bid ceiling | vs today | survival (real cost) vs today |
@@ -451,7 +452,7 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
 7b. ✅ Supp-1 at all horizons (2026-09-30). The P§2.8 claim holds at every h: index-10+ (un-raced) extraction $2.11M / $2.32M / $2.55M / $2.85M at h = 0/12/30/60s, share 21.3% / 19.5% / 18.9% / 18.5%. Top-3 share rises 59.9% → 64.8% — later-horizon deepening concentrates slightly in raced positions, but the un-raced floor never drops below ~19%.
 8. ✅ Study D (2026-09-30, results/study_d/, `make study-d`). Touch proxy from `is_buyer_maker`, composed spread median 0.22bp / P90 1.9bp / P99 4.4bp; per-side staleness median ~0.75s (bursty prints — at a random instant the last print on a side is often ~1s old); raw ETH sides cross 4.4% before bounding.
 
-     | benchmark (h0) | LP-neg share | gross LVR | baseline net | headline net | Δ vs baseline | capture | survival ratio | AUC | AUC >100k |
+     | benchmark (h0) | LP-neg share | gross LVR | baseline net | headline net | Δ vs baseline | capture | survival ratio (flat $10 gas†) | AUC | AUC >100k |
      |---|---|---|---|---|---|---|---|---|---|
      | trade | 29.0% | $9.91M | −$1.93M | +$2.14M | +$4.07M | 41% | 0.958 | 0.867 | 0.978 |
      | mid | 27.9% | $9.83M | −$1.80M | +$2.28M | +$4.08M | 41% | 0.958 | 0.860 | 0.977 |
@@ -606,7 +607,7 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
      - **Position inverts under FCFS.** Mainnet extraction is top-of-block (61% in the first three user slots — bought position); on Arbitrum it sits deep in the block (69% at index 10+; LP-negative share rises with index, 14% at index 0 → 29% at 10+). There is no position auction, so the arb arrives when the CEX moves, wherever the block happens to be. The position-invariant per-block anchor is what makes the score indifferent to this.
      - "Ordering-rent ceiling" on Arbitrum is what Timeboost express-lane bids and priority fees could at most capture — the analogue of mainnet's builder bids.
      - Bid/ask matters more relative to Arbitrum's small edges: the sign of LP net flips between trade price (−$0.04M) and arb_exit (+$0.86M).
-     - Study B's flat `$10` gas survival (`arb_survival`, `survival_ratio`, `gas_sensitivity` flat sweep) is a mainnet proxy and meaningless at Arbitrum's cent-level gas — read `*_real_cost` (base fee × gas units, per block) on L2.
+     - Arb survival is at real cost on both chains (base fee × 250k gas + 1bp hedge; Arbitrum gas P50 $0.01/swap). The flat $10 proxy, which reported 0.4% survival on Arbitrum, was removed 2026-10-02.
      - Study H/I on Arbitrum need per-second aggregation in `blocksim` (63M blocks) — pending.
    - Data caveats found while testing: Arbitrum's endpoint returns `blockTimestamp` in logs on only ~80% of logs (0x0 otherwise) — headers are always used, non-zero log values are cross-checked (all matched); HyperEVM fills it consistently.
    - **RPC budget:** the Chainstack plan allows 400 requests/s in total, shared by every chain's endpoint and every concurrent job; `rpc.py` now starts at 300 and is capped at 380 (parallel jobs must split it). Arbitrum is far busier than the one-hour probe suggested — March alone has 1,038,436 swaps (≈6× mainnet's monthly count) — so its header + sub-second resolution (~6 header calls per swap block) is the dominant cost, on the order of a day at 380 rps. HyperEVM skips sub-second resolution (`resolve_subsecond=False`): 97% of its seconds hold one block, so the split would place almost every block at mid-second anyway; skipping it saves ~2/3 of its header calls and moves ~3% of block times by up to 0.5 s. Arbitrum keeps the split.
