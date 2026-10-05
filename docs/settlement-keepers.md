@@ -211,7 +211,12 @@ accounts other than the curator and its known affiliates), not raw volume.
    multi-pool; leader reverse auction with a keeper population of differing
    costs; missed-deadline and fallback dynamics; duplicated-work cost of the
    open race.
-4. **K3 small pools and pREP (simulate):** a pool size distribution (needs
+4. ✅ **K3 small pools** (spec 12e): pools ≥ ~$240M/6mo self-fund (τ ≤ 1.2% hourly,
+   ≤ 0.25% daily); a $13M pool needs 11–16% hourly, 1.5–2.5% daily; joint τ over
+   seven pools 0.11–0.19%; bundling saves 7–26%. Pooled τ (a protocol treasury
+   paying keepers per settled account) suffices — a tradable pREP is optional.
+   Curator share must be on recapture, not volume. Originally specified as:
+   **K3 small pools and pREP (simulate):** a pool size distribution (needs
    data on smaller pools — e.g. the v3 0.30% and v4 ETH/USDC pools from the
    venue probe, other pairs); whether multi-pool proofs plus pREP keep small
    pools served; curator share vs wash-growth attack.

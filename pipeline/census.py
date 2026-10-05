@@ -33,6 +33,7 @@ POOLS = [   # verified on-chain 2026-10-05: token0/token1/fee/decimals
     (Pool("dai_usdc_001", "0x5777d92f208679db4b9778590fa3cab3ac9e2168", "DAI", "USDC", 18, 6), "usd1"),
 ]
 BATCH = 20
+TX_CHUNK = 20_000           # sender lookups saved every this many txs
 
 
 def study_pool_clock() -> tuple[np.ndarray, np.ndarray, pd.Series]:
@@ -59,24 +60,42 @@ def logs(pool: Pool, lo: int, hi: int) -> list[dict]:
 
 
 def census_pool(pool: Pool, leg: str, clock) -> pd.DataFrame:
+    """Checkpointed: swap logs saved first, sender lookups saved in chunks and
+    resumed; the final file is written once both are complete."""
     path = OUT / f"{pool.name}.parquet"
     if path.exists():
         print(f"ok (exists) {path.name}")
         return pd.read_parquet(path)
+    OUT.mkdir(parents=True, exist_ok=True)
     kb, kts, eth = clock
-    df = pd.DataFrame(logs(pool, int(kb[0]), int(kb[-1])))     # the study pool's window
-    if df.empty:
-        return df
+    logs_path = OUT / f"{pool.name}.logs.parquet"
+    if logs_path.exists():
+        df = pd.read_parquet(logs_path)
+    else:
+        df = pd.DataFrame(logs(pool, int(kb[0]), int(kb[-1])))     # the study pool's window
+        if df.empty:
+            return df
+        for c in df.columns:      # 256-bit integers (amounts, sqrtPrice, liquidity) do not fit int64
+            if df[c].dtype == object or df[c].map(lambda x: isinstance(x, int) and abs(x) >= 2**63).any():
+                df[c] = df[c].astype(str)
+        df.to_parquet(logs_path, index=False)
+    parts = sorted(OUT.glob(f"{pool.name}.txs.*.parquet"))
+    done = pd.concat([pd.read_parquet(p) for p in parts]) if parts else pd.DataFrame(columns=["tx_hash", "tx_from"])
+    todo = sorted(set(df["tx_hash"]) - set(done["tx_hash"]))
+    for i in range(0, len(todo), TX_CHUNK):
+        meta = fetch_tx_meta(todo[i:i + TX_CHUNK], {})[["tx_hash", "tx_from"]]
+        meta.to_parquet(OUT / f"{pool.name}.txs.{len(parts) + i // TX_CHUNK:04d}.parquet", index=False)
+        print(f"  {pool.name}: tx senders {len(done) + i + len(meta):,}/{len(done) + len(todo):,}", flush=True)
+    parts = sorted(OUT.glob(f"{pool.name}.txs.*.parquet"))
+    tx = pd.concat(pd.read_parquet(p) for p in parts).drop_duplicates("tx_hash")
     ts = np.interp(df["block_number"].to_numpy(), kb, kts.astype(float))
     phase = int(kts[0]) % 12
     df["block_ts"] = (np.round((ts - phase) / 12) * 12 + phase).astype(np.int64)
-    meta = fetch_tx_meta(df["tx_hash"].drop_duplicates().tolist(), {})
-    df = df.merge(meta[["tx_hash", "tx_from"]], on="tx_hash", how="left")
+    df = df.merge(tx, on="tx_hash", how="left")
     a0 = df["amount0_raw"].astype(float).abs() / 10**pool.dec0
     a1 = df["amount1_raw"].astype(float).abs() / 10**pool.dec1
     px = (df["block_ts"] // 86400).map(eth).to_numpy()
     df["usd"] = {"usd0": a0, "usd1": a1, "weth1": a1 * px}[leg]
-    OUT.mkdir(parents=True, exist_ok=True)
     df.to_parquet(path, index=False)
     print(f"wrote {path.name}: {len(df):,} swaps, ${df['usd'].sum() / 1e9:.2f}B", flush=True)
     return df

@@ -612,6 +612,26 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
    - Leader misses (availability 95–99%) push 35–221 epochs per six months to 15–67 min (deadline + fallback race). A steep bounty slope matters: β = $0.001/min delays similar zk keepers ~52 min, β = $0.1/min ~2.5 min, for ~1% more paid.
    - **Collusion is worthless:** a leader cannot change a charge (fixed by the account's record chain and the signed prices); a bribe can only delay the LP credit, worth ≤ $0.009 (mainnet) / $0.001 (Arbitrum) per delayed epoch at 5%/yr. An omitted account self-settles or stays locked.
    - CAVEATS: keeper costs and availabilities assumed; independent availability; no strategic bidding beyond cost + expected slashing; proving time fixed.
+12e. ✅ **Study K3 — small pools, bundling, joint take, curator share (2026-10-05, `pipeline/census.py`, `pipeline/study_k3.py`, results/study_k/small_pools.json).** Seven Uniswap v3 mainnet pools spanning sizes (census: logs + tx senders over the window, block time on the slot grid, USD via the stable / WETH leg): ETH/USDC 0.05% $19.6B, WBTC/WETH 0.05% $4.27B, USDC/WETH 0.30% $669M, LINK/WETH 0.30% $411M, DAI/USDC 0.01% $358M, UNI/WETH 0.30% $239M, PEPE/WETH 0.30% $13M. Recapture = volume × 3.6bp (the study pool's measured rate; 1–10bp band in the results — other pairs' toxicity not measured). Keeper cost per pool-epoch from Study G constants at the real hourly base fee.
+
+     | pool | τ needed, hourly standalone (on-chain / zk) | daily standalone | hourly, bundled with all pools |
+     |---|---|---|---|
+     | ETH/USDC 0.05% | 0.16% / 0.10% | 0.05% / 0.02% | 0.16% / 0.10% |
+     | WBTC/WETH 0.05% | 0.19% / 0.15% | 0.05% / 0.02% | 0.18% / 0.11% |
+     | USDC/WETH 0.30% | 0.53% / 0.50% | 0.11% / 0.04% | 0.44% / 0.25% |
+     | LINK/WETH 0.30% | 0.51% / 0.60% | 0.12% / 0.07% | 0.39% / 0.26% |
+     | DAI/USDC 0.01% | 0.53% / 0.70% | 0.12% / 0.08% | 0.36% / 0.23% |
+     | UNI/WETH 0.30% | 1.02% / 1.19% | 0.25% / 0.14% | 0.77% / 0.50% |
+     | PEPE/WETH 0.30% | **11% / 16%** | 2.5% / 1.5% | 6.8% / 4.3% |
+     | **joint (Σ cost / Σ recapture)** | **0.19% / 0.11%** | | |
+
+   - **Pools down to ~$240M per six months pay their own keepers** within τ ≤ 1.2% at hourly epochs, ≤ 0.25% at daily epochs.
+   - **A tiny pool cannot pay hourly settlement alone** ($13M: 11–16%) and bundling barely helps (4–7%): its cost is not the shared fixed part but the per-account write (14.3k gas per account settled), and PEPE has many small accounts per dollar. What fixes it: longer epochs (daily: 1.5–2.5%) and/or a joint take.
+   - **A joint take across pools is cheap:** 0.11–0.19% of total recapture serves all seven pools; the small pools' keeper cost is ~$7k over six months against ~$0.7M of their recapture at 3.6bp. The cross-subsidy the large pools pay is therefore small.
+   - **Bundling saves 7% (on-chain) to 26% (zk)** of total keeper cost: one fixed cost per epoch instead of one per pool; it matters most for mid-size pools under zk.
+   - **Answer to the joint-token question:** what small pools need is a *pooled τ*, not necessarily a new token — a protocol-level treasury that pays keepers per settled account across pools achieves it. A tradable pREP adds a second asset (P§4.4's pair-native framing, valuation reflexivity, regulatory weight) for a subsidy of ~$7k per six months on this pool set; recommend pooled τ first, pREP only if keepers must be paid in a liquid unit.
+   - **Curator share (analytic):** a reward on *volume* is wash-safe only below the pool fee (1bp on DAI/USDC, 5bp on the 0.05% pools, 30bp on 0.30%) — a wash trader pays f per unit; a reward on *recapture from other accounts* is safe for any share < 1 (recapture is a charge the trader paid in full, plus the fee). Use recapture, not volume.
+   - CAVEATS: recapture rate assumed per pool (band 1–10bp shifts τ ∝ 1/rate); senders = tx.from; one chain; per-pool keeper cost assumes the per-account write for each account per epoch.
 11e. ✅ v3 vs v4 venue probe (2026-10-01, `pipeline/v4_probe.py`, RPC only). Mar–Aug 2026 Uniswap ETH/USDC volume: **v3 0.05% (study pool) $19.6B**, v3 0.30% $0.67B, v4 hook-less 0.30% $0.66B, 0.01% $0.63B, 0.05% $0.41B, 1.00% ~$0 — the study pool carries 89% of $22.0B. Depth from each pool's own swap-event liquidity: study pool **$12.1k/bp** (matches Study I's swap-based estimate, $12.3k/bp — estimator validated), next deepest $2.9k/bp. Busiest v4 pool ids in a 300-block sample identified from swap receipts: ETH/USDT (hooked), a long-tail token, stable/stable pairs, multi-hop routes — **no large hooked ETH/USDC pool**. Study I's calibration is representative: Uniswap ETH/USDC is thin in 2026 as a venue, not just this pool. The RPC caps eth_getLogs below 50k blocks even when topic-filtered.
 11f. ✅ L2 gas-constraint probe (2026-10-01, `pipeline/l2_probe.py`; latest hour per chain; Base via public RPC, Arbitrum and HyperEVM via Chainstack URLs in `.env`).
 
