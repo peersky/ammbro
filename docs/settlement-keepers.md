@@ -274,7 +274,8 @@ Consequences:
    per swap vs keeper payouts at real base fees; shared vs per-pool tanks;
    uniform vs per-account charging; base-fee mismatch and ×10 spikes;
    minimum G_s per design and chain.
-6. **G-aa (measure):** ERC-4337 paymaster sponsoring a keeper's applyEpoch vs
+6. ✅ **G-aa** (spec 12g): ERC-4337 sponsorship adds ~87–98k gas per settlement transaction — ~4–5% of an hourly mainnet epoch, negligible per swap at daily epochs. Originally specified as:
+   **G-aa (measure):** ERC-4337 paymaster sponsoring a keeper's applyEpoch vs
    self-reimbursement inside the settlement call.
 7. **ZK PoC (build, parked 2026-10-05):** SP1 guest settling a segment (one account) and an epoch
    (all accounts) with one batch signature; settlement contract with both
