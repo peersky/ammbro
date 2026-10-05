@@ -193,7 +193,12 @@ accounts other than the curator and its known affiliates), not raw volume.
 
 1. ✅ **G-park (measured, §2.2–2.4):** hook +17.1k/swap; self-settle 46k + 6.0k/swap;
    keeper epoch 26k + 14.3k/account; Groth16 verification 227k.
-2. **K1 settlement economics (simulate, real data):** every account's swaps;
+2. ✅ **K1 settlement economics** (spec 12c): self-settlement chosen by 2–8% of
+   accounts carrying 7–51% of volume depending on the cost of holding stake,
+   saving 15–24% of stake; keeper epochs $0.1–0.7 p50; break-even τ 0.1–0.24%
+   of recapture (×10 gas: 0.8–2.2%); reserve solvent from zero at τ = 0.25%
+   (mainnet) / 0.5% (Arbitrum). Originally specified as:
+   **K1 settlement economics (simulate, real data):** every account's swaps;
    each account chooses its self-settlement cadence (own gas vs stake freed);
    keepers settle the rest per epoch. Outputs: share of accounts/volume that
    self-settle, stake freed, keeper revenue vs cost per epoch (quiet hours, gas

@@ -1,0 +1,927 @@
+{
+  "chain": "arbitrum",
+  "gas": {
+    "self_settle_fixed": 46224,
+    "self_settle_per_swap": 6014,
+    "epoch_fixed": 26270,
+    "epoch_per_account": 14269,
+    "groth16": 227226,
+    "reconcile_fixed": 90051,
+    "reconcile_per_swap": 6388
+  },
+  "rho": 0.0005,
+  "accounts": 46109,
+  "volume_usd": 11180868373.0,
+  "recapture_usd": 939984.0,
+  "by_r": {
+    "0.05": {
+      "choice_share_accounts": {
+        "keeper": 0.9587,
+        "block": 0.0374,
+        "1min": 0.0039
+      },
+      "choice_share_volume": {
+        "1min": 0.0238,
+        "block": 0.0117,
+        "keeper": 0.9646
+      },
+      "stake_needed_usd": 130394.0,
+      "stake_if_all_keeper_usd": 155013.0,
+      "self_settle_gas_usd": 113.0,
+      "designs": {
+        "onchain": {
+          "epoch_gas_p50_p95_p99": [
+            7917849.5,
+            28532743.75,
+            47014168.2
+          ],
+          "epoch_usd_p50_p95_p99": [
+            0.319,
+            1.155,
+            1.89
+          ],
+          "accounts_per_epoch_p50_p95_p99": [
+            187.0,
+            422.5,
+            598.4
+          ],
+          "funding_real_gas": {
+            "offchain_0usd": {
+              "keeper_cost_usd": 2127.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00226,
+              "tau_0.001": {
+                "reserve_min_usd": -1204.0,
+                "reserve_end_usd": -1187.0,
+                "hours_negative": 4414
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -561.0,
+                "reserve_end_usd": 223.0,
+                "hours_negative": 3138
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 2573.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7273.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 21373.0,
+                "hours_negative": 1
+              }
+            },
+            "offchain_0.01usd": {
+              "keeper_cost_usd": 2171.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00231,
+              "tau_0.001": {
+                "reserve_min_usd": -1237.0,
+                "reserve_end_usd": -1231.0,
+                "hours_negative": 4414
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -593.0,
+                "reserve_end_usd": 179.0,
+                "hours_negative": 3142
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 2529.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7229.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 21328.0,
+                "hours_negative": 1
+              }
+            },
+            "offchain_0.05usd": {
+              "keeper_cost_usd": 2348.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.0025,
+              "tau_0.001": {
+                "reserve_min_usd": -1408.0,
+                "reserve_end_usd": -1408.0,
+                "hours_negative": 4415
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -725.0,
+                "reserve_end_usd": 2.0,
+                "hours_negative": 3204
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 2352.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7052.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 21152.0,
+                "hours_negative": 1
+              }
+            }
+          },
+          "funding_gas_x10": {
+            "keeper_cost_usd": 21491.0,
+            "recapture_usd": 939984.0,
+            "breakeven_tau": 0.02286,
+            "tau_0.001": {
+              "reserve_min_usd": -20551.0,
+              "reserve_end_usd": -20551.0,
+              "hours_negative": 4416
+            },
+            "tau_0.0025": {
+              "reserve_min_usd": -19141.0,
+              "reserve_end_usd": -19141.0,
+              "hours_negative": 4416
+            },
+            "tau_0.005": {
+              "reserve_min_usd": -16791.0,
+              "reserve_end_usd": -16791.0,
+              "hours_negative": 4416
+            },
+            "tau_0.01": {
+              "reserve_min_usd": -12208.0,
+              "reserve_end_usd": -12091.0,
+              "hours_negative": 4414
+            },
+            "tau_0.025": {
+              "reserve_min_usd": -5770.0,
+              "reserve_end_usd": 2009.0,
+              "hours_negative": 3140
+            }
+          },
+          "open_race": {
+            "settlement_delay_min": 0.0,
+            "overpay_vs_cheapest_cost": 0.1
+          }
+        },
+        "zk": {
+          "epoch_gas_p50_p95_p99": [
+            2921799.0,
+            6282148.5,
+            8792065.6
+          ],
+          "epoch_usd_p50_p95_p99": [
+            0.12,
+            0.268,
+            0.37
+          ],
+          "accounts_per_epoch_p50_p95_p99": [
+            187.0,
+            422.5,
+            598.4
+          ],
+          "funding_real_gas": {
+            "offchain_0.02usd": {
+              "keeper_cost_usd": 748.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.0008,
+              "tau_0.001": {
+                "reserve_min_usd": -149.0,
+                "reserve_end_usd": 192.0,
+                "hours_negative": 2645
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 1601.0,
+                "hours_negative": 1
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 3951.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 8651.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": 0.0,
+                "reserve_end_usd": 22751.0,
+                "hours_negative": 0
+              }
+            },
+            "offchain_0.05usd": {
+              "keeper_cost_usd": 881.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00094,
+              "tau_0.001": {
+                "reserve_min_usd": -248.0,
+                "reserve_end_usd": 59.0,
+                "hours_negative": 3103
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 1469.0,
+                "hours_negative": 1
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 3819.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 8519.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": 0.0,
+                "reserve_end_usd": 22619.0,
+                "hours_negative": 0
+              }
+            },
+            "offchain_0.2usd": {
+              "keeper_cost_usd": 1543.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00164,
+              "tau_0.001": {
+                "reserve_min_usd": -739.0,
+                "reserve_end_usd": -603.0,
+                "hours_negative": 4370
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -97.0,
+                "reserve_end_usd": 807.0,
+                "hours_negative": 1457
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 3157.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7856.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 21956.0,
+                "hours_negative": 1
+              }
+            }
+          },
+          "funding_gas_x10": {
+            "keeper_cost_usd": 7485.0,
+            "recapture_usd": 939984.0,
+            "breakeven_tau": 0.00796,
+            "tau_0.001": {
+              "reserve_min_usd": -6545.0,
+              "reserve_end_usd": -6545.0,
+              "hours_negative": 4416
+            },
+            "tau_0.0025": {
+              "reserve_min_usd": -5135.0,
+              "reserve_end_usd": -5135.0,
+              "hours_negative": 4416
+            },
+            "tau_0.005": {
+              "reserve_min_usd": -3636.0,
+              "reserve_end_usd": -2785.0,
+              "hours_negative": 4392
+            },
+            "tau_0.01": {
+              "reserve_min_usd": -1493.0,
+              "reserve_end_usd": 1915.0,
+              "hours_negative": 2645
+            },
+            "tau_0.025": {
+              "reserve_min_usd": -1.0,
+              "reserve_end_usd": 16015.0,
+              "hours_negative": 1
+            }
+          },
+          "open_race": {
+            "settlement_delay_min": 2.0,
+            "overpay_vs_cheapest_cost": 0.0872
+          }
+        }
+      }
+    },
+    "0.2": {
+      "choice_share_accounts": {
+        "keeper": 0.9362,
+        "block": 0.0573,
+        "1min": 0.0065
+      },
+      "choice_share_volume": {
+        "1min": 0.0364,
+        "block": 0.0329,
+        "keeper": 0.9307
+      },
+      "stake_needed_usd": 124798.0,
+      "stake_if_all_keeper_usd": 155013.0,
+      "self_settle_gas_usd": 381.0,
+      "designs": {
+        "onchain": {
+          "epoch_gas_p50_p95_p99": [
+            7620369.5,
+            27537820.0,
+            45675239.35
+          ],
+          "epoch_usd_p50_p95_p99": [
+            0.307,
+            1.118,
+            1.793
+          ],
+          "accounts_per_epoch_p50_p95_p99": [
+            181.0,
+            405.25,
+            569.7
+          ],
+          "funding_real_gas": {
+            "offchain_0usd": {
+              "keeper_cost_usd": 2049.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00218,
+              "tau_0.001": {
+                "reserve_min_usd": -1139.0,
+                "reserve_end_usd": -1109.0,
+                "hours_negative": 4414
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -495.0,
+                "reserve_end_usd": 301.0,
+                "hours_negative": 3110
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 2651.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7351.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 21451.0,
+                "hours_negative": 1
+              }
+            },
+            "offchain_0.01usd": {
+              "keeper_cost_usd": 2093.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00223,
+              "tau_0.001": {
+                "reserve_min_usd": -1172.0,
+                "reserve_end_usd": -1153.0,
+                "hours_negative": 4414
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -528.0,
+                "reserve_end_usd": 257.0,
+                "hours_negative": 3126
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 2607.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7307.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 21407.0,
+                "hours_negative": 1
+              }
+            },
+            "offchain_0.05usd": {
+              "keeper_cost_usd": 2269.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00241,
+              "tau_0.001": {
+                "reserve_min_usd": -1329.0,
+                "reserve_end_usd": -1329.0,
+                "hours_negative": 4414
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -659.0,
+                "reserve_end_usd": 81.0,
+                "hours_negative": 3152
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 2431.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7130.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 21230.0,
+                "hours_negative": 1
+              }
+            }
+          },
+          "funding_gas_x10": {
+            "keeper_cost_usd": 20707.0,
+            "recapture_usd": 939984.0,
+            "breakeven_tau": 0.02203,
+            "tau_0.001": {
+              "reserve_min_usd": -19767.0,
+              "reserve_end_usd": -19767.0,
+              "hours_negative": 4416
+            },
+            "tau_0.0025": {
+              "reserve_min_usd": -18357.0,
+              "reserve_end_usd": -18357.0,
+              "hours_negative": 4416
+            },
+            "tau_0.005": {
+              "reserve_min_usd": -16007.0,
+              "reserve_end_usd": -16007.0,
+              "hours_negative": 4416
+            },
+            "tau_0.01": {
+              "reserve_min_usd": -11554.0,
+              "reserve_end_usd": -11307.0,
+              "hours_negative": 4414
+            },
+            "tau_0.025": {
+              "reserve_min_usd": -5118.0,
+              "reserve_end_usd": 2793.0,
+              "hours_negative": 3120
+            }
+          },
+          "open_race": {
+            "settlement_delay_min": 0.0,
+            "overpay_vs_cheapest_cost": 0.1
+          }
+        },
+        "zk": {
+          "epoch_gas_p50_p95_p99": [
+            2836185.0,
+            6036008.25,
+            8382545.3
+          ],
+          "epoch_usd_p50_p95_p99": [
+            0.116,
+            0.258,
+            0.355
+          ],
+          "accounts_per_epoch_p50_p95_p99": [
+            181.0,
+            405.25,
+            569.7
+          ],
+          "funding_real_gas": {
+            "offchain_0.02usd": {
+              "keeper_cost_usd": 725.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00077,
+              "tau_0.001": {
+                "reserve_min_usd": -131.0,
+                "reserve_end_usd": 215.0,
+                "hours_negative": 2423
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 1625.0,
+                "hours_negative": 1
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 3975.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 8675.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": 0.0,
+                "reserve_end_usd": 22775.0,
+                "hours_negative": 0
+              }
+            },
+            "offchain_0.05usd": {
+              "keeper_cost_usd": 858.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00091,
+              "tau_0.001": {
+                "reserve_min_usd": -230.0,
+                "reserve_end_usd": 82.0,
+                "hours_negative": 3069
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 1492.0,
+                "hours_negative": 1
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 3842.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 8542.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": 0.0,
+                "reserve_end_usd": 22642.0,
+                "hours_negative": 0
+              }
+            },
+            "offchain_0.2usd": {
+              "keeper_cost_usd": 1520.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00162,
+              "tau_0.001": {
+                "reserve_min_usd": -721.0,
+                "reserve_end_usd": -580.0,
+                "hours_negative": 4367
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -79.0,
+                "reserve_end_usd": 830.0,
+                "hours_negative": 1291
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 3180.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7880.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 21980.0,
+                "hours_negative": 1
+              }
+            }
+          },
+          "funding_gas_x10": {
+            "keeper_cost_usd": 7251.0,
+            "recapture_usd": 939984.0,
+            "breakeven_tau": 0.00771,
+            "tau_0.001": {
+              "reserve_min_usd": -6311.0,
+              "reserve_end_usd": -6311.0,
+              "hours_negative": 4416
+            },
+            "tau_0.0025": {
+              "reserve_min_usd": -4901.0,
+              "reserve_end_usd": -4901.0,
+              "hours_negative": 4416
+            },
+            "tau_0.005": {
+              "reserve_min_usd": -3455.0,
+              "reserve_end_usd": -2551.0,
+              "hours_negative": 4379
+            },
+            "tau_0.01": {
+              "reserve_min_usd": -1313.0,
+              "reserve_end_usd": 2149.0,
+              "hours_negative": 2423
+            },
+            "tau_0.025": {
+              "reserve_min_usd": -1.0,
+              "reserve_end_usd": 16249.0,
+              "hours_negative": 1
+            }
+          },
+          "open_race": {
+            "settlement_delay_min": 2.0,
+            "overpay_vs_cheapest_cost": 0.0868
+          }
+        }
+      }
+    },
+    "0.5": {
+      "choice_share_accounts": {
+        "keeper": 0.9211,
+        "block": 0.0691,
+        "1min": 0.0098
+      },
+      "choice_share_volume": {
+        "1min": 0.2073,
+        "block": 0.0387,
+        "keeper": 0.754
+      },
+      "stake_needed_usd": 117403.0,
+      "stake_if_all_keeper_usd": 155013.0,
+      "self_settle_gas_usd": 1382.0,
+      "designs": {
+        "onchain": {
+          "epoch_gas_p50_p95_p99": [
+            6605923.0,
+            23230656.75,
+            38881431.3
+          ],
+          "epoch_usd_p50_p95_p99": [
+            0.266,
+            0.949,
+            1.486
+          ],
+          "accounts_per_epoch_p50_p95_p99": [
+            159.0,
+            353.25,
+            497.85
+          ],
+          "funding_real_gas": {
+            "offchain_0usd": {
+              "keeper_cost_usd": 1762.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00187,
+              "tau_0.001": {
+                "reserve_min_usd": -893.0,
+                "reserve_end_usd": -822.0,
+                "hours_negative": 4410
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -249.0,
+                "reserve_end_usd": 588.0,
+                "hours_negative": 1682
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 2938.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7638.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 21737.0,
+                "hours_negative": 1
+              }
+            },
+            "offchain_0.01usd": {
+              "keeper_cost_usd": 1806.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00192,
+              "tau_0.001": {
+                "reserve_min_usd": -926.0,
+                "reserve_end_usd": -866.0,
+                "hours_negative": 4411
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -282.0,
+                "reserve_end_usd": 544.0,
+                "hours_negative": 1841
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 2894.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7593.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 21693.0,
+                "hours_negative": 1
+              }
+            },
+            "offchain_0.05usd": {
+              "keeper_cost_usd": 1983.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00211,
+              "tau_0.001": {
+                "reserve_min_usd": -1057.0,
+                "reserve_end_usd": -1043.0,
+                "hours_negative": 4414
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -413.0,
+                "reserve_end_usd": 367.0,
+                "hours_negative": 2460
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 2717.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7417.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 21517.0,
+                "hours_negative": 1
+              }
+            }
+          },
+          "funding_gas_x10": {
+            "keeper_cost_usd": 17843.0,
+            "recapture_usd": 939984.0,
+            "breakeven_tau": 0.01898,
+            "tau_0.001": {
+              "reserve_min_usd": -16903.0,
+              "reserve_end_usd": -16903.0,
+              "hours_negative": 4416
+            },
+            "tau_0.0025": {
+              "reserve_min_usd": -15493.0,
+              "reserve_end_usd": -15493.0,
+              "hours_negative": 4416
+            },
+            "tau_0.005": {
+              "reserve_min_usd": -13143.0,
+              "reserve_end_usd": -13143.0,
+              "hours_negative": 4416
+            },
+            "tau_0.01": {
+              "reserve_min_usd": -9093.0,
+              "reserve_end_usd": -8443.0,
+              "hours_negative": 4410
+            },
+            "tau_0.025": {
+              "reserve_min_usd": -2658.0,
+              "reserve_end_usd": 5656.0,
+              "hours_negative": 1741
+            }
+          },
+          "open_race": {
+            "settlement_delay_min": 0.0,
+            "overpay_vs_cheapest_cost": 0.1
+          }
+        },
+        "zk": {
+          "epoch_gas_p50_p95_p99": [
+            2522267.0,
+            5294020.25,
+            7357317.65
+          ],
+          "epoch_usd_p50_p95_p99": [
+            0.103,
+            0.224,
+            0.308
+          ],
+          "accounts_per_epoch_p50_p95_p99": [
+            159.0,
+            353.25,
+            497.85
+          ],
+          "funding_real_gas": {
+            "offchain_0.02usd": {
+              "keeper_cost_usd": 653.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00069,
+              "tau_0.001": {
+                "reserve_min_usd": -74.0,
+                "reserve_end_usd": 287.0,
+                "hours_negative": 1794
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 1697.0,
+                "hours_negative": 1
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 4047.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 8747.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": 0.0,
+                "reserve_end_usd": 22847.0,
+                "hours_negative": 0
+              }
+            },
+            "offchain_0.05usd": {
+              "keeper_cost_usd": 785.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00084,
+              "tau_0.001": {
+                "reserve_min_usd": -172.0,
+                "reserve_end_usd": 155.0,
+                "hours_negative": 2659
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 1565.0,
+                "hours_negative": 1
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 3915.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 8615.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": 0.0,
+                "reserve_end_usd": 22714.0,
+                "hours_negative": 0
+              }
+            },
+            "offchain_0.2usd": {
+              "keeper_cost_usd": 1448.0,
+              "recapture_usd": 939984.0,
+              "breakeven_tau": 0.00154,
+              "tau_0.001": {
+                "reserve_min_usd": -663.0,
+                "reserve_end_usd": -508.0,
+                "hours_negative": 4361
+              },
+              "tau_0.0025": {
+                "reserve_min_usd": -21.0,
+                "reserve_end_usd": 902.0,
+                "hours_negative": 157
+              },
+              "tau_0.005": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 3252.0,
+                "hours_negative": 1
+              },
+              "tau_0.01": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 7952.0,
+                "hours_negative": 1
+              },
+              "tau_0.025": {
+                "reserve_min_usd": -0.0,
+                "reserve_end_usd": 22052.0,
+                "hours_negative": 1
+              }
+            }
+          },
+          "funding_gas_x10": {
+            "keeper_cost_usd": 6529.0,
+            "recapture_usd": 939984.0,
+            "breakeven_tau": 0.00695,
+            "tau_0.001": {
+              "reserve_min_usd": -5589.0,
+              "reserve_end_usd": -5589.0,
+              "hours_negative": 4416
+            },
+            "tau_0.0025": {
+              "reserve_min_usd": -4179.0,
+              "reserve_end_usd": -4179.0,
+              "hours_negative": 4416
+            },
+            "tau_0.005": {
+              "reserve_min_usd": -2877.0,
+              "reserve_end_usd": -1829.0,
+              "hours_negative": 4366
+            },
+            "tau_0.01": {
+              "reserve_min_usd": -736.0,
+              "reserve_end_usd": 2871.0,
+              "hours_negative": 1794
+            },
+            "tau_0.025": {
+              "reserve_min_usd": -1.0,
+              "reserve_end_usd": 16971.0,
+              "hours_negative": 1
+            }
+          },
+          "open_race": {
+            "settlement_delay_min": 2.0,
+            "overpay_vs_cheapest_cost": 0.0853
+          }
+        }
+      }
+    }
+  }
+}
