@@ -1,0 +1,468 @@
+{
+  "chain": "arbitrum",
+  "keeper_sets": {
+    "diverse": {
+      "onchain": {
+        "cost": [
+          0.0,
+          0.005,
+          0.01,
+          0.02,
+          0.05
+        ],
+        "p": [
+          0.99,
+          0.98,
+          0.95,
+          0.9,
+          0.8
+        ]
+      },
+      "zk": {
+        "cost": [
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.2
+        ],
+        "p": [
+          0.99,
+          0.98,
+          0.95,
+          0.9,
+          0.8
+        ]
+      }
+    },
+    "homogeneous": {
+      "onchain": {
+        "cost": [
+          0.01,
+          0.01,
+          0.01,
+          0.01,
+          0.01
+        ],
+        "p": [
+          0.95,
+          0.95,
+          0.95,
+          0.95,
+          0.95
+        ]
+      },
+      "zk": {
+        "cost": [
+          0.05,
+          0.05,
+          0.05,
+          0.05,
+          0.05
+        ],
+        "p": [
+          0.95,
+          0.95,
+          0.95,
+          0.95,
+          0.95
+        ]
+      }
+    }
+  },
+  "beta_grid": [
+    0.001,
+    0.01,
+    0.1
+  ],
+  "term_epochs": 168,
+  "slash_usd": 5.0,
+  "deadline_min": 15.0,
+  "results": {
+    "onchain/diverse/beta0.001/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 2049.0,
+      "social_cost_usd": 1863.0,
+      "waste_usd": 0.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        0.25,
+        0.3,
+        0.3
+      ],
+      "delay_min_max": 10.2,
+      "epochs_late_over_10min": 1,
+      "paid_over_social": 1.1
+    },
+    "onchain/diverse/beta0.001/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 2509.0,
+      "social_cost_usd": 1863.0,
+      "waste_usd": 0.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 175.0,
+      "delay_min_p50_p95_p99": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "delay_min_max": 25.3,
+      "epochs_late_over_10min": 35,
+      "paid_over_social": 1.347
+    },
+    "onchain/diverse/beta0.01/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 2051.0,
+      "social_cost_usd": 1863.0,
+      "waste_usd": 0.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        0.25,
+        0.3,
+        0.3
+      ],
+      "delay_min_max": 1.2,
+      "epochs_late_over_10min": 0,
+      "paid_over_social": 1.101
+    },
+    "onchain/diverse/beta0.01/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 2514.0,
+      "social_cost_usd": 1863.0,
+      "waste_usd": 0.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 175.0,
+      "delay_min_p50_p95_p99": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "delay_min_max": 16.3,
+      "epochs_late_over_10min": 35,
+      "paid_over_social": 1.35
+    },
+    "onchain/diverse/beta0.1/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 2070.0,
+      "social_cost_usd": 1977.0,
+      "waste_usd": 111.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        0.25,
+        0.29,
+        0.3
+      ],
+      "delay_min_max": 0.3,
+      "epochs_late_over_10min": 0,
+      "paid_over_social": 1.047
+    },
+    "onchain/diverse/beta0.1/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 2561.0,
+      "social_cost_usd": 1864.0,
+      "waste_usd": 1.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 175.0,
+      "delay_min_p50_p95_p99": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "delay_min_max": 15.4,
+      "epochs_late_over_10min": 35,
+      "paid_over_social": 1.375
+    },
+    "onchain/homogeneous/beta0.001/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 2093.0,
+      "social_cost_usd": 2093.0,
+      "waste_usd": 186.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        10.21,
+        10.25,
+        10.26
+      ],
+      "delay_min_max": 10.3,
+      "epochs_late_over_10min": 4416,
+      "paid_over_social": 1.0
+    },
+    "onchain/homogeneous/beta0.001/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 3150.0,
+      "social_cost_usd": 1913.0,
+      "waste_usd": 6.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 990.0,
+      "delay_min_p50_p95_p99": [
+        0.2,
+        0.2,
+        25.23
+      ],
+      "delay_min_max": 25.3,
+      "epochs_late_over_10min": 198,
+      "paid_over_social": 1.647
+    },
+    "onchain/homogeneous/beta0.01/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 2094.0,
+      "social_cost_usd": 2093.0,
+      "waste_usd": 186.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        1.21,
+        1.25,
+        1.26
+      ],
+      "delay_min_max": 1.3,
+      "epochs_late_over_10min": 0,
+      "paid_over_social": 1.0
+    },
+    "onchain/homogeneous/beta0.01/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 3177.0,
+      "social_cost_usd": 1913.0,
+      "waste_usd": 6.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 990.0,
+      "delay_min_p50_p95_p99": [
+        0.2,
+        0.2,
+        16.23
+      ],
+      "delay_min_max": 16.3,
+      "epochs_late_over_10min": 198,
+      "paid_over_social": 1.661
+    },
+    "onchain/homogeneous/beta0.1/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 2100.0,
+      "social_cost_usd": 2093.0,
+      "waste_usd": 186.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        0.31,
+        0.35,
+        0.36
+      ],
+      "delay_min_max": 0.4,
+      "epochs_late_over_10min": 0,
+      "paid_over_social": 1.004
+    },
+    "onchain/homogeneous/beta0.1/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 3445.0,
+      "social_cost_usd": 1913.0,
+      "waste_usd": 6.0,
+      "gas_usd": 1862.0,
+      "slashed_usd": 990.0,
+      "delay_min_p50_p95_p99": [
+        0.2,
+        0.2,
+        15.33
+      ],
+      "delay_min_max": 15.4,
+      "epochs_late_over_10min": 198,
+      "paid_over_social": 1.801
+    },
+    "zk/diverse/beta0.001/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 726.0,
+      "social_cost_usd": 668.0,
+      "waste_usd": 0.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        22.05,
+        22.1,
+        22.1
+      ],
+      "delay_min_max": 52.0,
+      "epochs_late_over_10min": 4416,
+      "paid_over_social": 1.087
+    },
+    "zk/diverse/beta0.001/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 1208.0,
+      "social_cost_usd": 668.0,
+      "waste_usd": 0.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 175.0,
+      "delay_min_p50_p95_p99": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "delay_min_max": 67.1,
+      "epochs_late_over_10min": 35,
+      "paid_over_social": 1.809
+    },
+    "zk/diverse/beta0.01/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 728.0,
+      "social_cost_usd": 797.0,
+      "waste_usd": 130.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        4.05,
+        4.1,
+        4.1
+      ],
+      "delay_min_max": 7.0,
+      "epochs_late_over_10min": 0,
+      "paid_over_social": 0.913
+    },
+    "zk/diverse/beta0.01/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 1213.0,
+      "social_cost_usd": 669.0,
+      "waste_usd": 1.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 175.0,
+      "delay_min_p50_p95_p99": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "delay_min_max": 22.1,
+      "epochs_late_over_10min": 35,
+      "paid_over_social": 1.814
+    },
+    "zk/diverse/beta0.1/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 748.0,
+      "social_cost_usd": 2106.0,
+      "waste_usd": 1438.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        2.25,
+        2.3,
+        2.3
+      ],
+      "delay_min_max": 2.5,
+      "epochs_late_over_10min": 0,
+      "paid_over_social": 0.355
+    },
+    "zk/diverse/beta0.1/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 1260.0,
+      "social_cost_usd": 678.0,
+      "waste_usd": 11.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 175.0,
+      "delay_min_p50_p95_p99": [
+        2.0,
+        2.0,
+        2.0
+      ],
+      "delay_min_max": 17.6,
+      "epochs_late_over_10min": 35,
+      "paid_over_social": 1.858
+    },
+    "zk/homogeneous/beta0.001/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 858.0,
+      "social_cost_usd": 1629.0,
+      "waste_usd": 829.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        52.01,
+        52.05,
+        52.06
+      ],
+      "delay_min_max": 52.1,
+      "epochs_late_over_10min": 4416,
+      "paid_over_social": 0.527
+    },
+    "zk/homogeneous/beta0.001/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 1915.0,
+      "social_cost_usd": 828.0,
+      "waste_usd": 28.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 990.0,
+      "delay_min_p50_p95_p99": [
+        2.0,
+        2.0,
+        67.03
+      ],
+      "delay_min_max": 67.1,
+      "epochs_late_over_10min": 198,
+      "paid_over_social": 2.314
+    },
+    "zk/homogeneous/beta0.01/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 858.0,
+      "social_cost_usd": 1629.0,
+      "waste_usd": 829.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        7.01,
+        7.05,
+        7.06
+      ],
+      "delay_min_max": 7.1,
+      "epochs_late_over_10min": 0,
+      "paid_over_social": 0.527
+    },
+    "zk/homogeneous/beta0.01/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 1942.0,
+      "social_cost_usd": 828.0,
+      "waste_usd": 28.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 990.0,
+      "delay_min_p50_p95_p99": [
+        2.0,
+        2.0,
+        22.03
+      ],
+      "delay_min_max": 22.1,
+      "epochs_late_over_10min": 198,
+      "paid_over_social": 2.346
+    },
+    "zk/homogeneous/beta0.1/race": {
+      "epochs": 4416,
+      "protocol_paid_usd": 865.0,
+      "social_cost_usd": 1629.0,
+      "waste_usd": 829.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 0.0,
+      "delay_min_p50_p95_p99": [
+        2.51,
+        2.55,
+        2.56
+      ],
+      "delay_min_max": 2.6,
+      "epochs_late_over_10min": 0,
+      "paid_over_social": 0.531
+    },
+    "zk/homogeneous/beta0.1/leader": {
+      "epochs": 4416,
+      "protocol_paid_usd": 2209.0,
+      "social_cost_usd": 828.0,
+      "waste_usd": 28.0,
+      "gas_usd": 579.0,
+      "slashed_usd": 990.0,
+      "delay_min_p50_p95_p99": [
+        2.0,
+        2.0,
+        17.53
+      ],
+      "delay_min_max": 17.6,
+      "epochs_late_over_10min": 198,
+      "paid_over_social": 2.669
+    }
+  },
+  "collusion_bound_usd_per_epoch_delayed": 0.0012
+}

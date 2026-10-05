@@ -203,7 +203,11 @@ accounts other than the curator and its known affiliates), not raw volume.
    keepers settle the rest per epoch. Outputs: share of accounts/volume that
    self-settle, stake freed, keeper revenue vs cost per epoch (quiet hours, gas
    spikes), τ needed, settlement delay.
-3. **K2 keeper market (simulate):** open race vs designated leader vs
+3. ✅ **K2 keeper market** (spec 12d): open race for on-chain settlement (no
+   waste, cheapest); designated leader for zk settlement (removes duplicated
+   proving — race waste exceeds gas on Arbitrum with similar keepers);
+   collusion worth < $0.01 per delayed epoch. Originally specified as:
+   **K2 keeper market (simulate):** open race vs designated leader vs
    multi-pool; leader reverse auction with a keeper population of differing
    costs; missed-deadline and fallback dynamics; duplicated-work cost of the
    open race.
