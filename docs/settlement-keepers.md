@@ -44,16 +44,17 @@ rec     = (post sqrtP, active liquidity, Δ0, Δ1, block)
 
 Each account's swaps form a complete, self-contained segment
 `(settledSeq, seq]` that can be settled independently of other accounts.
-Gas: dispatch (M: v4 hook dispatch ≈ 2.6k inside the measured 10–13k per-swap
-hook overhead) + the account slot write the parking lock needs anyway (E: ~5k,
-**not yet measured — Study G's budget omits it**).
+Gas (M, G-park, `contracts/src/RepHookAccount.sol` on a real v4 PoolManager,
+each swap its own transaction): **+17,112 gas per swap** over a hookless swap
+(140,801 vs 123,689) for dispatch, price/liquidity reads, the in-block move
+slot, the collateral check, the parking lock and the per-account record.
 
 ### 2.3 Two settlement paths, one pointer
 
 | path | who | when | how | pays |
 |---|---|---|---|---|
-| **self-settle** | the account | any block after its swaps' prices are signed | submits its records + signed prices; charges computed on-chain (≈ 56k signature + 6.4k per swap, M) or proven (SP1) for long segments | the account (its own gas) |
-| **keeper settle** | a keeper | at epoch end, everything still in flight | one proof for the epoch; output = list of (account, fromSeq, toSeq, burn, release) | the protocol take τ (§4) |
+| **self-settle** | the account | any block after its swaps' prices are signed | submits its records + the signed price batch; charges computed on-chain (M: **46k + 6.0k per swap**, steady state; first-ever settlement +17k for a fresh slot) | the account (its own gas) |
+| **keeper settle** | a keeper | at epoch end, everything still in flight | list of (account, fromSeq, toSeq, burn, release, head) applied on-chain (M: **26k + 14.3k per account**; skipped entry 4.4k), either computed on-chain from the records or proven off-chain (M: SP1 Groth16 verification **227,226 gas**) | the protocol take τ (§4) |
 
 - **No double settlement:** both paths advance the same `settledSeq`.
 - **Skip, don't revert:** a keeper entry whose `fromSeq ≠ settledSeq` (the
@@ -69,21 +70,37 @@ mainnet (≈ 40% of τ at 2.5%) and ≈ all of τ on Arbitrum, and a proof takes
 minutes — longer than a block. Fast release therefore comes from accounts
 settling themselves; keepers are the catch-all.
 
-### 2.4 Proving workload (E, SP1 zkVM, one batch signature)
+### 2.4 Settlement budget over the window (M, Study G `settlement_budget`)
+
+All designs include the per-swap hook (17.1k); priced at each block's base fee.
+
+| design | mainnet (× execution) | Arbitrum (× execution) |
+|---|---|---|
+| keeper on-chain, every block (Data Streams report per block) | $96.7k (0.72) | $21.2k (0.72) |
+| **keeper on-chain, hourly, one signed price batch** | **$24.9k (0.18)** | **$5.7k (0.19)** |
+| keeper zk, hourly, one Groth16 proof | $20.5k (0.14) | $4.3k (0.15) |
+| every account self-settles hourly (on-chain) | $38.7k (0.28) | $6.8k (0.23) |
+| *execution of the swaps themselves* | $148k | $30k |
+
+**Finding.** With one signed price batch per epoch, zk saves only ~18% (mainnet)
+to ~24% (Arbitrum) over settling the same epoch on-chain: the per-block report
+verification it was meant to remove is already gone, and what remains — the
+per-swap hook (~60% of the zk total) and the per-account writes — no proof can
+remove. The simpler, lower-risk design (on-chain hourly settlement with a batch
+signature, no prover, no trusted setup) is within ~20% of the zk design. zk
+pays off with scale (the 6.0–6.4k per-swap on-chain charge computation goes)
+and as a way for one keeper to settle many pools; it is not needed for
+viability.
+
+### 2.5 Proving workload (E, SP1 zkVM, one batch signature)
 Per hourly epoch: one signature + keccak chain and charge per swap (~10k
 cycles) + the account list. Mainnet ≈ 2M cycles (p99 7M), Arbitrum ≈ 8M (p99
 60M) → seconds on a consumer GPU, minutes on a laptop CPU; the Groth16 wrap
 (1–2 min, ~16 GB RAM) dominates. Verification on-chain ≈ 250–300k gas (E, to
 measure). Proving is cheap; on-chain state writes are the cost.
 
-Budget over the window (E, parking write still estimated):
-
-| | mainnet | Arbitrum |
-|---|---|---|
-| per swap (dispatch + parking + record, ~18k) | ~18B gas | ~94B gas |
-| per epoch (proof + per-account writes, ~1.2M / ~1.6M) | ~6B gas | ~7B gas |
-| **total, 6 months** | **~$7k** | **~$4k** |
-| without zk (on-chain reconciliation + parking) | ~$46–85k | ~$10–20k |
+(The earlier estimate of ~$7k / ~$4k for the zk design under-counted the
+per-account write — measured 14.3k, not ~6k; the measured figures are in §2.4.)
 
 ## 3. Keeper market
 
@@ -174,8 +191,8 @@ accounts other than the curator and its known affiliates), not raw volume.
 
 ## 5. Studies needed (proposed order)
 
-1. **G-park (measure):** hook with per-account record + parking lock in
-   Foundry on the real v4 PoolManager; correct Study G's per-swap budget.
+1. ✅ **G-park (measured, §2.2–2.4):** hook +17.1k/swap; self-settle 46k + 6.0k/swap;
+   keeper epoch 26k + 14.3k/account; Groth16 verification 227k.
 2. **K1 settlement economics (simulate, real data):** every account's swaps;
    each account chooses its self-settlement cadence (own gas vs stake freed);
    keepers settle the rest per epoch. Outputs: share of accounts/volume that

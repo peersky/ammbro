@@ -22,6 +22,14 @@ Every input is measured on the chain itself, nothing is assumed:
                  rolling-hash afterSwap hook minus a hookless pool, every
                  swap its own transaction — the hook's real overhead incl.
                  PoolManager dispatch and state reads. The budget uses it.
+  G-park         contracts/src/RepHookAccount.sol (v4 hook with the parking lock
+                 ℓ = ρ + k·Δ_block, collateral check and per-account record chain,
+                 plus selfSettle / applyEpoch, docs/settlement-keepers.md):
+                 swap gas vs a hookless pool; steady-state self-settlement and
+                 keeper-epoch gas (accounts settled before), fixed + slope.
+  G-zk           zk/contracts: one real SP1 v6.0.0 Groth16 proof verified on-chain.
+  Settlement     budget of four settlement designs over the window, all with the
+                 measured per-swap hook (parking + record), priced at real base fees.
   Budget         reconciliation gas vs execution gas over the real window,
                  priced block by block at the real base fee and ETH price:
                  per-block regime (one reconciliation tx per block with a
@@ -135,6 +143,88 @@ def foundry() -> dict:
             "reconcile_fixed_gas_per_tx": int(round(fixed)), "reconcile_gas_per_swap": int(round(slope))}
 
 
+ZK_CONTRACTS = REPO_ROOT / "zk" / "contracts"
+
+
+def _forge_at(root, match: str) -> dict:
+    out = subprocess.run(["forge", "test", "--isolate", "--gas-report", "--json", "--mt", match],
+                         cwd=root, capture_output=True, text=True, check=True).stdout
+    res = {}
+    for c in json.loads(out):
+        for f, v in c["functions"].items():
+            name = f"{c['contract'].split(':')[1]}.{f.split('(')[0]}"
+            res[f"{c['contract'].split(':')[1]}.{f}"] = v          # full signature (overloads)
+            res.setdefault(name, v)                                 # short name: first overload listed
+    return res
+
+
+def foundry_park() -> dict:
+    """G-park and G-zk: steady-state gas of the settlement layer."""
+    base = _forge_at(CONTRACTS, "test_park_baseline")["PoolSwapTest.swap"]["median"]
+    park = _forge_at(CONTRACTS, "test_park_swap")["PoolSwapTest.swap"]["median"]
+    # self-settle: each test settles once (1 swap, fresh slot) then n swaps; the n-swap call is the steady one
+    self_n = {1: _forge_at(CONTRACTS, "test_self_n001")["RepHookAccount.selfSettle"]["min"]}
+    for n in (10, 50):
+        self_n[n] = _forge_at(CONTRACTS, f"test_self_n{n:03d}")["RepHookAccount.selfSettle"]["max"]
+    s_slope, s_fixed = np.polyfit(list(self_n), list(self_n.values()), 1)
+    epoch_n = {n: _forge_at(CONTRACTS, f"test_epoch_n{n:04d}")["RepHookAccount.applyEpoch"]["median"] for n in (10, 100, 400)}
+    e_slope, e_fixed = np.polyfit(list(epoch_n), list(epoch_n.values()), 1)
+    skip = _forge_at(CONTRACTS, "test_epoch_skip_n0100")["RepHookAccount.applyEpoch"]["median"]
+    groth = _forge_at(ZK_CONTRACTS, "test_verify_groth16")["SP1Verifier.verifyProof(bytes32,bytes,bytes)"]["median"]
+    return {"swap_hookless": base, "swap_with_park_hook": park, "hook_park_overhead_per_swap": park - base,
+            "self_settle_by_n": self_n, "self_settle_fixed": int(s_fixed), "self_settle_per_swap": int(s_slope),
+            "epoch_by_accounts": epoch_n, "epoch_fixed": int(e_fixed), "epoch_per_account": int(e_slope),
+            "epoch_skipped_per_entry": int(skip / 100), "groth16_verify_tx": groth}
+
+
+def settlement_budget(meas: dict, park: dict, fnd: dict) -> dict:
+    """Four settlement designs over the window (docs/settlement-keepers.md §2)."""
+    sw = pd.concat(pd.read_parquet(p, columns=["tx_hash", "block_number", "block_ts", "base_fee_wei", "amount0_raw", "amount1_raw"])
+                   for p in sorted((ONCHAIN_DIR / "swaps" / STUDY_POOL.name).glob("*.parquet")))
+    tx = pd.concat(pd.read_parquet(p, columns=["tx_hash", "tx_from"])
+                   for p in sorted((ONCHAIN_DIR / "txs" / STUDY_POOL.name).glob("*.parquet"))).drop_duplicates("tx_hash")
+    sw = sw.merge(tx, on="tx_hash", how="left")
+    a0 = sw["amount0_raw"].astype(float).abs() / 10**STUDY_POOL.dec0
+    a1 = sw["amount1_raw"].astype(float).abs() / 10**STUDY_POOL.dec1
+    sw["day"] = sw["block_ts"] // 86400
+    sw["eth"] = sw["day"].map((a0 / a1).where(a1 > 1e-6).groupby(sw["day"]).median())
+    sw["usd_gas"] = sw["base_fee_wei"].astype(float) / 1e18 * sw["eth"]
+    sw["hour"] = sw["block_ts"] // 3600
+    blk = sw.groupby("block_number").agg(swaps=("tx_hash", "size"), accts=("tx_from", "nunique"), usd_gas=("usd_gas", "first"))
+    hr = sw.groupby("hour").agg(swaps=("tx_hash", "size"), accts=("tx_from", "nunique"), blocks=("block_number", "nunique"),
+                                usd_gas=("usd_gas", "median"))
+    rv = meas["report_verification"]
+    report = rv["gas_first_in_tx"][50] + calldata_gas(rv["calldata_bytes"][50])
+    hook = park["hook_park_overhead_per_swap"]
+    rec_fixed, rec_swap = fnd["reconcile_fixed_gas_per_tx"], fnd["reconcile_gas_per_swap"]
+    e_fixed, e_acct = park["epoch_fixed"], park["epoch_per_account"]
+    ecrecover_batch = 3_000                # one signature per price batch (ecrecover precompile)
+    designs = {
+        "keeper on-chain, per block (Data Streams report per block)":
+            (blk, report + rec_fixed + blk.swaps * rec_swap + blk.accts * e_acct),
+        "keeper on-chain, hourly (one signed price batch)":
+            (hr, ecrecover_batch + calldata_gas(32) * hr.blocks + rec_fixed + hr.swaps * rec_swap + hr.accts * e_acct),
+        "keeper zk, hourly (one Groth16 proof)":
+            (hr, park["groth16_verify_tx"] + e_fixed + hr.accts * e_acct),
+        "every account self-settles hourly (on-chain)":
+            (hr, hr.accts * park["self_settle_fixed"] + hr.swaps * park["self_settle_per_swap"]),
+    }
+    exec_gas = meas["execution"]["gas_single_swap_tx"][50]
+    n_swaps = int(sw.shape[0])
+    hook_usd = float((hook * sw["usd_gas"]).sum())
+    rows = {}
+    for name, (frame, gas) in designs.items():
+        settle_gas = float(gas.sum())
+        total = settle_gas + hook * n_swaps
+        rows[name] = {"settlement_gas_per_swap": int(settle_gas / n_swaps),
+                      "total_gas_per_swap_incl_hook": int(total / n_swaps),
+                      "ratio_to_execution": round(total / n_swaps / exec_gas, 3),
+                      "usd_window": round(float((gas * frame.usd_gas).sum()) + hook_usd, 0)}
+    q = lambda s: [int(np.percentile(s, p)) for p in (50, 95, 99)]
+    return {"hook_per_swap_gas": hook, "accounts_per_hour_p50_p95_p99": q(hr.accts),
+            "swaps_per_hour_p50_p95_p99": q(hr.swaps), "designs": rows}
+
+
 def calldata_gas(n_bytes: int) -> int:
     return 16 * n_bytes        # upper bound: every byte non-zero (EIP-2028)
 
@@ -190,6 +280,8 @@ def run() -> dict:
     out = {"chain": ACTIVE.name, "execution": execution_gas(), "report_verification": report_verification(),
            "foundry": foundry()}
     out["budget"] = budget(out, out["foundry"])
+    out["settlement_layer"] = foundry_park()
+    out["settlement_budget"] = settlement_budget(out, out["settlement_layer"], out["foundry"])
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "measured.json").write_text(json.dumps(out, indent=2))
     return out

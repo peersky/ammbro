@@ -17,16 +17,16 @@
   "report_verification": {
     "verifier_proxy": "0x478aa2ac9f6d65f84e09d9185d126c3a17c2a93c",
     "n_tx": 40,
-    "n_verify_calls": 126,
+    "n_verify_calls": 113,
     "gas_first_in_tx": {
-      "10": 62544,
+      "10": 62045,
       "50": 62544,
       "90": 62544
     },
     "gas_later_in_same_tx": {
       "10": 37544,
       "50": 37544,
-      "90": 41544
+      "90": 39544
     },
     "calldata_bytes": {
       "10": 1156,
@@ -89,6 +89,66 @@
         "reconciliation_gas_per_swap": 39732,
         "ratio_to_execution": 0.292,
         "usd_window": 8630.0
+      }
+    }
+  },
+  "settlement_layer": {
+    "swap_hookless": 123689,
+    "swap_with_park_hook": 140801,
+    "hook_park_overhead_per_swap": 17112,
+    "self_settle_by_n": {
+      "1": 52245,
+      "10": 106361,
+      "50": 346942
+    },
+    "self_settle_fixed": 46224,
+    "self_settle_per_swap": 6014,
+    "epoch_by_accounts": {
+      "10": 169516,
+      "100": 1452507,
+      "400": 5734246
+    },
+    "epoch_fixed": 26270,
+    "epoch_per_account": 14269,
+    "epoch_skipped_per_entry": 4368,
+    "groth16_verify_tx": 227226
+  },
+  "settlement_budget": {
+    "hook_per_swap_gas": 17112,
+    "accounts_per_hour_p50_p95_p99": [
+      190,
+      431,
+      624
+    ],
+    "swaps_per_hour_p50_p95_p99": [
+      778,
+      3510,
+      6177
+    ],
+    "designs": {
+      "keeper on-chain, per block (Data Streams report per block)": {
+        "settlement_gas_per_swap": 80668,
+        "total_gas_per_swap_incl_hook": 97780,
+        "ratio_to_execution": 0.718,
+        "usd_window": 21236.0
+      },
+      "keeper on-chain, hourly (one signed price batch)": {
+        "settlement_gas_per_swap": 9282,
+        "total_gas_per_swap_incl_hook": 26394,
+        "ratio_to_execution": 0.194,
+        "usd_window": 5687.0
+      },
+      "keeper zk, hourly (one Groth16 proof)": {
+        "settlement_gas_per_swap": 2846,
+        "total_gas_per_swap_incl_hook": 19958,
+        "ratio_to_execution": 0.147,
+        "usd_window": 4327.0
+      },
+      "every account self-settles hourly (on-chain)": {
+        "settlement_gas_per_swap": 14543,
+        "total_gas_per_swap_incl_hook": 31655,
+        "ratio_to_execution": 0.232,
+        "usd_window": 6818.0
       }
     }
   }

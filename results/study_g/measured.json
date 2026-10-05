@@ -87,5 +87,65 @@
         "usd_window": 45809.0
       }
     }
+  },
+  "settlement_layer": {
+    "swap_hookless": 123689,
+    "swap_with_park_hook": 140801,
+    "hook_park_overhead_per_swap": 17112,
+    "self_settle_by_n": {
+      "1": 52245,
+      "10": 106361,
+      "50": 346942
+    },
+    "self_settle_fixed": 46224,
+    "self_settle_per_swap": 6014,
+    "epoch_by_accounts": {
+      "10": 169516,
+      "100": 1452507,
+      "400": 5734246
+    },
+    "epoch_fixed": 26270,
+    "epoch_per_account": 14269,
+    "epoch_skipped_per_entry": 4368,
+    "groth16_verify_tx": 227226
+  },
+  "settlement_budget": {
+    "hook_per_swap_gas": 17112,
+    "accounts_per_hour_p50_p95_p99": [
+      127,
+      276,
+      373
+    ],
+    "swaps_per_hour_p50_p95_p99": [
+      194,
+      450,
+      730
+    ],
+    "designs": {
+      "keeper on-chain, per block (Data Streams report per block)": {
+        "settlement_gas_per_swap": 117756,
+        "total_gas_per_swap_incl_hook": 134868,
+        "ratio_to_execution": 0.715,
+        "usd_window": 96736.0
+      },
+      "keeper on-chain, hourly (one signed price batch)": {
+        "settlement_gas_per_swap": 16135,
+        "total_gas_per_swap_incl_hook": 33247,
+        "ratio_to_execution": 0.176,
+        "usd_window": 24918.0
+      },
+      "keeper zk, hourly (one Groth16 proof)": {
+        "settlement_gas_per_swap": 10155,
+        "total_gas_per_swap_incl_hook": 27267,
+        "ratio_to_execution": 0.144,
+        "usd_window": 20481.0
+      },
+      "every account self-settles hourly (on-chain)": {
+        "settlement_gas_per_swap": 35251,
+        "total_gas_per_swap_incl_hook": 52363,
+        "ratio_to_execution": 0.277,
+        "usd_window": 38650.0
+      }
+    }
   }
 }

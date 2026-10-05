@@ -21,3 +21,7 @@ __pycache__/
 contracts/out/
 contracts/cache/
 contracts/lib/
+zk/target/
+zk/contracts/out/
+zk/contracts/cache/
+zk/contracts/lib/
