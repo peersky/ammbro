@@ -189,7 +189,56 @@ accounts other than the curator and its known affiliates), not raw volume.
 6. Regulatory framing of a token that claims protocol income — out of scope
    for the paper, but it must be acknowledged.
 
-## 5. Studies needed (proposed order)
+## 5. Pair-native constraint and the gas tank (author decision, 2026-10-05)
+
+**Constraint.** The mechanism uses no numeraire except each pool's own pair:
+charges, REP, τ and the reserve are denominated in the pool's two assets, and
+nothing in the protocol converts between pools or into USD. (Research reports
+still quote USD; that is the analyst's unit, not the mechanism's.)
+
+Consequences:
+
+1. **Keeper work is paid in gas, from a gas tank — not from τ.** Every swap
+   prepays its share of future settlement gas in the chain's gas token:
+   `withholding = G_s × block.basefee` — a count of gas units times a value the
+   chain exposes at execution, with no price involved. Keepers are paid from
+   the tank: the settlement contract reimburses `gasUsed × basefee` plus an
+   escalating bounty in gas token (simplest), or an **ERC-4337 paymaster**
+   sponsors the keeper's settlement UserOps (keepers hold no gas; costs the
+   EntryPoint's overhead — measured in G-aa). Pool value and keeper gas are
+   two separate economies; nothing is priced across them. τ is freed to fund
+   only the reserve and the mint margin.
+2. **The tank can be shared across pools** without a numeraire — every pool's
+   withholding is already in the same unit (gas) — so small pools are
+   subsidised in gas terms by large pools' swaps (K3's small-pool problem)
+   with no exchange rate anywhere.
+3. **Collection options:** a prefunded gas credit in the account (the hook
+   debits it in the slot it already writes; the 256-bit slot is full, so
+   either narrower fields or a second slot, ~2.9k gas); for ETH-paired pools,
+   from the WETH leg (gas token 1:1); or `msg.value` with the swap (needs
+   router support).
+4. **Uniform vs per-account charging:** settlement cost is dominated by the
+   per-account write (14.3k gas per account per epoch); a uniform per-swap
+   G_s makes frequent swappers subsidise one-off accounts. Alternative: a
+   per-account-per-epoch charge on the account's first swap of the epoch plus
+   a smaller per-swap part (K4 compares).
+5. **Keeper bounties in gas token** are discovered by the escalating auction
+   (K2); the protocol never prices keeper work.
+6. **The arb payout rule drops its gas allowance** (`G·basefee` kept out of
+   extraction values ETH in pool units): the job allowance m, discovered by
+   the controller, absorbs the arb's gas as part of its cost. Study I: worst-
+   case LP gain Arbitrum +$0.657M without vs +$0.653M with the allowance;
+   mainnet +$4.81M vs +$5.07M.
+7. **Epoch length is a per-pool parameter:** a tiny pool settles daily (K3:
+   PEPE 11–16% → 1.5–2.5% of recapture in USD terms; in the gas-tank design
+   the same lever lowers its G_s).
+8. **A joint token, if ever wanted, can only be work-issued and
+   basket-redeemed:** issued per gas unit of verified settlement work, redeemed
+   pro rata against each pool's τ in that pool's own assets. No price enters,
+   but the cross-pool rate is set by work, not value. Not needed for keepers
+   once the gas tank pays them.
+
+## 6. Studies needed (proposed order)
 
 1. ✅ **G-park (measured, §2.2–2.4):** hook +17.1k/swap; self-settle 46k + 6.0k/swap;
    keeper epoch 26k + 14.3k/account; Groth16 verification 227k.
@@ -220,6 +269,13 @@ accounts other than the curator and its known affiliates), not raw volume.
    data on smaller pools — e.g. the v3 0.30% and v4 ETH/USDC pools from the
    venue probe, other pairs); whether multi-pool proofs plus pREP keep small
    pools served; curator share vs wash-growth attack.
-5. **ZK PoC (build):** SP1 guest settling a segment (one account) and an epoch
+5. ✅ **K4 gas-tank solvency** (spec 12f): shared tank, daily epochs, flexible settlement time → G ≈ 1.4–2.3k gas per swap on mainnet (0.7–1.2% of swap gas), 0.64k on Arbitrum. Originally specified as:
+   **K4 gas-tank solvency (simulate, real data):** withholding G_s × basefee
+   per swap vs keeper payouts at real base fees; shared vs per-pool tanks;
+   uniform vs per-account charging; base-fee mismatch and ×10 spikes;
+   minimum G_s per design and chain.
+6. **G-aa (measure):** ERC-4337 paymaster sponsoring a keeper's applyEpoch vs
+   self-reimbursement inside the settlement call.
+7. **ZK PoC (build, parked 2026-10-05):** SP1 guest settling a segment (one account) and an epoch
    (all accounts) with one batch signature; settlement contract with both
    paths and the skip rule; cycles, proving time, Groth16 verification gas.

@@ -632,6 +632,21 @@ Paper synced with Studies D–I on 2026-10-01; still open: 4 (horizon set), 5 (a
    - **Answer to the joint-token question:** what small pools need is a *pooled τ*, not necessarily a new token — a protocol-level treasury that pays keepers per settled account across pools achieves it. A tradable pREP adds a second asset (P§4.4's pair-native framing, valuation reflexivity, regulatory weight) for a subsidy of ~$7k per six months on this pool set; recommend pooled τ first, pREP only if keepers must be paid in a liquid unit.
    - **Curator share (analytic):** a reward on *volume* is wash-safe only below the pool fee (1bp on DAI/USDC, 5bp on the 0.05% pools, 30bp on 0.30%) — a wash trader pays f per unit; a reward on *recapture from other accounts* is safe for any share < 1 (recapture is a charge the trader paid in full, plus the fee). Use recapture, not volume.
    - CAVEATS: recapture rate assumed per pool (band 1–10bp shifts τ ∝ 1/rate); senders = tx.from; one chain; per-pool keeper cost assumes the per-account write for each account per epoch.
+12f. ✅ **Study K4 — gas-tank solvency (2026-10-05, `pipeline/study_k4.py`, results/*/study_k/gas_tank.json).** Pair-native design (docs/settlement-keepers.md §5): every swap prepays `G × block.basefee` in gas token; keepers are paid from the tank (settlement gas × base fee at settlement × 1.1 + an assumed off-chain bounty). Minimum G (gas units per swap) that keeps the tank solvent, exact (max over epochs of cumulative payout / cumulative withholding base), tank seeded with the first day's payouts:
+
+     | G per swap (share of the swap's own gas) | hourly | daily | daily, keepers pick the cheapest block in 24h |
+     |---|---|---|---|
+     | mainnet, shared tank over 7 pools, zk | 11.7k (6.2%) | **2.3k (1.2%)** | **1.4k (0.7%)** |
+     | mainnet, shared tank, on-chain settlement | 18.9k (10%) | 4.9k (2.6%) | 3.1k (1.6%) |
+     | mainnet, each pool alone, zk (largest → smallest) | 12k → 56–80k | 2.2k → 4.5–6k | 1.3k → 3–4k |
+     | Arbitrum, zk | 4.8k (3.5%) | **0.64k (0.5%)** | 0.64k |
+
+   - **A shared tank removes the small-pool penalty without any numeraire** (every pool's withholding is gas): PEPE alone would need 80k/swap hourly; in the shared tank all swaps pay 11.7k.
+   - **Daily epochs cut G ~5×** (each account written once a day, not hourly); heavy accounts that need stake back sooner self-settle (K1).
+   - **Never force immediate settlement:** settlement forced into the worst base fee of the next 24h needs ~5× more G; a long deadline lets keepers pick cheap blocks and needs 35–60% less. Withholding at swap time and paying at a keeper-chosen time makes base-fee variance work for the tank.
+   - **Per-account charging:** at daily epochs a 15.7k-gas charge on an account's first swap of the day covers nearly all settlement cost (per-swap remainder ≈ 0 for most pools) — frequent swappers then pay ~nothing per extra swap.
+   - In USD (analyst's unit): ~$0.0007–0.004 per swap on mainnet at the window's median base fee, ~$0.0001 on Arbitrum.
+   - From a zero tank the early epochs dominate (G 2× the break-even hourly) — seed the tank at launch (initial-supply proceeds, P§4.8).
 11e. ✅ v3 vs v4 venue probe (2026-10-01, `pipeline/v4_probe.py`, RPC only). Mar–Aug 2026 Uniswap ETH/USDC volume: **v3 0.05% (study pool) $19.6B**, v3 0.30% $0.67B, v4 hook-less 0.30% $0.66B, 0.01% $0.63B, 0.05% $0.41B, 1.00% ~$0 — the study pool carries 89% of $22.0B. Depth from each pool's own swap-event liquidity: study pool **$12.1k/bp** (matches Study I's swap-based estimate, $12.3k/bp — estimator validated), next deepest $2.9k/bp. Busiest v4 pool ids in a 300-block sample identified from swap receipts: ETH/USDT (hooked), a long-tail token, stable/stable pairs, multi-hop routes — **no large hooked ETH/USDC pool**. Study I's calibration is representative: Uniswap ETH/USDC is thin in 2026 as a venue, not just this pool. The RPC caps eth_getLogs below 50k blocks even when topic-filtered.
 11f. ✅ L2 gas-constraint probe (2026-10-01, `pipeline/l2_probe.py`; latest hour per chain; Base via public RPC, Arbitrum and HyperEVM via Chainstack URLs in `.env`).
 

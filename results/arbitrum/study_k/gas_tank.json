@@ -1,0 +1,189 @@
+{
+  "chain": "arbitrum",
+  "exec_gas_per_swap": 136171,
+  "pools": {
+    "eth_usdc_005": {
+      "onchain/1h/real": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 11034,
+          "G_min_seeded_1day": 10815,
+          "G_breakeven": 10361
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 7730,
+          "G_min_seeded_1day": 7413,
+          "G_breakeven": 7478
+        },
+        "uniform_share_of_swap_gas": 0.081,
+        "uniform_usd_per_swap_median": 0.00045
+      },
+      "onchain/1h/spike24h": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 11377,
+          "G_min_seeded_1day": 11152,
+          "G_breakeven": 10674
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 8064,
+          "G_min_seeded_1day": 7719,
+          "G_breakeven": 7792
+        },
+        "uniform_share_of_swap_gas": 0.0835,
+        "uniform_usd_per_swap_median": 0.00046
+      },
+      "onchain/1h/flex24h": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 10991,
+          "G_min_seeded_1day": 10772,
+          "G_breakeven": 10304
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 7639,
+          "G_min_seeded_1day": 7361,
+          "G_breakeven": 7421
+        },
+        "uniform_share_of_swap_gas": 0.0807,
+        "uniform_usd_per_swap_median": 0.00044
+      },
+      "onchain/24h/real": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 8010,
+          "G_min_seeded_1day": 6574,
+          "G_breakeven": 7856
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 7254,
+          "G_min_seeded_1day": 5882,
+          "G_breakeven": 7164
+        },
+        "uniform_share_of_swap_gas": 0.0588,
+        "uniform_usd_per_swap_median": 0.00032
+      },
+      "onchain/24h/spike24h": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 8273,
+          "G_min_seeded_1day": 6768,
+          "G_breakeven": 8100
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 7595,
+          "G_min_seeded_1day": 6076,
+          "G_breakeven": 7409
+        },
+        "uniform_share_of_swap_gas": 0.0608,
+        "uniform_usd_per_swap_median": 0.00033
+      },
+      "onchain/24h/flex24h": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 7998,
+          "G_min_seeded_1day": 6565,
+          "G_breakeven": 7844
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 7239,
+          "G_min_seeded_1day": 5873,
+          "G_breakeven": 7153
+        },
+        "uniform_share_of_swap_gas": 0.0587,
+        "uniform_usd_per_swap_median": 0.00032
+      },
+      "zk/1h/real": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 4865,
+          "G_min_seeded_1day": 4793,
+          "G_breakeven": 4155
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 1606,
+          "G_min_seeded_1day": 1307,
+          "G_breakeven": 1272
+        },
+        "uniform_share_of_swap_gas": 0.0357,
+        "uniform_usd_per_swap_median": 0.0002
+      },
+      "zk/1h/spike24h": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 4984,
+          "G_min_seeded_1day": 4911,
+          "G_breakeven": 4246
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 1710,
+          "G_min_seeded_1day": 1409,
+          "G_breakeven": 1363
+        },
+        "uniform_share_of_swap_gas": 0.0366,
+        "uniform_usd_per_swap_median": 0.0002
+      },
+      "zk/1h/flex24h": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 4850,
+          "G_min_seeded_1day": 4779,
+          "G_breakeven": 4141
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 1578,
+          "G_min_seeded_1day": 1296,
+          "G_breakeven": 1259
+        },
+        "uniform_share_of_swap_gas": 0.0356,
+        "uniform_usd_per_swap_median": 0.0002
+      },
+      "zk/24h/real": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 854,
+          "G_min_seeded_1day": 642,
+          "G_breakeven": 740
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 52,
+          "G_min_seeded_1day": 0,
+          "G_breakeven": 49
+        },
+        "uniform_share_of_swap_gas": 0.0063,
+        "uniform_usd_per_swap_median": 3e-05
+      },
+      "zk/24h/spike24h": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 880,
+          "G_min_seeded_1day": 656,
+          "G_breakeven": 760
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 76,
+          "G_min_seeded_1day": 0,
+          "G_breakeven": 69
+        },
+        "uniform_share_of_swap_gas": 0.0065,
+        "uniform_usd_per_swap_median": 4e-05
+      },
+      "zk/24h/flex24h": {
+        "uniform_G_per_swap": {
+          "G_min_solvent": 853,
+          "G_min_seeded_1day": 641,
+          "G_breakeven": 739
+        },
+        "per_account_charge_gas": 15695,
+        "split_G_per_swap": {
+          "G_min_solvent": 51,
+          "G_min_seeded_1day": 0,
+          "G_breakeven": 48
+        },
+        "uniform_share_of_swap_gas": 0.0063,
+        "uniform_usd_per_swap_median": 3e-05
+      }
+    }
+  },
+  "shared": {}
+}
