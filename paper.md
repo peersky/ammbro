@@ -2,384 +2,297 @@
 
 ## Abstract
 
-REP-AMM is a dynamic-fee redistribution design with an oracle-reconciled, ex-post scoring layer and a reputation market as the price-discrimination substrate. In this work we present a Uniswap v4 hook that prices every swap at execution and reconciles it after the block against trusted, signed oracle data. Arbitrage is treated as a paid job: the trader keeps a small, market-discovered allowance per unit of price correction that covers its costs, gas included, and extraction beyond that allowance is recaptured for liquidity providers from collateral posted before trading — so that paying block builders for position becomes useless — while those who consistently trade below real-time oracle prices lose reputation and, with it, their future fee discounts. We introduce these fees as counterparty-free tokenization: a new token is derived from each swap pair to create a Reputation (or Reparation, lol) asset, staking which grants fee discounts, and which itself represents the capitalized value of the adverse-selection spread that the holder's future benign volume avoids paying — a per-pair, slashable trading license whose price is sustained by the pool's expected extraction pressure. All value is settled in each pool's own pair — no external numeraire — and the work of settling it is paid in gas from a tank that every swap prefunds. We further conduct data analysis and backtest to demonstrate existing solution incompletness and how REP-AMM solves it.     
+Liquidity providers in automated market makers lose value to arbitrageurs who trade against stale on-chain prices (loss-versus-rebalancing, LVR). REP-AMM is a Uniswap v4 hook that prices each swap at execution and reconciles it after the block against signed oracle prices. Arbitrage is treated as a paid job: a price-correcting swap keeps a market-discovered allowance per unit of correction, and extraction beyond it is recaptured for liquidity providers from stake posted before trading, so that paying block builders for position becomes useless. Traders who overpay mint a per-pair reputation token (REP) whose stake grants fee discounts. All value settles in each pool's own pair, and the work of settlement is paid in gas from a tank that every swap prefunds. On six months of Ethereum and Arbitrum data the mechanism recaptures 70–73% of extraction at a benign-flow overcharge below 0.1 bp, and settlement costs 0.18× the gas of the swaps it settles.
 
-## 1. Problem statement
+## 1. Introduction
 
-Loss-Versus-Rebalancing (LVR) is cost heavy for AMM liquidity providers (LPs) when informed arbitrageurs pick off stale on-chain quotes against a fresher external (CEX) price. It is a *permanent*, non-mean-reverting drain, distinct from impermanent loss, and it is large: commonly cited at **5–7% of liquidity value annually**, enough that many major pools are net-unprofitable for LPs after accounting for it. While arbitrage is useful in principle and needed, the disproportional arbitrager gains and competition for block position creates situation where AMM LPs are losing, eventually killing initial dream of DeFi where AMM LPs can make money by simply allocating capital in passive manner. 
+LVR is a permanent, non-mean-reverting cost for liquidity providers (LPs), commonly estimated at 5–7% of liquidity value per year — enough to make many major pools unprofitable after fees. Arbitrage itself is necessary: it keeps the pool's price aligned with the market. The problem is its price. Arbitrageurs capture the full gap between pool and market, and on Ethereum they pass much of it to block builders in competition for position, a cost ultimately borne by LPs. Fixed fee tiers fragment liquidity without resolving the trade-off.
 
-Moreover, attempts to create optimal market fees have led to many discrete pools with diferent fees, which we believe is suboptimal.
+We pursue two goals: to return as much of the arbitrage surplus as possible to LPs while charging uninformed flow as little as possible, and to replace the hard-coded fee by a variable the system sets itself. The contributions are:
 
-Proposed design goal is to shift as much of the arbitrage surplus as possible from the arbitrageur back to the LP, while charging honest/uninformed flow as little as possible. Ensure that in long term, a passive LP that does not active position management can be profitable with low-risk on-chain investment. Additional goal is to introduce dynamic pool fee curve, which moves question of how much LPs should charge for swaps from fee hardcoding to being a useful dynamic variable within the system.
+1. a per-swap quality score `q_LP`, measured against signed bid/ask prices at an empirically measured decision instant (§3);
+2. a payout rule for arbitrage — a per-unit cap with an allowance discovered on-chain — under which bidding for position earns nothing (§4.2–4.3);
+3. a reputation asset and a collateral design that make the charge collectable after the fact (§4.4–4.5);
+4. a settlement layer that is pair-native and costs a fraction of the swaps it settles (§4.6);
+5. an evaluation on Ethereum and Arbitrum covering scoring validity, recapture, payout rules, oracle error and settlement cost (§5).
 
----
+## 2. Related work
 
-## 2. Literature review
+Approaches to LVR either remove the information asymmetry or redistribute its surplus (Appendix A). Milionis et al. (2022) define LVR and suggest backward-looking fee adjustment and the sale of arbitrage rights as directions; REP-AMM is a concrete, farming-resistant instance of the first. Auction designs — am-AMM (Adams et al., 2024), McAMM and Angstrom — sell the right to arbitrage or manage the pool and return the proceeds to LPs; Angstrom additionally clears ordinary orders at a uniform price, but relies on app-specific sequencing, whereas REP-AMM is a plain hook. Diamond and V0LVER reduce liquidity for arbitrageurs only, and argue against oracle dependence; we accept a trusted signed oracle and quantify the consequences of its error (§5.6). MEV taxes (Robinson and White, 2024) charge a fee increasing in the priority fee and capture competitive MEV under honest priority ordering; they do not hold under builder auctions on Ethereum and cannot reach extraction in the middle of a block. Reputation-based fee tiers (zScore; Karma on Status Network) and optimal dynamic fees (Ghasemlu, 2026; Nezlobin and Tassy, 2025) set fees by behaviour or volatility but specify neither an oracle-reconciled scoring rule nor resistance to concentration of the discount.
 
-There are two major directions found in literature:
+## 3. Measurement model
 
-**LVR minimization / elimination** — remove the information asymmetry at the root.
-- *Oracle-priced AMMs*: quote against a low-latency oracle so there is no stale price to pick off (proposed in Milionis et al. 2022 as a direction; the only peer-reviewed oracle-based LVR-protection design predates us).
-- *Liquidity-shaping*: Diamond / V0LVER reduce liquidity **only for arbitrageurs** (equivalently, an arbitrageur-specific fee), preserving normal UX for honest users.
+### 3.1 Reconciliation is necessary
 
-**LVR redistribution** — let arbitrage happen, but capture and return the surplus.
-- *Auction models*: am-AMM, McAMM, Angstrom auction the **right to arbitrage** (or to manage the pool) each block; proceeds go to LPs.
-- *Dynamic-fee models*: price-discriminate informed vs. uninformed flow via fees that scale with volatility or with behavioral pattern recognition.
+No blockchain finalises as quickly as a centralised order book observes prices. Even a price signed into the transaction leaves a lag between the signature and execution that can be exploited. The ground truth about a swap is therefore available only after the fact, and an AMM that prices against it must span at least two blocks: the swap, and its reconciliation.
 
+### 3.2 The quality score
 
-### 2.1 Milionis, Moallemi, Roughgarden, Zhang (2022) — "Automated Market Making and LVR"
-The foundational paper. Defines LVR, gives a closed-form ("Black-Scholes for AMMs"), and proposes two of our building blocks as future directions**: (a) fees set by comparing LVR vs. fee income in a backward-looking window, raising fees when income < LVR; and (b) "selling special rights to arbitrage to special wallets to capture expected LVR and redistribute it."
-Our backward-looking oracle reconciliation is a concrete instance of their (a). Our arb-rights-market intuition is their (b). They propose these as directions, not mechanisms. Neither is specified, implemented, or made Sybil-/farming-robust. 
-
-### 2.2 am-AMM (Adams, Moallemi, Reynolds — Paradigm/Columbia, 2024)
-Runs a censorship-resistant on-chain Harberger-lease auction for the right to be "pool manager" for a window of blocks. Manager sets the fee, collects fees, and can arb the pool at zero fee. Surplus accrues to LPs. Anything we say about "auctioning the right to arbitrage" in our work is downstream of this.
-The paper *explicitly states* am-AMM provides **even fewer sandwich protections** than a fixed-fee AMM, because the manager can trade at zero fee. It also has a manager-concentration/censorship dependency (the K-block delay parameter). Our concave discount curve (§4.3) is, in part, an argument against the single-manager winner-take-all structure.
-
-### 2.3 Diamond / V0LVER (McMenamin et al., 2022–2023)
-Redistribution + minimization hybrid. Reduces liquidity *only* for arbitrageurs, rebating a (1−β) fraction of LVR to LPs. V0LVER extends toward protecting against both LVR and user-level MEV.
-Diamond's authors argue *against* oracle-based designs as an "unsatisfactory dependency" as sub-block oracle prices need centralized/manipulable sources. Our proposed system **is** reliying on trusted oracle, however we belive it is acceptible due to nature of proposed protocol (see §7).**
-
-### 2.4 Angstrom / Sorella Labs (live Uniswap v4 hook)
-Runs an off-chain (mainnet) or on-chain (L2) arbitrage auction every block; the highest arb bid is sequenced first, bid proceeds distributed pro-rata to in-range LPs; all other orders clear at a **uniform clearing price** (batch), which structurally removes the front/back positions a sandwich needs. Explicitly targets LVR **and** sandwich mitigation, and has been through Spearbit/Cantina audits.
-Angstrom already does arb-rights auctioning + LP redistribution + sandwich mitigation via uniform-price batching.
-However, angstrom relies on **app-specific sequencing** - a decentralized operator set with sequencing rights. This is heavier trust assumption than a plain hook. This is distinct design we propose as ours needs *no* sequencer and works as a vanilla v4 hook has a real integration-simplicity argument. 
-
-### 2.5 zScore (2025) — decentralized reputation for DeFi
-Proposes Uniswap v4 hooks with **dynamic fee tiers keyed to a behavioral reputation score**, giving high-score users reduced fees (e.g. 0.1% vs 0.3%) and *explicitly names "minimal sandwich attacks" as a scoring input.*
-zScore is a general-purpose reputation framework; it does not specify the *LVR-accurate, oracle-reconciled, per-swap* scoring rule, nor the anti-farming curve, nor the retroactive-bootstrap means. Our contribution, if any, is the *precise scoring function and its economic robustness*, not the idea of reputation-fees.
-
-### 2.6 Orvex / Karma (Status Network)
-A live DEX using **Karma, a soulbound non-transferable reputation token**, for reputation-based access control and rate-limiting (via Rate-Limiting Nullifiers).
-Soulbound reputation gating. Karma governs spam/access, not LVR-specific fee discrimination. Also in our work that "soulbound" is the design is exactly the kind of thing our transferable-market approach deliberately rejects.
-
-### 2.7 Optimal dynamic fees (Ghasemlu 2026; Nezlobin/Tassy 2025)
-Stochastic-control and generalized-block-time treatments deriving the *optimal fee* as a function of volatility. Relevant because our concave discount-curve theorem (§6.4) is, mathematically, a cousin of this optimal-fee work. The "derive the optimal fee/curve given the divergence distribution" program is already underway for fees.
-They optimize a *scalar fee*, not a *reputation-eligibility curve* that also has to resist cornering. The anti-concentration constraint is genuinely not in their objective.
-
-### 2.8 MEV taxes (Robinson & White, Paradigm, June 2024) — "Priority Is All You Need"
-A smart contract charges a fee that is an increasing **function of the transaction's priority fee**. Under *competitive priority ordering* (proposers sort strictly by priority fee, no censoring/peeking/delaying), searchers competing for a top-of-block opportunity bid up their priority fee; taxing that priority fee lets the application skim the competitive MEV. A tax of ~$99 per $1 of priority fee captures ~99% of the competitive MEV for that transaction. Paradigm names **exactly our three target applications**: DEX routers optimizing swapper price, **AMMs minimizing LVR for LPs**, and wallets capturing backrun MEV.
-The "fee scales with block position / with how much LVR is available top-of-block" mechanism developed mid-project is substantially this. Priority fee is the market's own encoding of "what is this position worth," which is the LVR proxy.
-MEV taxes **only work if block proposers honestly follow competitive priority ordering.** That holds on OP-Stack L2 sequencers (Base, OP Mainnet, Blast) but **may not work on Ethereum L1**, where builder auctions maximize proposer revenue and can evade the tax. Moreover, this by design cannot capture any LP lossess accuring in block mid sections. Our ex-post oracle reconciliation does *not* need honest ordering — it scores realized execution against signed external truth after finalization — so it can target L1. That, and only that, is the defensible edge (see §7, §12).
-
-
----
-
-## 3. Methodology
-
-We define our system from a system level goals & constraints for a theoretically optimal AMM protocol.
-
-### 3.1 Timings & reconciliation 
-First, we acknowledge that the very nature of blockchain consensus with its constraints on decentralisation and finalisation would likely never be as fast and precise as faster, centralised systems, which however inherit other kinds of risks on their own;
-Thus, no matter how fast a DEX protocol substrate is, there always **will be lag** between what a high speed market orderbook sees and what distributed consensus will eventually finalize. This lag, applies not only for block times, but also for attempts to use digitally signed oracle price feeds as real time price anchor submitted as part of transaction payload - even in such a case, there still always will be some **exploitable** lag that any protocol will have to allow betwen price feed signed timstamp and actual transaction execution within the block space.
-
-Thus, first first-principle based conclusion is that in blockchain protocol, only **a retroactive reconciliation step** against external pool(s) data is possible to provide ground truth in principle.   
-This implies, that such theoretically optimal on-chain protocol should have it own finalization time, **which takes at least 2 blocks of underlying blockchain protocol** - (1) the swap, (2) the reconcilliation acting as self-correcting loop.
-
-### 3.2 Fees & Value extraction
-In ideal protocol fees for swap should approach as little as possible value as long as passive LPs stay profitable. Arbitragers in this context are required for balancing the pool, they are workers that are tasked to balance on-chain, smart contract logic secured transparent market with efficient solution that costs LPs as little as possible while keeping incentive high ehough that for any given block time, the protocol pool follows overall market trend; Protocol task is keep arbtiragers enough profitable to keep pool promptly balanced yet avoid arbitragers to pay for mempool and block builder infrastructure, as this is additional expense that LPs and protocol users eventually must bear, two means are used to achive this in game-theoretic fashion - reducing arbitrager earnings that market makes the demand for arbitrage, and on another side - reducing means that block builders can affect pool performance. 
-
-##### 3.2.1 Arbitrage and swap Quality factor 
-To address this, we introduce a parameter `q_LP`  that stands for "quality for LPs" which is a measurable objective ground truth for any swap happened in the past. This parameter is tasked to answer whether the swap at transaction time did useful and timely balance correction of pool, rather than simply extract value from LPs. 
-
-### 3.3 LP traction
-We assume that under normal conditions, LPs who have to operate active pool rebalancing today have to spend increased energy that results in their operational costs, which eventually create traction not only for passive LPs, but also for active hedging and position management to use system that would allow to count these expenses and optimise by design.
-
-
-### 3.4 Execution time on a discrete ledger
-
-As discussed in §3.1, any blockchain's discrete time stays coarser than a high-frequency observer of centralised order books; a ledger is only a rough discretisation of that process. Two facts make the discretisation sharper than it first appears. First, a block executes as one instant: its transactions run in sequence, but no time passes between them, so a transaction's index records the builder's ordering, not a moment. Second, a block's timestamp is the label of its slot, not the moment its content was decided: under proposer–builder separation the block is assembled and published into the slot, and arbitrageurs keep repricing until the final bid is taken.
-
-We therefore *measure* when swaps are priced instead of assuming it. An arbitrage that closes a gap stops where the pool price net of the fee meets the external price it can hedge at; minimising that residual over offsets from the block timestamp gives the instant at which gap-closing flow priced its trades. On ETH/USDC (March–August 2026) this decision latency is `L` ≈ 1–1.5 s after the block timestamp (§5; bracketed against quote staleness), consistent with blocks published one to two seconds into the slot. On Arbitrum, where the sequencer orders transactions first-come-first-served and there is no slot to wait through, the same measurement gives `L` ≈ 0.75 s (§5.2).
-
-The protocol scores every swap in a block against the same instant, `t* = block_ts + L`. A per-block anchor is **position-invariant**: no position in the block maps to a different benchmark, so position cannot be bought for a more lenient score — a direct requirement of the design aim that paying for position must be useless (§3.2).
-
-The finer alternative — normalising transaction index into intra-block time increments of `T/N_mean_txs` (≈ 40 ms at ~300 transactions per block) — is attractive as a fairness standard but unsafe on today's chains. Index is sold to the highest bidder, and whoever controls position can then choose its benchmark time. Ordering the plane by arrival hands the top slot, which the best-informed traders buy, the oldest price and forgives ~72% of top-of-block extraction; reversing the orientation only moves the purchase to the cheap bottom of the block; clocks that count only swaps on the pool itself are bought with one's own dust swaps (in our data, $0.03 of gas buys $11 of forgiveness per arbitrage) (§5). We therefore retain the virtual time plane as a proposal for the base layer: it is safe only where ordering is enforced by time — first-come-first-served sequencing or an encrypted mempool — so that position cannot be bought.
-
-**Chains with blocks shorter than their timestamps.** On rollups and fast chains the problem inverts. Arbitrum produces a block roughly every 250 ms but stamps blocks to the second, so three to four consecutive blocks share one timestamp; HyperEVM produces one small block per second plus a large block about once a minute, which occasionally shares a second with a small one. No block header on either chain carries a sub-second time. Here a block's timestamp is an interval of one second, not an instant, and treating it as an instant would score swaps against prices up to a second away. We reconstruct sub-second block times with the normalisation of this section applied to whole blocks: the `N` blocks sharing timestamp `S` are spread uniformly across that second, and the `k`-th is placed at the midpoint of its slice, `S + (k + ½)/N`. This differs from the index-based plane in two respects that make it defensible. It orders *blocks*, not transactions inside a block; and on these chains block order is set by the sequencer's arrival order — first-come-first-served on Arbitrum, apart from the Timeboost express lane's ~200 ms priority — rather than by an auction for position, so a block's place within its second tracks real time. It is used only to *measure* the benchmark instant; the protocol's scoring rule stays position-invariant within a block. The reconstruction is an approximation: it assumes blocks are evenly spaced inside a second, its error is bounded by ±1/(2N) of a second (≈ ±125 ms on Arbitrum, ±0.5 s on HyperEVM, where `N` is usually 1), and the residual is absorbed by the decision-latency fit and the ≈ 1 s scoring window (§4.2), both measured separately for each chain (§5).
-
-### 3.5 Using digitally signed price oracles
-
-Chainlink Data Streams or Pyth oracles provide digitally signed price oracles, that allow to have high-fidelity retrospective, by taking nearest data point or sliding average over grain window allow to reference grain in #3.4 to actual protocol behaviour; 
-
-### 3.6 Pool vs Oracle liquidy depth
-
-Price reconciliation must account for reference market depth and, as liquidity grows, the impact of the pool itself on reference prices. Mid-prices are theoretical constructs rather than executable levels; actual trades execute against open bid and ask orders. Consequently, a swap is considered arbitrage-extractive only if its execution price beats the executable reference price for that trade direction.
-
-To capture this execution dynamic, we evaluate swaps directionally: pool sales are benchmarked against the liquidity-weighted bid price, whereas pool purchases are benchmarked against the liquidity-weighted ask price — the price at which the counterparty could unwind the trade on the reference market. Swaps priced inside the bid–ask band are therefore never scored as extractive. We utilize Chainlink Data Streams v3 reports https://docs.chain.link/data-streams/concepts/liquidity-weighted-prices, which natively supply mid, bid, and ask (LWBA) metrics, eliminating the need for supplementary price feeds. A key advantage of this model is that the LWBA spread dynamically expands during high volatility and narrows during market calm. The threshold for fair execution thus adjusts to prevailing market structure rather than relying on hardcoded parameters, ensuring that legitimate trading flow is not penalized during volatile periods.
-
-While conservative by design, this benchmark has a known bias. Because LWBA aggregates across overall order book depth, it provides an accurate counterfactual for large, size-bearing trades; however, it can be overly permissive toward small extractions during volatile moments, where top-of-book (touch) prices represent the true counterfactual. We quantify this leniency in our benchmark-equivalence study (§N), which compares trade-price, LWBA-mid, and directional-LWBA benchmarks. Standard report LWBA is sufficient during the initial bootstrap phase. As pool liquidity approaches reference-book depth, LWBA components can be extended off-chain with the pool's on-chain liquidity data. This yields a size-aware effective price that interpolates between top-of-book and depth-weighted levels based on swap notional volume, establishing a unified liquidity baseline across off-chain and on-chain venues.
- 
-## 4. System design 
-# §4. System Design *(draft for the REP-AMM paper — sketch, in paper voice; cross-references use the paper's numbering)*
-
-> Drafting notes, delete before submission: (1) This section is the paper-prose port of spec §12A + §5 + §17.2/17.7, built on the constructs the paper's §3 established (two-block finalization, `q_LP`, the measured per-block decision instant, signed feeds, directional LWBA). (2) Cross-refs assume: §3.1 timings, §3.2.1 q_LP, §3.4 execution time / decision instant, §3.5 signed oracles, §3.6 depth/LWBA, §5 empirical studies. (3) The title/abstract decision on REP's billing is still open; §4.4–§4.6 are written so they can be framed either as "the second layer of the system" or "an optional layer under evaluation" with only intro-sentence changes.
-
-## 4.1 Protocol lifecycle: execute, then reconcile
-
-Following §3.1, the protocol's unit of operation spans two phases of the underlying chain, and the two phases settle **different things**. In the **execution phase** (block *N*), the pool's hook intercepts each swap, reads the trader's **active reputation stake** (§4.5), and charges the fee determined by that stake through the coverage curve (§4.3) — **the fee is final at this moment**. Unstaked flow pays `f_max` outright. The swap executes normally and the hook logs the raw pool-perspective token deltas (Δ₀, Δ₁), the transaction's index, and the block metadata. No oracle is consulted at execution: trading remains permissionless, synchronous, single-transaction, and unaffected by feed latency or liveness.
-
-In the **reconciliation phase** (any later block), a swap's account is settled against the signed prices for its blocks — a price batch signed once by the oracle — either by the account itself, at any time, or by a keeper at the end of the epoch (§4.6). Settlement computes each swap's quality factor `q_LP` against the directional benchmark (§4.2) and acts **against stake only**: benign aggregates mint REP (§4.4); extraction beyond the job allowance (§4.3) is debited from the trader's stake, in the order of §4.5. No new funds are requested at reconciliation — it settles only against collateral locked at execution. Keepers are paid in gas from a tank that every swap prefunds, with a bounty that escalates with delay, so prolonged stalls are self-healing (§4.6).
-
-This division follows from §3.1 by one further step: since a swap's true quality is knowable only retroactively, and cash cannot be recalled from a counterparty who has departed, the protocol prices execution-time fees off the only thing it can still reach afterward — the trader's locked stake. Staked reputation is thereby simultaneously the fee determinant and the collateral. Reconciliation timing becomes a pure keeper-economics choice (next-block vs. batched), costing users nothing in locked capital; the scoring instant is pinned regardless, since a late reconciliation still scores each swap against the signed price at its block's decision instant.
-
-## 4.2 The scoring rule: pair-native, directional, instantaneous
-
-All economic quantities settle in the pool's own pair; the single external input to the system is the signed oracle pair price. For a swap with pool-perspective deltas (Δ₀, Δ₁) in a block with decision instant *t* (§3.4):
+For a swap with pool-perspective token deltas (Δ₀, Δ₁),
 
 ```
-markout = Δ₀ + P_dir(t)·Δ₁          (token0 terms)
-q_LP    = markout / notional         (dimensionless)
+q_LP = (Δ₀ + P_dir(t*)·Δ₁) / notional
 ```
 
-where `P_dir(t)` is the **directional** benchmark of §3.6: the liquidity-weighted bid when the pool sells the asset, the liquidity-weighted ask when the pool buys, evaluated at the block's decision instant `t*` (h = 0). Where the pair price must be composed from two single-asset feeds, each side is composed as the round trip it represents: the pair ask is buy-leg-ask over sell-leg-bid, and the pair bid is sell-leg-bid over buy-leg-ask.
+where `P_dir` is the directional benchmark — the liquidity-weighted bid when the pool sells the risky asset and the ask when it buys it — so that swaps executed inside the bid–ask band are never scored as extractive (Chainlink Data Streams supplies both sides). The score is invariant to the choice of numeraire, needs no sign convention by trade direction, and is evaluated at horizon zero, where extraction occurs, rather than against later prices that mix extraction with drift. Negative values are losses to LPs.
 
-Three properties carry the section's weight. *Numeraire symmetry:* re-denominating in token1 rescales markout and notional identically; `q_LP` is unchanged, so the numeraire is bookkeeping, not economics. *Direction-freedom:* the delta formulation needs no per-side sign conventions; benign overpayment is `q_LP > 0` for buys and sells alike. *Instantaneity:* scoring at h = 0 measures the extraction where it occurs — against the executable reference price at the moment of the trade — rather than against later prices that mix extraction with market drift. Forward-horizon markouts (+12s, +30s) are retained as robustness cross-checks, not alternative definitions: they bound reconstruction and feed-latency noise and close the surface against horizon-aware adversaries.
+### 3.3 When a swap is priced
 
-Because the decision instant is measured rather than observed per transaction (§3.4), `q_LP` is evaluated as an average of the signed price path over a narrow window centred on `t*` (≈ 1 s), rather than a point read. The window must be centred on the decision instant: a window trailing the block timestamp scores arbitrageurs against prices from before the move they trade on and erases most measured extraction — over a 12 s trailing window the measured LP loss turns into a profit (§5). The residual tolerance ε — the timing noise left inside the window, ≈ 1 bp at the 90th percentile — is calibrated in §5 and sits alongside the endogenous tolerance the LWBA spread already provides. ε also absorbs the oracle's own error against the market. A bias `b` is cancelled exactly by `ε = |b|`, and per-report noise σ needs `ε ≈ 2σ`; each basis point of ε gives up roughly 8% of the recapture, so the rule is `ε ≈ max(|b|, 2σ)` for the feed in use, and ε ≈ 1 bp presumes a feed within about a basis point of the market (§5.7). Charges on ordinary (router) flow stay below 0.3 bp under every oracle error we tested; oracle error lands on arbitrage-sized trades.
+A block executes as one instant, so a transaction's index records ordering, not time; and under proposer–builder separation a block's timestamp labels its slot rather than the moment its content was decided. We therefore measure the decision instant *t\** = block timestamp + *L*: a swap that closes a gap stops where the pool price net of the fee meets the hedgeable external price, and minimising that residual over offsets identifies *L* (Figure 5). Every swap in a block is scored at the same instant and over a one-second window around it. A per-block anchor is position-invariant — no position maps to a more lenient benchmark — which is the property that makes buying position useless. Finer, index-based clocks can be bought by whoever controls ordering (Appendix B).
 
-## 4.3 The fee system: coverage curve and extraction charge
+On chains whose blocks are shorter than their timestamps, such as Arbitrum (about four blocks per second), we place the *N* blocks sharing second *S* at *S* + (*k* + ½)/*N*. This orders blocks, not transactions, and on a first-come-first-served sequencer block order follows arrival; its error of at most ±1/(2*N*) s is absorbed by the scoring window.
 
-The fee a trader pays has two components: the coverage curve, settled on the trader's **per-epoch aggregate** rather than per swap — a choice forced by a structural argument developed below (§4.6) — and the job charge on arbitrage, computed **per price-correcting swap** (§4.8).
+## 4. Mechanism
 
-**The coverage curve** prices ordinary flow. Staked reputation `r` grants discounted-volume capacity `C = r/ρ` per epoch, and the fee on covered volume follows
+### 4.1 Execute, then reconcile
+
+```mermaid
+flowchart LR
+  S[Swap] -->|hook: fee from active stake,<br/>park ℓ·V, record, prefund gas| P[(Pool + account record)]
+  P -->|any time| SS[Self-settlement<br/>by the account]
+  P -->|epoch end| K[Keeper settlement]
+  O[Signed price batch] --> SS
+  O --> K
+  SS --> R{Charge vs allowance}
+  K --> R
+  R -->|benign surplus| M[Mint REP]
+  R -->|extraction beyond m| B[Burn stake → LPs]
+  T[(Gas tank)] -->|reimburse + bounty| K
+```
+
+*Figure 1. Lifecycle of a swap.*
+
+At execution the hook reads the trader's active REP stake, charges the fee given by the coverage curve, parks part of the stake, records the swap and prefunds its share of settlement gas; no oracle is consulted, so trading remains synchronous and permissionless. At reconciliation, the swap is scored against signed prices and settled against stake only: benign surplus mints REP, and extraction beyond the job allowance is burned from stake. Because a departed counterparty's cash cannot be recalled, stake is both the fee determinant and the collateral.
+
+### 4.2 Fees: the coverage curve
+
+Staked reputation *r* grants discounted capacity *r*/ρ per epoch, and the fee on covered volume *V* is
 
 ```
 f(r, V) = f_min + (f_max − f_min) · exp(−r / (ρ·V))
 ```
 
-The curve is decreasing and convex in `r` (diminishing returns per marginal unit of reputation — the anti-concentration property), increasing in `V` (larger flow requires proportionally more stake), asymptotic to `f_min` (liquidity providers always earn a floor, approached but never reached), and homogeneous of degree zero (doubling stake and volume together leaves the rate unchanged: the curve prices *coverage ratio*, not wealth, so a proportionally staked institution pays what a proportionally staked retail trader pays). Volume beyond capacity pays `f_max` on the excess. Reference band: `f_min` = 1 bp, `f_max` = 5%.
+The curve (Figure 2) is convex and decreasing in *r* (diminishing returns, which discourages concentration), asymptotic to `f_min` (LPs always earn a floor) and homogeneous of degree zero (it prices the coverage ratio, not wealth). Volume beyond capacity pays `f_max`.
 
-**Arbitrage as a paid job.** Rebalancing is a service the pool needs (§3.2); extraction beyond its competitive cost is what the pool should not pay. At reconciliation each swap keeps
+![Coverage curve](figures/fig_coverage_curve.png)
+
+*Figure 2. The coverage curve for three fee bands.*
+
+### 4.3 Arbitrage as a paid job
+
+Each price-correcting swap keeps
 
 ```
 kept = ∫ min(edge(u), m) du
 ```
 
-where `edge(u)` is the marginal gap between the oracle and the pool price, beyond the pool fee, at each point `u` along the trade's price path, and `m` is the **job allowance** per unit of corrected volume. The allowance covers all of the arbitrageur's costs — hedging, capital and gas alike. The pool does not reimburse gas separately: doing so would value the chain's gas token in the pool's own units, a price the protocol never takes (§4.6). Since `m` is discovered rather than set (below), gas is absorbed into it like any other cost; on our data this gives up 5% of the worst-case LP gain on mainnet and nothing on Arbitrum (§5.5). For every swap that moves the pool toward the oracle, everything beyond `kept` is recaptured for liquidity providers by debiting the stake that backs the swap, in the order of §4.5. Swaps that move the pool away from the oracle cannot extract and are never charged. The charge is computed per correcting swap rather than on an account's aggregate, so that no account can net other traders' overpayments against its own extraction (§4.8).
+where `edge(u)` is the marginal gap between the oracle and the pool price, beyond the pool fee, along the trade's price path, and *m* is the job allowance per unit of correction; everything beyond is recaptured for LPs (Figure 3a). The allowance covers all of the arbitrageur's costs, gas included, so the pool never values gas in its own units. Capping rent per unit rather than on the trade's average edge stops the arbitrageur at the competitive band: under an average-edge cap, rent keeps growing past the oracle, inviting overshoot (Figure 3b). The integral is additive, so splitting a trade gains nothing, and the rule pays any correcting swap regardless of its position.
 
-Capping rent *per unit along the price path*, rather than on the trade's average edge, gives three properties. The arbitrageur stops where its marginal edge equals its own cost, so the pool is corrected to the competitive band and never past it; an average-edge cap pays the allowance on every unit while the average stays above it, and arbitrageurs then push the pool past the oracle to inflate volume (§5). The rule is split-invariant — the integral over a price path is additive, so dividing a trade gains nothing, without needing a convex schedule. And it is position-invariant: it pays any correcting swap, whether it opens the block or restores the pool after other users' trades.
+![Payout rule](figures/fig_payout_rule.png)
 
-When the collateral is REP, the charge is burned at the inverse of the mint scalar (§4.4): REP is minted and burned at the same internal rate per unit of pool value, so no market price of REP enters either formula. Whether that rate keeps the collateral sufficient when REP trades below it is evaluated in §5, against a plain bond.
+*Figure 3. (a) Rent kept and recaptured under the per-unit cap. (b) Kept rent as a function of trade size under the two caps.*
 
-**The allowance is discovered, not set.** The competitive cost of rebalancing is private and moves (exchange fee tiers, hedging, capital), so no fixed `m` is safe: set too low, rebalancing stops; set too high, the surplus is bid to block builders for position. `m` is set by a feedback loop on information the reconciler already holds:
+The competitive cost of rebalancing is private and changes, so *m* is discovered by a controller rather than set. It raises *m* hourly when blocks begin with uncorrected gaps beyond `f + m + ε`, and lowers it daily. Lowering requires care: when *m* falls below the cheapest arbitrageur's cost, no correction is profitable at any gap size (Figure 4), and a blind decay finds the cost only by crossing this cliff. On first-come-first-served chains the controller therefore lowers *m* only when more than a quarter of the day's correcting swaps come from senders other than the most frequent one, evidence that several arbitrageurs can still profit; it then settles between the cheapest and second-cheapest cost. Under builder auctions sender diversity under-reports competition, and blind decay is used.
 
-```
-every ~1 hour : if at least 5 blocks began with a gap beyond f + m + ε that the block's first
-                swap did not correct, and they are more than 2% of such blocks      →  m ← 2m
-every epoch   : lower m ← 0.95·m only if competition is observed (below); otherwise hold
-```
+![Supply cliff](figures/fig_supply_cliff.png)
 
-Any arbitrageur whose cost is below `m` profits from correcting a gap beyond `f + m`, so in a healthy pool such blocks almost never occur; once `m` falls below every arbitrageur's cost they occur every time. Raises are fast, so a shock in arbitrage costs costs hours of rebalancing rather than days.
+*Figure 4. Number of arbitrageurs able to profit as a function of the allowance, for the cost population used in §5.4.*
 
-Lowering needs more care. Under a per-unit cap, an arbitrageur keeps at most `m` per unit, so when `m` falls below the cheapest arbitrageur's cost no correction is profitable at any gap size: arbitrage supply has a cliff, not a slope. A controller that lowers `m` blindly finds the cost only by crossing that cliff, and pays for each crossing with a stall in rebalancing (in our data, one to three hours roughly every two weeks, §5.5). The controller therefore lowers `m` only on evidence that more than one arbitrageur could still do the job. On a chain that orders transactions first-come-first-served, any arbitrageur that would profit can arrive first, so while several can profit the correcting swaps come from several senders, and as `m` nears the cheapest cost they come from one. The reconciler sees every correcting swap's sender; the epoch's decay is applied only if more than a quarter of its correcting swaps came from senders other than its top one. The loop then settles between the cheapest and the second-cheapest arbitrageur's cost — where one can do the job and nothing is left to bid for position — without crossing the cliff. The signal is costly to fake in the direction that matters: an arbitrageur posing as several only lowers its own allowance, and suppressing it requires a cartel that any arbitrageur with cost below `m` can break. Under a builder auction, the cheapest arbitrageur outbids the rest and wins every block it can profit from, so sender diversity under-reports competition; there the controller falls back to blind decay and accepts the periodic stall (§5.5). Either way the arbitrageur's payout is set by competition between arbitrageurs, not by a protocol constant.
+### 4.4 The reputation asset
 
-## 4.4 The reputation asset: minting as surplus sharing
+Per epoch, the pool's net income `N = Σ fees + Σ markouts` is compared with the LPs' target `θ*·ΣV`. Surplus mints REP to accounts whose payments exceeded the target on their own volume, at a fixed internal rate; extraction beyond the allowance burns stake at the same rate, so no market price of REP enters either formula. Minting is self-funding — a wash trader's mint is prepaid by its own overpayment — and self-enforcing: over-earning mints capacity that lowers fees, under-earning halts minting. REP is minted slightly below the surplus it claims; this protocol take τ funds the per-pool reserve. Staked REP is a slashable trading licence, preferable to escrowed cash because it earns its holder the discount, is costly only to extractors, and appreciates with the pool's benign volume.
 
-Reputation (REP) enters the system in exactly one way: as a claim on realized surplus above the liquidity providers' target. Per epoch, with `θ*` the target take-rate:
+### 4.5 Stake, parking and collection
 
-```
-N = Σ fees + Σ markouts        (pool net income, token0 terms)
-S = N − θ*·ΣV                  (surplus over target)
-```
-
-When `S > 0`, REP is minted pro-rata to accounts whose fees-plus-benign-markout exceeded the target on their own volume — the traders who overpaid relative to what the pool needed. Minting is a fixed protocol scalar per unit of surplus share; no market price of REP enters any internal formula.
-
-**Protocol take.** REP is minted slightly below the surplus it claims: a share `τ` of each epoch's surplus is withheld by the protocol. The take is required by design, not a convenience: the per-pool reserve (§4.5) must be funded from something other than unbacked minting, and REP must be minted below the surplus it claims so that the reserve carries a safety margin. `τ` funds the reserve and nothing else — it is denominated in the pool's own pair, like every other quantity of value in the protocol. The gas spent settling the pool is a different economy and is paid differently: every swap prefunds its share of settlement gas into a gas tank (§4.6), so settlement never draws on the pool's value and never needs a price between gas and the pool's assets. Measured on ETH/USDC, keepers' settlement costs would be 0.1–0.24% of the value recaptured from arbitrage if they were paid from τ instead (§5.9) — small either way, but the separation keeps the mechanism pair-native. This yields two properties at once. The mint is **self-funding**: total minted claims are a share of surplus actually collected in fees, so wash-trading mints nothing net — a wash trader's claim was prepaid out of their own overpayment, converting cash fees into future-discount rights and nothing more. And the target is **self-enforcing**: over-earning mints capacity, which grows discounted volume and pulls income back toward the target; under-earning halts minting while burns (§4.5) shrink capacity and push income back up. The liquidity providers' "asymptotic profit target" of §1 is not imposed anywhere — it is the fixed point of the mint valve, with the mint scalar as the damping knob under a standard stability bound.
-
-Extraction has the mirrored consequence: extraction beyond the job allowance (§4.3) is burned from the trader's stake (§4.5) at the same internal rate at which surplus mints, and the capacity consumed by the offending volume is destroyed rather than renewed.
-
-Reputation-denominated settlement is a deliberate choice over holding fees in escrow and refunding them. Financially, staked REP is a slashable trading license — the capitalized value of the adverse-selection spread the holder's future benign volume avoids paying. This is strictly better than locked cash on three counts. First, capital efficiency: escrowed fees are dead capital awaiting refunds, while REP is productive collateral — it earns its holder the discount continuously and never needs to be returned, so money settles once and no user funds ever wait on a keeper. Second, credibility: a cash deposit is worth the same to honest and toxic flow alike and so separates nothing, whereas REP is differentially costly — cheap to hold for benign flow, ruinous for extractors (the burn destroys an annuity to dodge one epoch's fee) — which is precisely what makes the discount tier credible. Third, the collateral appreciates with the pool: locked cash is inert, while REP's value grows with the pool's benign volume, aligning its holders with the pool's health instead of merely parking their money against it.
-
-## 4.5 Staking, settlement-hold, and exit
-
-Reputation influences fees only when **staked**; balance-at-execution reads are excluded by design, since they would permit flash-rental of the discount (borrow, swap at tier, return, within one block). Staked REP moves through three states:
-
-```
-ACTIVE ──(trade: ℓ·V held)──► IN-FLIGHT ──(settle, benign)──► ACTIVE
-                                         ──(settle, extractive)──► BURNED
-ACTIVE ──(unstake)──► EXITING ──(delay, no pending flights)──► WITHDRAWN
-```
-
-The fee curve reads **active** stake only. When a trade consumes capacity, `ℓ·V` of the trader's active stake is held in flight until that epoch reconciles: a second trade inside the window faces a worse point on the curve, so intra-settlement throughput is metered by reputation itself — a dynamic rate limit priced by the curve rather than a hard lock, leaving honest multi-hop routing within capacity unaffected. Newly staked REP activates only after a delay of several epochs, and exit requires a delay exceeding worst-case settlement with no flights pending — so none of an account's stake can leave while any of its trades awaits reconciliation.
-
-**How much is parked.** The charge a trade can incur scales with how far the pool was from the market when it traded — a quantity the hook cannot see at execution — while any parking rule must use what the hook can see. The rule is
+Only staked REP affects fees, which precludes flash-renting the discount. A trade parks `ℓ·V` of active stake until it is settled, with
 
 ```
 ℓ = ρ + k · Δ_block
 ```
 
-where `Δ_block` is the pool's cumulative price move so far in the block, including this trade, and `k` is a per-pool parameter. In calm markets the pool barely moves and `ℓ ≈ ρ`; after a jump in the external price, corrections move the pool fast and park correspondingly more. A trader cannot shrink `Δ_block` by splitting a correction into many small trades or across accounts within the block: the pool's motion is shared. Rules keyed to the trade's own size or count — e.g. parking growing exponentially with swap size — are not used: the trader controls those quantities, and splitting one correction into ten pieces halves what they collect while large honest swaps are over-charged (§5).
+where `Δ_block` is the pool's price move so far in the block: corrections after a market jump move the pool quickly and park more. Splitting a trade cannot reduce `Δ_block`, whereas rules keyed to trade size can be defeated by splitting. Charges are collected first from the trade's parked stake, then from the rest of the account's stake (which cannot be withdrawn while settlements are pending), and finally from the per-pool reserve. Charges are never taken from other traders' stake.
 
-**Who pays a charge.** Charges are collected in a fixed order:
+### 4.6 Settlement
 
-1. the trade's own parked stake `ℓ·V`;
-2. the **rest of the same account's stake** — reachable because exit is blocked while flights are pending;
-3. a **per-pool reserve**, only if the account is exhausted (an abandoned or drained account), funded by the protocol take — REP minted slightly below the surplus it claims (§4.4).
+The hook extends each swapper's record — post-trade price, active liquidity and token deltas, chained by hash in the account's storage — so that an account's unsettled swaps form a self-contained segment. An account may settle itself at any time against the signed prices for its blocks, which releases its parked stake; at the end of each epoch a keeper settles every account still in flight. Both paths advance the same pointer, and a keeper's entry for an account that has already settled is skipped rather than reverted. Flights still unsettled when the oracle's retention window expires are burned in full.
 
-A charge is never collected from other traders' parked stake. Pooling collateral across traders would make honest users pay for an extractor's bill while leaving the extractor's own remaining stake untouched — the incentive pointing the wrong way. The reserve amortizes only the residual risk that remains once the extractor's whole stake is gone, and it costs one pool-level balance. The parking rule therefore sets how much of an account's stake stops earning discounts while in flight, not how much can be collected: collection is bounded by the account's whole stake plus the reserve. On ETH/USDC the charge is heavy-tailed — its 99.9th percentile is 21 bp of notional, its maximum 358 bp, and 27% of all charge comes from trades above 50 bp — so a parking rate alone would collect between 70% and 90%; with the whole account stake behind it, collection is complete for an account staking its worst epoch's charges (about $1M for the dominant arbitrageur in our window) (§5). An account with no stake cannot be charged after the fact and pays `f_max` at execution.
+Settlement is paid in gas, not in the pool's assets. Every swap prefunds `G × block.basefee` into a gas tank — a count of gas units times a value the chain exposes, with no price involved — from which keepers are reimbursed with an escalating bounty, directly or through an ERC-4337 paymaster. Since every pool contributes in the same unit, one tank can serve many pools. Two rules keep it inexpensive: settlement is never forced into the current block, and each pool chooses its epoch length. Where charges are computed on-chain, an open race among keepers is efficient; where they are proven off-chain, a designated leader avoids duplicated proving. A leader cannot alter a charge, which is fixed by the record and the signed prices.
 
-## 4.6 Feasibility of on-chain reconciliation
+The per-swap work of settlement — a multiply-add against a verified price, a comparison and a state write — is smaller than executing the swap, so settlement is bounded by the pool's own execution footprint. §5.7 measures it. Parameters are listed in Appendix E.
 
-Reconciliation is viable by a capacity argument. Whatever set of swaps block *N−1* accommodated, scoring them requires per-swap work strictly smaller than executing them: a markout is one multiply-add against an already-verified report price, a tolerance comparison, and one reputation-state write, with the report's signature verification amortized across every swap scored in its validity window. If per-swap reconciliation gas is bounded by per-swap execution gas, the protocol's steady-state footprint is at most twice its own swap footprint — bounded by construction, scaling only with the pool's own usage, never beyond what the chain has already demonstrated it can process; lazy settlement (below) smooths it further.
+### 4.7 Launch and intermediaries
 
-Settlement is organised around the account rather than the pool. At every swap the hook extends the swapper's own record — the post-trade price, the active liquidity and the swap's token deltas, chained by hash in the account's storage, which the parking lock of §4.5 writes in any case. The unsettled swaps of an account therefore form a complete and self-contained segment that can be settled independently of every other account. Two paths settle such a segment, and both advance the same settlement pointer, so that no swap can be settled twice. An account may settle itself at any time by submitting its records together with the signed prices for their blocks; the charges are computed and its stake is updated in a single transaction, at the account's own expense. Frequent traders have a reason to do so, because settlement releases their parked stake: in our sample it reduced the stake they required by 15–24% (§5.9). Every account that is still in flight at the end of an epoch is settled by a keeper, whose batch consists of one result per account. An entry for an account that has settled itself in the meantime is skipped rather than reverted, so that self-settlement cannot be used to invalidate a keeper's batch.
+At launch no account holds REP. An initial supply is sold, not granted; its proceeds seed the reserve and the gas tank. Intermediaries — solvers, RFQ desks — can hold stake and pass the discount to users. The protocol never identifies arbitrageurs: arbitrage is a role carried by a swap, and any swap that moves the pool toward the oracle is paid the allowance on it. The charge is computed per correcting swap rather than per account, so an intermediary cannot net customers' overpayments against its own extraction.
 
-Negative settlement therefore does not depend on the trader's cooperation: the keeper settles every account that an epoch leaves behind, and charges reach the account's whole stake (§4.5), not only its parked part. A default rule remains as a liveness backstop, exploiting the flight mechanism of §4.5: **an in-flight tranche that remains unreconciled when the signed-data retention window (on the order of a month) expires is burned in full**, and the account's remaining stake stays frozen until its flights are settled.
+## 5. Evaluation
 
-Keepers are paid without recourse to any numeraire. Every swap prefunds its share of settlement gas, `G × block.basefee`, into a gas tank: a fixed number of gas units multiplied by a quantity the chain exposes at execution, so that no price is involved. Keepers are reimbursed from the tank for the gas their settlement consumed, together with a bounty that escalates with delay; alternatively, an ERC-4337 paymaster funded by the tank sponsors the keeper's settlement transaction, so that keepers need hold no gas at all. Because every pool's contribution is denominated in the same unit, a single tank can serve many pools, and the settlement of small pools can be supported by the swaps of large ones without an exchange rate. Two further rules keep the tank inexpensive. Settlement is never required in the current block, since a long deadline allows keepers to wait for low base fees; and the length of an epoch is a per-pool parameter, so that a pool with little flow can settle daily rather than hourly. On our data, a tank shared by seven mainnet pools remained solvent with 1,400–2,300 gas per swap at daily epochs, less than 1.2% of a swap's own gas, and 640 gas per swap on Arbitrum (§5.9).
+### 5.1 Data and method
 
-The appropriate market for keepers depends on how settlement is computed. When the charges are computed on-chain, keepers do no off-chain work and an open race with an escalating bounty is efficient. When settlement is proven off-chain, keepers of similar cost racing one another duplicate the proving, and a designated settlement leader per term — selected by auction or by a random draw among staked keepers, with a bond slashed for each missed epoch — removes the duplication; the open race remains as a fallback after a deadline. A leader cannot alter any charge, since charges follow from the account's record chain and the signed prices; collusion can therefore only delay an epoch's credit to liquidity providers, which in our sample was worth less than one cent per epoch (§5.9).
-
-What reconciliation computes is bounded and local. The hook records each swap's post-trade price, active liquidity and token deltas, from which the pre-trade price follows within a single liquidity range. Within such a range the job allowance has a closed form, and most corrections move the price by less than one tick spacing; trades that cross a range boundary are recomputed off-chain from pool state and posted optimistically, subject to challenge within the retention window. The allowance controller of §4.3 requires only quantities that reconciliation already holds — each block's resting price, its signed report, the direction of its first swap and the sender of each correcting swap — and no transaction indices.
-
-The measured cost supports the capacity argument (§5.8). On a Uniswap v4 pool the hook — the parking lock, the collateral check and the account's record — adds 17,000 gas to a swap; self-settlement costs 46,000 gas plus 6,000 per swap; a keeper's epoch costs 26,000 gas plus 14,300 per account settled; and a batch of prices signed once requires a single signature check. Hourly settlement with the charges computed on-chain then costs 0.18 of the swaps' own execution gas on mainnet and 0.19 on Arbitrum, including the hook, which satisfies the bound by a factor of about five. A succinct proof of an epoch's charges, verified for 227,000 gas, lowers the cost only to 0.14–0.15: once prices arrive in a single signed batch, the per-swap hook and the per-account writes dominate, and a proof removes neither. The viability of the mechanism therefore does not depend on proofs.
-
-## 4.7 Parameters
-
-The complete parameter set: `θ*` (LP target take-rate), `f_min`/`f_max` (fee band), `ρ` (capacity scale and base parking rate), `k` (per-pool parking speed, §4.5), the protocol take `τ` (§4.4; funds the reserve), the mint scalar (stability-bounded; its inverse is the burn rate), `L` (decision latency, measured) and the scoring-window width, `ε` (residual tolerance, bound to the measured timing-noise floor and to the feed's error, `ε ≈ max(|bias|, 2σ)`), the gas withholding per swap `G` and each pool's epoch length (§4.6), the keeper bounty's slope and the settlement deadline, the job-allowance controller (raise and decay steps, the 2% raise threshold, the minimum count of uncorrected blocks, the sender-diversity share that permits decay, and the starting allowance `m₀`, which bounds the allowance when only one arbitrageur is active), the settlement window, the activation delay, and the exit delay. The job allowance `m` itself is not a parameter: the controller discovers it. Consistency conditions — that `f_min` clears reconciliation economics, that the fee spread simultaneously prices REP and sizes the parked stake, and that account stake plus the reserve cover the tail of extraction — are evaluated in §5.
-
-
-## 4.8 Initial supply, intermediaries, and who the arbitrageur is
-
-At launch no account holds REP, so every swap would pay `f_max` and ordinary flow would route elsewhere. The protocol therefore issues an **initial supply**, sold rather than granted: its proceeds seed the per-pool reserve (§4.5), so pre-minted REP is backed at issuance just as minted REP is backed by collected surplus (§4.4). Issuance is priced slightly below the discount it confers — the same protocol take `τ` as ongoing minting (§4.4) — so that from the first block the reserve carries a safety margin while REP's price is discovered. Part of the proceeds seeds the gas tank (§4.6), which a launch needs: from an empty tank, the first epochs' settlements would need up to twice the steady-state withholding (§5.9).
-
-The supply needed is small relative to the flow it serves. Bringing a fee within δ of `f_min` requires `r ≥ ρ·V·ln((f_max − f_min)/δ)` (§4.3); with the reference band and δ = 1 bp this is ≈ 6.2·ρ·V. On ETH/USDC, non-arbitrage user flow averaged $26 M per day over our window, so a daily-epoch pool needs about $16 k of active REP per basis point of `ρ` to offer near-floor fees to all of it.
-
-Users need not hold REP themselves. Intermediaries that already route user orders — solvers, fillers, RFQ desks; *cashiers* — can hold the stake, quote users discounted fills, and sell the REP their customers' overpayment mints; competition between them passes the discount on. Intermediaries also answer the question of whose stake backs a swap when the hook sees only a router: the stake that backs a swap is the submitting account's, named in the swap's hook data. The protocol is agnostic to this structure; it is one way the initial supply reaches users.
-
-This raises the question of who the arbitrageur is. **By design the protocol never identifies arbitrageurs: arbitrage is a role carried by a swap, not an identity.** Any swap that moves the pool toward the oracle is doing the rebalancing job and is paid the job allowance on it (§4.3); every other swap is scored as ordinary flow. An intermediary that routes its customers' orders and also corrects the pool is an arbitrageur for its correcting swaps and a router for the rest. This is why the charge is computed per correcting swap rather than on an account's aggregate: under an aggregate rule an intermediary could net its customers' small overpayments against its own extraction and leave the latter uncharged — extraction laundered through other people's flow. Per-swap charging removes that incentive at negligible cost to ordinary users: a user whose swap happens to correct a stale pool still pays no more than the market price plus fees, and loses only the windfall beyond the allowance — on benign-labelled flow in our window, at most about $0.01 M.
-
-## 5. Empirical evaluation
-
-This section evaluates the mechanism of §4 against six months of on-chain data. We first describe the data, the benchmark and the scoring procedure (§5.1). We then measure when swaps are priced (§5.2), test whether the scoring rule separates informed from uninformed flow (§5.3), bound the surplus that can be recaptured (§5.4), and compare payout rules for arbitrage in a block-level simulation (§5.5). The remaining subsections examine the adequacy of collateral (§5.6), the sensitivity of the mechanism to oracle error (§5.7), the on-chain cost of settlement (§5.8) and the economics of the settlement layer (§5.9). §5.10 states the limitations of the evidence. All monetary figures are reported in US dollars for comparability; this is a unit of reporting only, and the mechanism itself uses no numeraire beyond each pool's own pair (§4.4, §4.6).
-
-### 5.1 Data and methodology
-
-**Venues and sample.** We study two pools over 1 March – 31 August 2026: the Uniswap v3 ETH/USDC pool with a 5 bp fee on Ethereum mainnet, and the corresponding WETH/USDC pool on Arbitrum One. The mainnet pool carried 89% of Uniswap's ETH/USDC volume in the window. We extract every swap from the chain's event logs through a commercial RPC endpoint, together with block timestamps and the sending account of each transaction. Table 1 summarises the sample. Arbitrum produces roughly four blocks per second but stamps them to the second; we place the *N* blocks that share a timestamp *S* at *S* + (*k* + ½)/*N* (§3.4), and we count transaction positions over user transactions only, since every Arbitrum block opens with a system transaction.
+We study the Uniswap v3 ETH/USDC 5 bp pool on Ethereum mainnet and the corresponding WETH/USDC pool on Arbitrum from 1 March to 31 August 2026 (Table 1). The benchmark is Binance ETHUSDT corrected by USDCUSDT, with a touch-level bid/ask proxy built from aggressor-flagged trades. A stable–stable control pool on each chain scored a median absolute `q_LP` of 0.9–1.1 bp, well within the 38.4 bp ceiling implied by peg noise. Payout rules are compared in a block-level simulation that replays the real oracle path and non-arbitrage flow, with optimising arbitrageurs whose costs range from 0.3 to 2.5 bp and are multiplied by four or eight from June (Appendix C).
 
 | | Ethereum mainnet | Arbitrum One |
 |---|---|---|
-| Pool (fee) | ETH/USDC (5 bp) | WETH/USDC (5 bp) |
 | Swaps | 990,555 | 5,237,793 |
-| Blocks in window | 1.32 M (12 s slots) | 63.4 M (≈ 0.25 s) |
-| Blocks containing a pool swap | 595,030 | 1,868,277 |
-| Median swap notional | $1.5 k | $1.3 k |
-| Six-month volume | $19.6 B | $11.2 B |
+| Blocks (with a pool swap) | 1.32 M (595 k) | 63.4 M (1.87 M) |
+| Volume | $19.6 B | $11.2 B |
 
-*Table 1. Sample.*
+*Table 1. Sample, March–August 2026.*
 
-**Benchmark.** The external reference is the Binance spot price of ETH in USDT, divided by the USDC/USDT rate to express it in the pool's quote asset. Because the protocol is designed to score against a signed liquidity-weighted bid and ask (§3.6), we construct a bid/ask proxy from Binance's aggressor-flagged trades: the most recent seller-initiated trade approximates the bid, and the most recent buyer-initiated trade approximates the ask. The proxy is a touch-level quote and understates the depth-weighted spread that a large trade faces.
+### 5.2 Decision latency and scoring validity
 
-**Scoring.** Each swap is scored with the directional benchmark of §4.2 — the bid when the pool sells the risky asset and the ask when it buys it — averaged over a one-second window centred on the block's decision instant *t\** = block timestamp + *L*, where *L* is the decision latency measured in §5.2. The quality factor is the liquidity provider's markout per unit of notional, `q_LP` = (Δ₀ + P·Δ₁)/notional, evaluated at horizon zero. Negative values indicate that the swap extracted value from liquidity providers.
+The decision latency is 1.5 s on mainnet and 0.75 s on Arbitrum (Figure 5), each bracketed by estimates biased early and late. A window trailing the block timestamp would instead score arbitrageurs against prices from before their trades, turning mainnet's measured LP loss of $1.58 M into an apparent gain of $5.26 M.
 
-**Control.** A stable–stable pool (USDC/USDT) on each chain serves as a negative control: since neither leg moves materially against the other, any systematic score on that pool would indicate an artefact of the benchmark rather than economic extraction. The absolute score on the control pools had a median of 0.93 bp and a 95th percentile of 2.25 bp on mainnet (1.06 bp and 2.31 bp on Arbitrum), well below the ceiling of 38.4 bp implied by three times the 99th percentile of the USDC/USDT peg deviation. We therefore treat the benchmark as fit for scoring.
+![Decision latency](figures/fig_decision_latency.png)
 
-**Simulation.** Payout rules and the allowance controller cannot be observed on existing pools, so §5.5 replays every block in the window with its real oracle path and its real non-arbitrage swaps, and lets a population of optimising arbitrageurs with hedging costs between 0.3 and 2.5 bp correct the pool under each rule. To test adaptation, arbitrage costs are multiplied by four or by eight from 1 June onwards. The simulation models the pool with linear depth estimated per day from real swaps and replays user flow at its observed size and direction.
+*Figure 5. Median fee-adjusted residual between the pool's post-swap price and the hedgeable external quote, by offset from the block timestamp.*
 
-### 5.2 Decision latency
+Against price-independent labels — retail routers as benign, sandwich legs and top-of-block repeat searchers as toxic — the score separates the classes with AUC 0.889 on mainnet and 0.814 on Arbitrum, rising to 0.983 and 0.897 for the largest swaps (Figure 6). Extraction follows the ordering regime: on mainnet, where builders sell position, 61% of it occurs in the first three positions of a block; on Arbitrum's first-come-first-served sequencer, 69% occurs at position ten or later (Figure 7). LPs lost $9.68 M to extraction on mainnet and ended $1.58 M down after fees; on Arbitrum they lost $1.34 M on smaller fills and ended $0.86 M up.
 
-A swap that closes a price gap stops where the pool price, net of the fee, equals the external price at which the arbitrageur can hedge. Minimising the residual of that relation over offsets from the block timestamp therefore identifies the instant at which gap-closing flow priced its trades. Because the bid/ask proxy is itself slightly stale, we estimate the offset twice — once with the last quote before each instant, which biases the estimate late, and once with the next quote after it, which biases it early — and take the midpoint.
+![Score distributions](figures/fig_score_distributions.png)
 
-On mainnet the decision latency is *L* = 1.5 s, bracketed between 1.25 s and 1.75 s. This is consistent with blocks being assembled and published one to two seconds into their slot under proposer–builder separation. On Arbitrum *L* = 0.75 s; the bracket is wider (0 to 1.5 s) because at sub-second block times the staleness of the proxy dominates the estimate, but the separation results of §5.3 are insensitive to the choice within the bracket. The window must be centred on *t\**: a window that trails the block timestamp by twelve seconds scores arbitrageurs against prices from before the move on which they trade, and turns the measured mainnet loss of $1.58 M into an apparent gain of $5.26 M. The timing noise that remains inside the centred one-second window is 0.80 bp at the 90th percentile on mainnet and 1.72 bp on Arbitrum.
+*Figure 6. Distribution of `q_LP` by label.*
 
-### 5.3 Validity of the scoring rule
+![Extraction by position](figures/fig_extraction_by_position.png)
 
-We test whether `q_LP` distinguishes informed from uninformed flow using labels that do not depend on price. Swaps routed through retail aggregators are labelled benign; the attacking legs of sandwich attacks and top-of-block swaps by repeat non-router senders are labelled toxic. The labels serve only as an external check — the mechanism itself scores every swap. Table 2 reports the area under the receiver operating characteristic curve (AUC), the probability that a randomly drawn toxic swap scores below a randomly drawn benign one.
+*Figure 7. Share of extraction by transaction position in the block.*
 
-| | Ethereum mainnet | Arbitrum One |
+### 5.3 Recapture
+
+With perfect information, a schedule charging extraction beyond an allowance of 2 bp, capped at `f_max`, recaptures 73% of extraction on mainnet and 70% on Arbitrum while preserving 97–99% of profitable arbitrage and overcharging benign flow by less than 0.1 bp (Figure 8). The schedule was set a priori, not fitted; selected on March–May, it is also the best schedule on June–August.
+
+![Recapture frontier](figures/fig_recapture_frontier.png)
+
+*Figure 8. Recapture against profitable arbitrage preserved, for all schedules evaluated.*
+
+### 5.4 Payout rule and allowance discovery
+
+A rule must keep the pool as rebalanced as today: the share of blocks within the fee plus 1 bp of the oracle may fall by at most 0.5 points, and the price users trade against may be at most 0.1 bp staler. The per-unit cap with an on-chain controller raises LPs' net position by $4.81 M on mainnet and $0.66–0.71 M on Arbitrum in the worst cost scenario, and redirects most of the $6.57 M that mainnet arbitrageurs paid for position. An average-edge cap fails the constraint through overshoot. Blind decay stalls rebalancing whenever it crosses the cheapest cost — about every two weeks — whereas decay gated on sender diversity holds just above it (Figure 9), at 7–8% less worst-case gain. Results hold for arbitrage populations from a monopoly to ten arbitrageurs and for depth halved or doubled (Appendix C).
+
+![Controller paths](figures/fig_controller_paths.png)
+
+*Figure 9. Allowance over time under three controllers, Arbitrum, with arbitrage costs quadrupled from June.*
+
+### 5.5 Collateral
+
+The charge per trade is small at the median (0.17 bp) but heavy-tailed (99.9th percentile 21 bp, maximum 358 bp; trades above 50 bp carry 27% of the total), so parking alone collects 70–90% and the account's remaining stake and the reserve collect the rest. Parking keyed to the in-block price move resists splitting; parking keyed to trade size loses half its collection when a correction is split ten ways.
+
+### 5.6 Oracle error
+
+Scoring with a degraded oracle leaves benign flow essentially unaffected (overcharge below 0.3 bp) but makes part of the charges on arbitrage unjustified (Figure 10). The tolerance ε is the remedy: ε equal to the bias removes a bias exactly, ε of about twice the noise removes most random error, and each basis point of ε forgoes about 8% of recapture — hence ε ≈ max(|bias|, 2σ). Staleness is the binding error on fast chains: a one-second-old feed halves recapture on Arbitrum, so rollups require a sub-second pull oracle.
+
+![Oracle error](figures/fig_oracle_error.png)
+
+*Figure 10. Mainnet: (a) unjustified share of charges and (b) recapture, as functions of the tolerance ε, for four oracle errors.*
+
+### 5.7 Settlement cost and keeper economics
+
+We measured every component on-chain or in Foundry (Appendix D). The hook adds 17,112 gas to a v4 swap; a keeper's epoch costs 26,000 gas plus 14,300 per account; self-settlement costs 46,000 gas plus 6,000 per swap; a Groth16 proof verifies for 227,226 gas. With prices signed once per batch and settled hourly, settlement costs 0.18× the execution gas of the settled swaps on mainnet and 0.19× on Arbitrum (Figure 11). A succinct proof lowers this only to 0.14–0.15×, because the hook and the per-account writes remain; viability does not depend on proofs.
+
+![Settlement cost](figures/fig_settlement_cost.png)
+
+*Figure 11. Settlement gas relative to the execution gas of the settled swaps.*
+
+Funding keepers from the gas tank requires a modest contribution per swap (Figure 12). A tank shared by seven mainnet pools stays solvent with 2.3 k gas per swap at daily epochs (1.2% of a swap's gas) and 1.4 k when keepers choose the block; Arbitrum needs 0.64 k. Alone, the smallest pool would need 80 k gas per swap at hourly epochs; within the shared tank it pays the common rate. In simulation, 2–8% of accounts preferred to settle themselves, carrying up to half of the volume and cutting their stake by 15–24%; an open keeper race settled on-chain epochs within 1.3 minutes, and a designated leader removed the duplicated proving that a race of similar keepers incurs.
+
+![Gas tank](figures/fig_gas_tank.png)
+
+*Figure 12. Smallest per-swap gas contribution that keeps the gas tank solvent.*
+
+### 5.8 Limitations
+
+The benchmark is a Binance touch proxy, not the signed liquidity-weighted quote, so oracle error is modelled rather than measured. The simulation assumes linear daily depth, fixed user flow, a population of arbitrage costs and a second-price auction for position; sender diversity presumes a first-come-first-served race. Labels are conservative heuristics. Gas was measured on a locally deployed v4 pool manager with mock tokens, and swaps crossing a liquidity boundary are outside the closed-form charge. Keeper costs are assumed, and the seven-pool census applies the study pool's recapture rate to the other pairs. The sufficiency of REP as collateral when it trades below its mint rate remains to be tested against a plain bond.
+
+---
+
+## Appendix A. Related work in detail
+
+**Milionis, Moallemi, Roughgarden and Zhang (2022).** Define LVR with a closed form and propose (a) fees set by comparing LVR with fee income over a backward-looking window and (b) the sale of arbitrage rights to capture LVR for LPs. Both are directions, not specified or farming-robust mechanisms; REP-AMM's oracle reconciliation instantiates (a).
+
+**am-AMM (Adams, Moallemi and Reynolds, 2024).** A Harberger-lease auction for the role of pool manager, who sets the fee and may arbitrage at zero fee; surplus accrues to LPs. By its authors' account it offers fewer sandwich protections than a fixed-fee AMM and depends on a single manager; the convex coverage curve of §4.2 is in part an argument against winner-take-all structures.
+
+**Diamond and V0LVER (McMenamin et al., 2022–2023).** Reduce liquidity only for arbitrageurs and rebate a share of LVR; V0LVER extends protection to user-level MEV. The authors regard oracle dependence as unsatisfactory; REP-AMM accepts a trusted signed oracle and bounds the effect of its error (§5.6).
+
+**Angstrom (Sorella Labs).** A live v4 hook that auctions the top-of-block arbitrage right, distributes the proceeds to in-range LPs and clears other orders at a uniform price, which removes the positions a sandwich needs. It relies on app-specific sequencing by a decentralised operator set; REP-AMM requires no sequencer.
+
+**zScore (2025) and Karma (Status Network).** zScore proposes v4 fee tiers keyed to behavioural reputation; it does not specify an oracle-reconciled per-swap rule or anti-farming curve. Karma is a soulbound token for access and rate limiting, not LVR-specific pricing; REP is deliberately transferable.
+
+**Optimal dynamic fees (Ghasemlu, 2026; Nezlobin and Tassy, 2025).** Derive optimal scalar fees as functions of volatility; they do not address a reputation-eligibility curve that must resist concentration.
+
+**MEV taxes (Robinson and White, 2024).** A fee increasing in the priority fee captures competitive MEV under strict priority ordering — plausible on OP-Stack sequencers, not under Ethereum builder auctions — and cannot reach extraction in the middle of a block. REP-AMM's ex-post reconciliation does not depend on honest ordering.
+
+## Appendix B. Measurement details
+
+**Benchmark composition.** Pair bid and ask composed from two single-asset feeds are taken as round trips: pair ask = buy-leg ask / sell-leg bid; pair bid = sell-leg bid / buy-leg ask. Liquidity-weighted quotes are conservative for large trades but lenient for small trades in volatile moments, when the touch is the true counterfactual; as pool liquidity approaches reference depth, the quotes can be extended with the pool's own liquidity into a size-aware price.
+
+**Decision latency.** The bid/ask proxy is about 0.75 s stale at the median. Running the latency fit with the last quote before each instant biases it late, with the next quote after it biases it early; *L* is the midpoint. Mainnet bracket: 1.25–1.75 s; Arbitrum: 0–1.5 s. Timing noise inside the centred 1 s window: 0.80 bp (mainnet) and 1.72 bp (Arbitrum) at the 90th percentile.
+
+**Index-based clocks.** Normalising transaction index into intra-block time is unsafe where position is sold: ordering by arrival gives the best-informed top-of-block traders the oldest price and forgives about 72% of top-of-block extraction; reversing the orientation moves the purchase to the cheap bottom of the block; clocks counting only the pool's own swaps can be bought with dust swaps ($0.03 of gas bought $11 of forgiveness per arbitrage in our data). Such clocks are safe only where ordering is enforced by time.
+
+**Labels.** Benign: transactions sent to a curated set of retail routers (on Arbitrum, the curated routers present there plus contracts used by at least 300 senders with at most 20 swaps each). Toxic: sandwich attacker legs, and the first swap in a direction among a block's first four user transactions by a non-router sender with at least 100 swaps. Arbitrum blocks open with a system transaction, so positions count user transactions. The "largest swaps" slice is the top 4.55% by notional on each chain ($100 k on mainnet, $7 k on Arbitrum).
+
+## Appendix C. Simulation design
+
+Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum blocks at their reconstructed sub-second times, with the oracle read at each block's own time plus *L*. Pool depth is linear within a day, estimated from real swaps. In each block, arbitrageurs with hedging costs {0.3, 0.6, 1.0, 1.5, 2.5} bp choose the trade that maximises profit under the payout rule; the winner pays the runner-up's profit for position (second-price). The block's real non-arbitrage swaps are then replayed at observed size and direction. Costs are multiplied by four or eight from 1 June.
+
+**Rebalancing constraint.** A rule is admissible only if, in every cost scenario, the share of blocks within the fee plus 1 bp of the oracle is at most 0.5 points below today's and the volume-weighted gap at which users trade is at most 0.1 bp above today's. This test is independent of block time; a count of uncorrected blocks is not, because a standing gap is counted once per block.
+
+**Worst-case LP gain over the three cost scenarios** (per-unit cap unless stated):
+
+| Controller | Mainnet | Arbitrum |
 |---|---|---|
-| AUC, all labelled swaps | 0.889 | 0.814 |
-| AUC, largest 4.55% of swaps by notional | 0.983 (> $100 k) | 0.897 (> $7 k) |
-| Gross LP loss to extraction | $9.68 M | $1.34 M |
-| LP net position after fees | −$1.58 M | +$0.86 M |
-| Extraction in user positions 0–2 / ≥ 10 | 61% / 21% | 6% / 69% |
+| Observes competition (not implementable on-chain) | +$5.11 M | +$0.75 M |
+| Blind decay | +$4.81 M | +$0.71 M |
+| Decay gated on sender diversity | — | +$0.66 M |
+| Fixed allowance, 5 bp | +$3.68 M | +$0.42 M |
+| Reimbursing gas in addition to the allowance | +$5.07 M | +$0.71 M |
 
-*Table 2. Separation of labelled flow and the scale of extraction at horizon zero.*
+**Controller.** Hourly: if at least five blocks began with a gap beyond `f + m + ε` that the block's first swap did not correct, and they exceed 2% of such blocks, `m ← 2m`. Daily: `m ← 0.95m` if the decay condition holds (blind decay: fewer than 1% such blocks; gated decay: more than 25% of correcting swaps from senders other than the top one); otherwise hold. Under blind decay, rebalancing stalled for 0.6–3.1 h in total on mainnet and 4.7–7.1 h on Arbitrum over six months; gated decay removed the stalls when costs were stable.
 
-The score separates the two classes well on both chains, and best for large swaps, where informed trading concentrates. Two contrasts between the venues are informative. First, extraction on Arbitrum is real but small relative to fees: liquidity providers lost $1.34 M to extraction over 5.3 times as many swaps as on mainnet, and ended net positive, because fills on the sequencer are small. The sign of that net result depends on the benchmark — it is −$0.04 M at the last trade price and +$0.86 M at the directional bid/ask — which shows that the directional benchmark matters most where edges are thin. Second, the position of extraction within the block follows the ordering regime. On mainnet, where position is sold by builders, 61% of extraction occurs in the first three user positions; on Arbitrum, whose sequencer orders transactions by arrival, 69% occurs at position ten or later, because an arbitrageur lands wherever the block happens to be when the external price moves. A per-block anchor scores both regimes identically.
+**Sensitivity.** With a monopolist, two or ten arbitrageurs, all costs halved or doubled, and depth halved or doubled, every controller variant kept the pool rebalanced on both chains. A monopolist never reveals competition, so gated decay holds the allowance at its starting value `m₀`, which then bounds the rent.
 
-### 5.4 The recapture ceiling
+**Two rejected controller variants.** Measuring staleness as the share of time a gap is open, over every block, mistook mainnet's 12 s of fresh drift for staleness and drove *m* to 21–31 bp. An allowance growing with the standing gap silenced the signal that raises *m* and lengthened stalls (20–61 h on Arbitrum).
 
-Before introducing the payout rule of §4.3, we bound what any charge on extraction could recover. We apply, with perfect information, a margin schedule that charges extraction beyond an allowance of 2 bp and caps the charge at `f_max`. The allowance was set by reasoning — the assumed hedging cost of 1 bp plus a buffer of 1 bp — and not fitted to the data. The schedule recaptures 73% of gross extraction on mainnet, raising liquidity providers' net position from −$1.58 M to +$5.52 M over the window, and 70% on Arbitrum. The overcharge on benign flow is 0.06–0.07 bp, and between 97% and 99% of the arbitrage that covers its real costs (base-fee gas plus a 1 bp hedge) remains profitable. The rent available for bidding for transaction order falls from $8.51 M to $1.41 M on mainnet and from $1.09 M to $0.15 M on Arbitrum.
+## Appendix D. Settlement measurements
 
-To check that this result is not an artefact of choosing the schedule on the same data, we select the best schedule on March–May, subject to preserving 95% of profitable arbitrage, and evaluate it on June–August. On mainnet the selected schedule is the one fixed a priori; on both chains the a-priori schedule is also the best schedule in hindsight on the test period.
+**Components.**
 
-### 5.5 The arbitrage payout rule and allowance discovery
-
-The simulation of §5.1 compares payout rules under the constraint that the pool remain as well rebalanced as it is today. Because Arbitrum blocks are fifty times shorter than mainnet slots, the constraint is stated in quantities that do not depend on block time: the share of blocks whose resting price lies within the fee plus 1 bp of the oracle may not fall by more than 0.5 percentage points, and the volume-weighted distance between the pool price and the oracle at which users trade may not rise by more than 0.1 bp. Rules that violate the constraint are discarded regardless of their effect on liquidity providers, since a pool that is no longer rebalanced would lose the flow that the simulation replays as fixed.
-
-Table 3 reports the worst-case gain to liquidity providers across the three cost scenarios. The per-unit cap of §4.3, with its allowance discovered on-chain, raises liquidity providers' net position by $4.81 M on mainnet and by $0.66–0.71 M on Arbitrum, and transfers most of the $6.57 M that arbitrageurs pay for transaction order today to liquidity providers. Reimbursing gas in addition to the allowance would add $0.26 M on mainnet and nothing on Arbitrum; we forgo it because it would require valuing the chain's gas token in the pool's units. An allowance capped on the trade's average edge rather than per unit fails the constraint: it pays arbitrageurs to push the pool past the oracle, producing 23,079 overshooting blocks, and users then trade about 5 bp further from the market.
-
-| Payout rule and controller | Mainnet | Arbitrum |
+| Component | Gas | Source |
 |---|---|---|
-| Per-unit cap, allowance by controller observing competition (not feasible on-chain) | +$5.11 M | +$0.75 M |
-| Per-unit cap, blind decay of the allowance | **+$4.81 M** | **+$0.71 M** |
-| Per-unit cap, decay gated on sender diversity | — † | **+$0.66 M** |
-| Per-unit cap, fixed allowance of 5 bp | +$3.68 M | +$0.42 M |
-| Average-edge cap | fails constraint | fails constraint |
+| Single-swap transaction (median) | 188,705 mainnet / 136,171 Arbitrum | 400 receipts per chain |
+| Data Streams report verification | 55,879 mainnet / 62,544 Arbitrum (37,544 each further in a tx) | traced historical calls; no on-chain fee |
+| Hook: parking, collateral check, record | +17,112 per swap | v4 pool manager, Foundry, isolated transactions |
+| Self-settlement | 46,000 + 6,000 per swap | Foundry |
+| Keeper epoch | 26,000 + 14,300 per account (4,400 per skipped entry) | Foundry |
+| Groth16 proof verification (SP1) | 227,226 | Foundry |
+| ERC-4337 sponsorship overhead | +87,000–98,000 per settlement transaction | EntryPoint v0.7 |
 
-*Table 3. Worst-case gain to liquidity providers over the three cost scenarios, relative to today. † Sender diversity presumes a first-come-first-served race; under a builder auction the blind-decay controller is the feasible choice (§4.3).*
+**Settlement designs**, six months, including the hook on every swap:
 
-The controller deserves separate comment. A controller that lowers the allowance blindly finds the cheapest arbitrageur's cost only by crossing it, and each crossing stops arbitrage until the allowance is raised again: rebalancing stalled for 0.6–3.1 hours in total over the window on mainnet and 4.7–7.1 hours on Arbitrum, concentrated in episodes of one to three hours roughly every two weeks. Gating the decay on evidence that more than one arbitrageur is winning eliminates the stalls when costs are stable; what remains is the recovery from the cost shock itself (1.7 and 2.7 hours on Arbitrum under the fourfold and eightfold shocks), at a cost of 7–8% of the worst-case gain. The conclusions are robust to the assumed arbitrage population (a monopolist, two arbitrageurs or ten; all costs halved or doubled) and to pool depth (halved or doubled): every variant keeps the pool rebalanced on both chains. A monopolist never reveals competition, so the allowance remains at its starting value; the rent is then bounded by that value rather than discovered.
-
-### 5.6 Collateral adequacy
-
-Charges must be collectable from stake locked before the trade (§4.5). In the simulated settlement of the chosen design, the charge per trade is small at the median (0.17 bp of notional) but heavy-tailed: its 99th percentile is 8.4 bp, its 99.9th percentile 21 bp and its maximum 358 bp, and trades charged above 50 bp account for 27% of the total charge. A parking rate sized to the typical trade therefore cannot collect the tail on its own; parking alone collects between 70% and 90% of the charge, depending on its rate. The remainder is collected from the rest of the account's stake, which cannot leave while charges are pending, and in the last resort from the per-pool reserve. Parking keyed to the pool's price movement within the block is unaffected by splitting a correction into smaller trades, whereas parking keyed to trade size is not: splitting a correction into ten trades halves what it collects.
-
-### 5.7 Robustness to oracle error
-
-Every charge rests on a signed report, so we score the recapture schedule of §5.4 with a deliberately degraded oracle — delayed by up to five seconds, perturbed by independent noise of 1–5 bp per report, or biased by ±1–3 bp — and compare its charges with those computed from the true benchmark. Table 4 summarises the results.
-
-| Oracle error (tolerance ε = 0) | Unjustified share of charges, mainnet / Arbitrum | Recapture, mainnet / Arbitrum |
+| Design | Mainnet (× execution) | Arbitrum (× execution) |
 |---|---|---|
-| None | 0 / 0 | 73% / 70% |
-| Delay of 1 s | 5.2% / 1.4% | 70% / 37% |
-| Noise of 2 bp per report | 11% / 19% | 78% / 80% |
-| Bias of +1 bp | 6.4% / 8.0% | 75% / 72% |
-| Bias of −3 bp | 21% / 35% | 81% / 93% |
+| Keeper every block, one report per block | $96.7 k (0.72) | $21.2 k (0.72) |
+| Keeper hourly, batch-signed prices | $24.9 k (0.18) | $5.7 k (0.19) |
+| Keeper hourly, succinct proof | $20.5 k (0.14) | $4.3 k (0.15) |
+| Every account self-settles hourly | $38.7 k (0.28) | $6.8 k (0.23) |
+| Execution of the swaps | $148 k | $30 k |
 
-*Table 4. Effect of oracle error on the recapture schedule.*
+**Keeper market.** Five keepers with differing costs and availability, over every hourly epoch. With on-chain settlement, an open race paid $12.0 k on mainnet (no wasted work) against $12.5 k for a designated leader. With proven settlement and similar keepers, a race wasted $829 of duplicated proving — more than Arbitrum's settlement gas — whereas a leader wasted $28 at a higher payment. A colluding leader can delay the LPs' credit by at most one epoch, worth under $0.01.
 
-Three findings follow. First, ordinary flow is protected: the overcharge on benign-labelled swaps remained below 0.3 bp under every error considered, because oracle error is small relative to the fee for swaps that do not extract. Second, the tolerance ε of §4.2 is the protocol's instrument against oracle error, at a measurable price: a tolerance equal to the bias removes a bias exactly, a tolerance of about twice the noise removes most of a random error, and each basis point of tolerance gives up about 8% of the recapture. This yields the rule ε ≈ max(|bias|, 2σ) for a feed with bias and noise σ. Third, staleness is the binding error on a fast chain. A feed one second old halves the recapture on Arbitrum, where swaps are priced 0.75 s after their block, while it costs three points of recapture on mainnet. A rollup deployment therefore requires a sub-second pull oracle rather than a periodic feed.
+**Small pools** (protocol take needed to fund keepers, hourly, at a recapture rate of 3.6 bp of volume): $19.6 B pool 0.10–0.16%; $0.24–0.67 B pools 0.5–1.2%; $13 M pool 11–16%, falling to 1.5–2.5% at daily epochs. Funded jointly, all seven pools need 0.11–0.19%.
 
-### 5.8 Cost of settlement
+## Appendix E. Parameters
 
-The capacity argument of §4.6 requires that settling a swap cost less than executing it. We measure each component directly. The median single-swap transaction on the study pools uses 188,705 gas on mainnet and 136,171 on Arbitrum (400 receipts each). Verifying a real Chainlink Data Streams report, obtained by tracing historical verification calls, costs 55,879 gas on mainnet and 62,544 on Arbitrum, or 37,544 for each further report in the same transaction; no fee is transferred on-chain. Under the assumption that the oracle signs each batch of prices once, verification reduces to a single signature check per batch.
-
-The remaining components were measured in Foundry on a Uniswap v4 pool manager, executing each call as a separate transaction. The hook — the parking lock, the collateral check and the account's record — adds 17,112 gas to a swap (140,801 against 123,689 without a hook). Self-settlement costs 46,000 gas plus 6,000 per swap settled; a keeper's epoch costs 26,000 gas plus 14,300 per account settled, or 4,400 for an entry skipped because the account had already settled itself. Verifying a succinct (Groth16) proof costs 227,226 gas, and sponsoring the keeper's transaction through an ERC-4337 paymaster adds 87,000–98,000 gas per settlement transaction.
-
-Table 5 prices these components block by block at the window's base fees, including the hook on every swap.
-
-| Settlement design | Mainnet, six months (× execution) | Arbitrum (× execution) |
-|---|---|---|
-| Keeper settles every block, one report per block | $96.7 k (0.72) | $21.2 k (0.72) |
-| Keeper settles hourly, prices signed once per batch | $24.9 k (0.18) | $5.7 k (0.19) |
-| Keeper settles hourly with a succinct proof | $20.5 k (0.14) | $4.3 k (0.15) |
-| Every account settles itself hourly | $38.7 k (0.28) | $6.8 k (0.23) |
-| *Execution of the swaps themselves* | $148 k | $30 k |
-
-*Table 5. Cost of settlement relative to the execution of the settled swaps.*
-
-Settlement stays within its bound in every design, and by a factor of about five when prices are signed in batches and settled hourly. A succinct proof reduces the cost by a fifth at most. Once prices arrive in a single signed batch, the costs that remain — the hook on every swap and one storage write per settled account — are incurred whether or not settlement is proven, so the viability of the mechanism does not depend on proofs.
-
-### 5.9 Settlement economics and keeper incentives
-
-**Self-settlement.** We let each account in the sample choose between waiting for the keeper and settling itself every hour, every minute or every block, minimising the sum of its own settlement gas and the cost of the stake it must hold at its peak. With the cost of holding stake between 5% and 50% a year, 2–8% of accounts chose to settle themselves. These accounts carried 7–51% of mainnet volume, and self-settlement reduced the stake they required by 15–24%. In total, $1.11 M of stake sufficed to back $19.6 B of six-month volume on mainnet.
-
-**Funding the keepers.** An hourly keeper epoch cost between $0.12 and $0.68 at the median ($24–38 at the 99th percentile on mainnet). Paid from the protocol take, keepers would require 0.1–0.24% of the value recaptured at observed gas prices and 0.8–2.2% under a sustained tenfold rise in gas prices, well within a take of 2.5%. Under the design of §4.6, they are instead paid from a gas tank to which every swap contributes a fixed number of gas units at the prevailing base fee. Table 6 reports the smallest contribution that keeps a tank shared by seven mainnet pools solvent throughout the window, with the tank seeded with one day of payments.
-
-| Gas withheld per swap (share of the swap's own gas) | Hourly epochs | Daily epochs | Daily, keeper chooses the block |
-|---|---|---|---|
-| Mainnet, shared tank, proven settlement | 11.7 k (6.2%) | 2.3 k (1.2%) | 1.4 k (0.7%) |
-| Mainnet, shared tank, on-chain settlement | 18.9 k (10%) | 4.9 k (2.6%) | 3.1 k (1.6%) |
-| Arbitrum, proven settlement | 4.8 k (3.5%) | 0.64 k (0.5%) | 0.64 k (0.5%) |
-
-*Table 6. Smallest per-swap gas contribution that keeps the gas tank solvent.*
-
-The shared tank removes the disadvantage of small pools without any exchange rate: the smallest pool in our census, with $13 M of six-month volume, would need 80,000 gas per swap on its own at hourly epochs, but pays the common rate in the shared tank. Daily epochs reduce the contribution about fivefold, because each account is written once a day rather than once an hour; accounts that need their stake released sooner settle themselves. The timing of settlement matters as much as its frequency: requiring settlement at the highest base fee of the following day would raise the required contribution about fivefold, whereas a deadline long enough for keepers to choose an inexpensive block lowers it by 35–60%.
-
-**Choice of keeper.** We simulated five keepers with differing costs and availability over every hourly epoch of the window. When the charges are computed on-chain, an open race with an escalating bounty settled each epoch within 1.3 minutes and wasted no effort, and appointing a single leader only added cost. When settlement is proven, keepers of similar cost that race one another duplicate the proving; on Arbitrum the duplicated effort exceeded the gas spent on settlement itself. A designated leader removed this waste at a higher payment per epoch, with missed epochs falling back to the open race after a deadline. Because a leader cannot alter any charge, collusion between a leader and an account can only delay the credit to liquidity providers, which was worth less than one cent per epoch.
-
-### 5.10 Limitations
-
-The evidence has several limitations. The external price is a Binance touch-level proxy rather than the signed liquidity-weighted quote the protocol would use, so the effect of oracle error in §5.7 is modelled rather than measured. The simulation of §5.5 approximates the pool's depth as linear within each day, replays user flow at its observed size and direction — whereas a pool quoting closer to the market would likely attract additional flow — assumes a population of arbitrage costs, and models the competition for transaction order as a second-price auction; the sender-diversity signal presumes a first-come-first-served race. The labels used in §5.3 are conservative heuristics. The gas measurements of §5.8 were taken on a locally deployed Uniswap v4 pool manager with mock tokens, and swaps that cross a liquidity boundary are not covered by the closed-form charge. The keeper simulations assume keeper costs and availability, and the seven-pool census applies the study pool's recapture rate to the other pairs. Finally, the sufficiency of REP as collateral when it trades below its mint rate has not yet been evaluated against a plain bond.
+| Parameter | Role |
+|---|---|
+| θ* | LPs' target take-rate; fixed point of the mint |
+| `f_min`, `f_max` | fee band of the coverage curve |
+| ρ | capacity scale and base parking rate |
+| k | parking speed per unit of in-block price move |
+| τ | protocol take; funds the reserve |
+| mint scalar | internal mint rate; its inverse is the burn rate |
+| L, window width | decision latency (measured) and scoring window |
+| ε | tolerance; ε ≈ max(\|bias\|, 2σ) of the feed |
+| m₀, controller steps and thresholds | starting allowance and the controller of §4.3; *m* itself is discovered |
+| G, epoch length | gas withheld per swap; per-pool settlement period |
+| bounty slope, deadline | keeper payment and settlement deadline |
+| activation and exit delays | stake lifecycle |

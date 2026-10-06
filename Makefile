@@ -2,7 +2,7 @@ PY := uv run python
 
 .PHONY: all setup data onchain studies \
         download parse bars extract txs score gate labels \
-        study-a study-b study-d study-e study-g study-h study-j sim-inputs study-i supp1 test clean
+        study-a study-b study-d study-e study-g study-h study-j sim-inputs study-i supp1 figures test clean
 
 # Full §17.9 chain: benchmark data -> on-chain swaps -> prepare -> labels
 # -> Study E (measures L, writes canonical q for both pools) -> control
@@ -73,6 +73,9 @@ sim-inputs: gate
 
 study-i: sim-inputs
 	$(PY) -m pipeline.study_i
+
+figures:                 # paper figures from committed results
+	$(PY) -m pipeline.figures
 
 test:
 	$(PY) -m pytest -q
