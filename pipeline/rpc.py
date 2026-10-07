@@ -77,6 +77,8 @@ def _rate_limited(err: dict) -> float | None:
     """Return suggested wait seconds if this is an RPS-limit error."""
     if err.get("code") != -32005:
         return None
+    if "paused" in str(err.get("message", "")).lower():   # account suspended, not a rate limit: fail fast
+        raise RuntimeError(f"rpc endpoint paused: {err.get('message')}")
     hint = str(err.get("data", {}).get("try_again_in", "1s"))
     try:
         return float(hint.replace("ms", "e-3").replace("s", "")) + 0.25

@@ -1,0 +1,3097 @@
+{
+  "f_boot": {
+    "eth_usdc_005": {
+      "fee_bp": 5.0,
+      "lp_net_today_bp": -0.81,
+      "f_boot_bp_theta_0x": 5.81,
+      "f_boot_bp_theta_0.5x": 8.31
+    },
+    "usdc_weth_030": {
+      "fee_bp": 30.0,
+      "lp_net_today_bp": -3.04,
+      "f_boot_bp_theta_0x": 33.04,
+      "f_boot_bp_theta_0.5x": 48.04
+    },
+    "wbtc_weth_005": {
+      "fee_bp": 5.0,
+      "lp_net_today_bp": -1.02,
+      "f_boot_bp_theta_0x": 6.02,
+      "f_boot_bp_theta_0.5x": 8.52
+    },
+    "link_weth_030": {
+      "fee_bp": 30.0,
+      "lp_net_today_bp": -1.94,
+      "f_boot_bp_theta_0x": 31.94,
+      "f_boot_bp_theta_0.5x": 46.94
+    },
+    "uni_weth_030": {
+      "fee_bp": 30.0,
+      "lp_net_today_bp": -4.14,
+      "f_boot_bp_theta_0x": 34.14,
+      "f_boot_bp_theta_0.5x": 49.14
+    },
+    "pepe_weth_030": {
+      "fee_bp": 30.0,
+      "lp_net_today_bp": -0.05,
+      "f_boot_bp_theta_0x": 30.05,
+      "f_boot_bp_theta_0.5x": 45.05
+    },
+    "dai_usdc_001": {
+      "fee_bp": 1.0,
+      "lp_net_today_bp": 2.69,
+      "f_boot_bp_theta_0x": -1.69,
+      "f_boot_bp_theta_0.5x": -1.19
+    }
+  },
+  "runs": {
+    "theta=0x eta=0 fmax=1x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 0.96,
+            "last_month": 0.83,
+            "benign_last_month": 0.83,
+            "f_max": 1.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 2.52,
+            "cash_plus_rep_at_pstar": 2.54,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 90040,
+            "rep_at_pstar": 899
+          },
+          "charges_usd": 14447,
+          "covered_share": 0.064,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.503
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 11,
+          "fee_bp": {
+            "first_week": 5.0,
+            "last_month": 4.8,
+            "benign_last_month": 4.73,
+            "f_max": 5.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": -0.96,
+            "cash_plus_rep_at_pstar": -0.93,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": -1877080,
+            "rep_at_pstar": 46962
+          },
+          "charges_usd": 7140950,
+          "covered_share": 0.014,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.428
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 4,
+          "fee_bp": {
+            "first_week": 29.75,
+            "last_month": 29.42,
+            "benign_last_month": 27.41,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": -3.88,
+            "cash_plus_rep_at_pstar": -3.71,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": -159391,
+            "rep_at_pstar": 6693
+          },
+          "charges_usd": 260596,
+          "covered_share": 0.046,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.176
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 29.57,
+            "last_month": 25.01,
+            "benign_last_month": 23.57,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": -1.09,
+            "cash_plus_rep_at_pstar": -0.7,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": -1452,
+            "rep_at_pstar": 517
+          },
+          "charges_usd": 12760,
+          "covered_share": 0.046,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.643
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 29.63,
+            "last_month": 29.29,
+            "benign_last_month": 28.13,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": -5.1,
+            "cash_plus_rep_at_pstar": -4.96,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": -121741,
+            "rep_at_pstar": 3295
+          },
+          "charges_usd": 181946,
+          "covered_share": 0.024,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.261
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 11,
+          "fee_bp": {
+            "first_week": 30.0,
+            "last_month": 29.16,
+            "benign_last_month": 28.11,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": -3.62,
+            "cash_plus_rep_at_pstar": -3.55,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": -242007,
+            "rep_at_pstar": 4302
+          },
+          "charges_usd": 633855,
+          "covered_share": 0.018,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.076
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 3,
+          "fee_bp": {
+            "first_week": 4.95,
+            "last_month": 4.9,
+            "benign_last_month": 4.85,
+            "f_max": 5.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": -1.15,
+            "cash_plus_rep_at_pstar": -0.93,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": -489731,
+            "rep_at_pstar": 92810
+          },
+          "charges_usd": 4703268,
+          "covered_share": 0.014,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 4.218,
+        "end": 2.428
+      }
+    },
+    "theta=0x eta=0 fmax=1.5x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 1.36,
+            "last_month": 1.1,
+            "benign_last_month": 1.1,
+            "f_max": 1.5,
+            "f_min": 0.2
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 2.83,
+            "cash_plus_rep_at_pstar": 2.88,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 101115,
+            "rep_at_pstar": 2112
+          },
+          "charges_usd": 14363,
+          "covered_share": 0.096,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 1,
+          "fee_bp": {
+            "first_week": 7.13,
+            "last_month": 5.96,
+            "benign_last_month": 5.67,
+            "f_max": 7.5,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.974,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": 0.7,
+            "cash_plus_rep_at_pstar": 0.82,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": 1330615,
+            "rep_at_pstar": 225531
+          },
+          "charges_usd": 5951562,
+          "covered_share": 0.091,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.682
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 33.42,
+            "last_month": 39.5,
+            "benign_last_month": 31.66,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.52,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 3.48,
+            "cash_plus_rep_at_pstar": 5.81,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 74530,
+            "rep_at_pstar": 49802
+          },
+          "charges_usd": 149039,
+          "covered_share": 0.341,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.875
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 37.32,
+            "last_month": 29.6,
+            "benign_last_month": 26.2,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.837,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 6.93,
+            "cash_plus_rep_at_pstar": 8.92,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 7694,
+            "rep_at_pstar": 2213
+          },
+          "charges_usd": 9693,
+          "covered_share": 0.297,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.888
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 38.16,
+            "last_month": 36.94,
+            "benign_last_month": 31.4,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.545,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 1.57,
+            "cash_plus_rep_at_pstar": 3.12,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 20487,
+            "rep_at_pstar": 20086
+          },
+          "charges_usd": 110023,
+          "covered_share": 0.244,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.687
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 42.97,
+            "last_month": 36.1,
+            "benign_last_month": 33.44,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.607,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 6.94,
+            "cash_plus_rep_at_pstar": 7.4,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 281884,
+            "rep_at_pstar": 18980
+          },
+          "charges_usd": 412821,
+          "covered_share": 0.14,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.299
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 6.94,
+            "last_month": 6.43,
+            "benign_last_month": 6.19,
+            "f_max": 7.5,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.996,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": 0.69,
+            "cash_plus_rep_at_pstar": 1.4,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": 295670,
+            "rep_at_pstar": 298123
+          },
+          "charges_usd": 4320506,
+          "covered_share": 0.064,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.541
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 4.618,
+        "end": 3.682
+      }
+    },
+    "theta=0x eta=0 fmax=2x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 1.69,
+            "last_month": 1.4,
+            "benign_last_month": 1.4,
+            "f_max": 2.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 3.1,
+            "cash_plus_rep_at_pstar": 3.18,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 111031,
+            "rep_at_pstar": 2593
+          },
+          "charges_usd": 14313,
+          "covered_share": 0.12,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 8.28,
+            "last_month": 6.48,
+            "benign_last_month": 6.12,
+            "f_max": 10.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.89,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": 1.58,
+            "cash_plus_rep_at_pstar": 1.84,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": 2759891,
+            "rep_at_pstar": 445531
+          },
+          "charges_usd": 5590679,
+          "covered_share": 0.209,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 4.302
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 41.57,
+            "last_month": 47.87,
+            "benign_last_month": 37.05,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.459,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 7.44,
+            "cash_plus_rep_at_pstar": 11.65,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 140470,
+            "rep_at_pstar": 79442
+          },
+          "charges_usd": 157094,
+          "covered_share": 0.52,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.884
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 43.31,
+            "last_month": 34.75,
+            "benign_last_month": 30.47,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.733,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 13.29,
+            "cash_plus_rep_at_pstar": 16.15,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 12949,
+            "rep_at_pstar": 2785
+          },
+          "charges_usd": 9276,
+          "covered_share": 0.463,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.296
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 45.87,
+            "last_month": 42.74,
+            "benign_last_month": 35.79,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.488,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 5.3,
+            "cash_plus_rep_at_pstar": 8.16,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 61662,
+            "rep_at_pstar": 33386
+          },
+          "charges_usd": 110621,
+          "covered_share": 0.431,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.942
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 50.69,
+            "last_month": 39.21,
+            "benign_last_month": 36.1,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.561,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 10.96,
+            "cash_plus_rep_at_pstar": 11.79,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 411164,
+            "rep_at_pstar": 31033
+          },
+          "charges_usd": 420348,
+          "covered_share": 0.245,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.621
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 8.22,
+            "last_month": 7.15,
+            "benign_last_month": 6.84,
+            "f_max": 10.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.978,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": 1.98,
+            "cash_plus_rep_at_pstar": 3.1,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": 825836,
+            "rep_at_pstar": 471500
+          },
+          "charges_usd": 4071214,
+          "covered_share": 0.134,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.991
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 4.996,
+        "end": 4.302
+      }
+    },
+    "theta=0x eta=0 fmax=3x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 2.37,
+            "last_month": 2.0,
+            "benign_last_month": 2.0,
+            "f_max": 3.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 3.65,
+            "cash_plus_rep_at_pstar": 3.74,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 130464,
+            "rep_at_pstar": 3231
+          },
+          "charges_usd": 14258,
+          "covered_share": 0.152,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 9.06,
+            "last_month": 7.17,
+            "benign_last_month": 6.83,
+            "f_max": 15.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.854,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": 2.47,
+            "cash_plus_rep_at_pstar": 2.88,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": 4130660,
+            "rep_at_pstar": 690450
+          },
+          "charges_usd": 5497343,
+          "covered_share": 0.35,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 4.515
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 51.88,
+            "last_month": 60.81,
+            "benign_last_month": 45.35,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.46,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 11.89,
+            "cash_plus_rep_at_pstar": 17.96,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 224798,
+            "rep_at_pstar": 114682
+          },
+          "charges_usd": 185541,
+          "covered_share": 0.684,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.904
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 48.95,
+            "last_month": 42.89,
+            "benign_last_month": 37.57,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.697,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 21.22,
+            "cash_plus_rep_at_pstar": 25.29,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 19654,
+            "rep_at_pstar": 3765
+          },
+          "charges_usd": 10324,
+          "covered_share": 0.616,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.564
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 58.26,
+            "last_month": 52.32,
+            "benign_last_month": 43.5,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.481,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 9.56,
+            "cash_plus_rep_at_pstar": 13.82,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 109652,
+            "rep_at_pstar": 48875
+          },
+          "charges_usd": 124153,
+          "covered_share": 0.625,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.107
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 53.28,
+            "last_month": 42.64,
+            "benign_last_month": 39.67,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.581,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 13.49,
+            "cash_plus_rep_at_pstar": 14.84,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 524508,
+            "rep_at_pstar": 52475
+          },
+          "charges_usd": 465577,
+          "covered_share": 0.374,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.625
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 9.67,
+            "last_month": 7.98,
+            "benign_last_month": 7.7,
+            "f_max": 15.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.958,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": 3.75,
+            "cash_plus_rep_at_pstar": 5.45,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": 1532508,
+            "rep_at_pstar": 696611
+          },
+          "charges_usd": 3754551,
+          "covered_share": 0.258,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.379
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 5.093,
+        "end": 4.515
+      }
+    },
+    "theta=0x eta=1 fmax=1x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 0.96,
+            "last_month": 0.83,
+            "benign_last_month": 0.83,
+            "f_max": 1.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 2.52,
+            "cash_plus_rep_at_pstar": 2.54,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 90040,
+            "rep_at_pstar": 899
+          },
+          "charges_usd": 14447,
+          "covered_share": 0.064,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.503
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 11,
+          "fee_bp": {
+            "first_week": 5.0,
+            "last_month": 4.8,
+            "benign_last_month": 4.73,
+            "f_max": 5.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": -0.96,
+            "cash_plus_rep_at_pstar": -0.93,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": -1877080,
+            "rep_at_pstar": 46962
+          },
+          "charges_usd": 7140950,
+          "covered_share": 0.014,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.428
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 4,
+          "fee_bp": {
+            "first_week": 29.75,
+            "last_month": 29.42,
+            "benign_last_month": 27.41,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": -3.88,
+            "cash_plus_rep_at_pstar": -3.71,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": -159391,
+            "rep_at_pstar": 6693
+          },
+          "charges_usd": 260596,
+          "covered_share": 0.046,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.176
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 29.57,
+            "last_month": 25.01,
+            "benign_last_month": 23.57,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": -1.09,
+            "cash_plus_rep_at_pstar": -0.7,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": -1452,
+            "rep_at_pstar": 517
+          },
+          "charges_usd": 12760,
+          "covered_share": 0.046,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.643
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 29.63,
+            "last_month": 29.29,
+            "benign_last_month": 28.13,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": -5.1,
+            "cash_plus_rep_at_pstar": -4.96,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": -121741,
+            "rep_at_pstar": 3295
+          },
+          "charges_usd": 181946,
+          "covered_share": 0.024,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.261
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 11,
+          "fee_bp": {
+            "first_week": 30.0,
+            "last_month": 29.16,
+            "benign_last_month": 28.11,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": -3.62,
+            "cash_plus_rep_at_pstar": -3.55,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": -242007,
+            "rep_at_pstar": 4302
+          },
+          "charges_usd": 633855,
+          "covered_share": 0.018,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.076
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 3,
+          "fee_bp": {
+            "first_week": 4.95,
+            "last_month": 4.9,
+            "benign_last_month": 4.85,
+            "f_max": 5.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": -1.15,
+            "cash_plus_rep_at_pstar": -0.93,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": -489731,
+            "rep_at_pstar": 92810
+          },
+          "charges_usd": 4703268,
+          "covered_share": 0.014,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 4.218,
+        "end": 2.428
+      }
+    },
+    "theta=0x eta=1 fmax=1.5x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 1.42,
+            "last_month": 1.13,
+            "benign_last_month": 1.13,
+            "f_max": 1.5,
+            "f_min": 0.2
+          },
+          "volume_kept": 0.782,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 1.97,
+            "cash_plus_rep_at_pstar": 2.01,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 55174,
+            "rep_at_pstar": 1007
+          },
+          "charges_usd": 14293,
+          "covered_share": 0.055,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.33
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 6,
+          "fee_bp": {
+            "first_week": 7.5,
+            "last_month": 6.25,
+            "benign_last_month": 5.98,
+            "f_max": 7.5,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.809,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": -0.39,
+            "cash_plus_rep_at_pstar": -0.32,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": -617385,
+            "rep_at_pstar": 115991
+          },
+          "charges_usd": 5827831,
+          "covered_share": 0.046,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.98
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 34.21,
+            "last_month": 40.0,
+            "benign_last_month": 32.59,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.446,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 2.78,
+            "cash_plus_rep_at_pstar": 4.4,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 50938,
+            "rep_at_pstar": 29720
+          },
+          "charges_usd": 133376,
+          "covered_share": 0.311,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.813
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 39.34,
+            "last_month": 30.54,
+            "benign_last_month": 27.1,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.703,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 3.93,
+            "cash_plus_rep_at_pstar": 5.48,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 3673,
+            "rep_at_pstar": 1447
+          },
+          "charges_usd": 8914,
+          "covered_share": 0.256,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.347
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 39.3,
+            "last_month": 37.94,
+            "benign_last_month": 32.55,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.463,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 0.39,
+            "cash_plus_rep_at_pstar": 1.42,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 4266,
+            "rep_at_pstar": 11373
+          },
+          "charges_usd": 99563,
+          "covered_share": 0.212,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.224
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 1,
+          "fee_bp": {
+            "first_week": 42.79,
+            "last_month": 37.31,
+            "benign_last_month": 34.61,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.479,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 2.52,
+            "cash_plus_rep_at_pstar": 2.85,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 80866,
+            "rep_at_pstar": 10473
+          },
+          "charges_usd": 381508,
+          "covered_share": 0.097,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 4.185
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 28,
+          "fee_bp": {
+            "first_week": 7.5,
+            "last_month": 6.85,
+            "benign_last_month": 6.67,
+            "f_max": 7.5,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.832,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": -3.16,
+            "cash_plus_rep_at_pstar": -2.98,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": -1122835,
+            "rep_at_pstar": 65444
+          },
+          "charges_usd": 4199264,
+          "covered_share": 0.006,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 5.209,
+        "end": 4.185
+      }
+    },
+    "theta=0x eta=1 fmax=2x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 1.85,
+            "last_month": 1.52,
+            "benign_last_month": 1.52,
+            "f_max": 2.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 0.647,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 1.41,
+            "cash_plus_rep_at_pstar": 1.46,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 32523,
+            "rep_at_pstar": 1312
+          },
+          "charges_usd": 14167,
+          "covered_share": 0.055,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 1,
+          "fee_bp": {
+            "first_week": 9.17,
+            "last_month": 7.14,
+            "benign_last_month": 6.78,
+            "f_max": 10.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.644,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": -0.13,
+            "cash_plus_rep_at_pstar": 0.06,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": -165948,
+            "rep_at_pstar": 241578
+          },
+          "charges_usd": 5248883,
+          "covered_share": 0.109,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.678
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 42.82,
+            "last_month": 49.41,
+            "benign_last_month": 39.36,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.35,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 5.71,
+            "cash_plus_rep_at_pstar": 9.1,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 82185,
+            "rep_at_pstar": 48747
+          },
+          "charges_usd": 127337,
+          "covered_share": 0.467,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.149
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 47.02,
+            "last_month": 37.11,
+            "benign_last_month": 32.67,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.525,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 7.95,
+            "cash_plus_rep_at_pstar": 11.23,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 5541,
+            "rep_at_pstar": 2281
+          },
+          "charges_usd": 7724,
+          "covered_share": 0.407,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.161
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 48.17,
+            "last_month": 45.89,
+            "benign_last_month": 38.6,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.359,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 3.5,
+            "cash_plus_rep_at_pstar": 6.12,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 30041,
+            "rep_at_pstar": 22420
+          },
+          "charges_usd": 88531,
+          "covered_share": 0.368,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.861
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 54.4,
+            "last_month": 41.97,
+            "benign_last_month": 38.7,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.368,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 3.86,
+            "cash_plus_rep_at_pstar": 4.66,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 95015,
+            "rep_at_pstar": 19574
+          },
+          "charges_usd": 358245,
+          "covered_share": 0.168,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.61
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 28,
+          "fee_bp": {
+            "first_week": 10.0,
+            "last_month": 8.05,
+            "benign_last_month": 7.8,
+            "f_max": 10.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.732,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": -4.04,
+            "cash_plus_rep_at_pstar": -3.66,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": -1261203,
+            "rep_at_pstar": 119019
+          },
+          "charges_usd": 3761279,
+          "covered_share": 0.012,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.071
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 5.169,
+        "end": 3.678
+      }
+    },
+    "theta=0x eta=1 fmax=3x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 2.73,
+            "last_month": 2.26,
+            "benign_last_month": 2.26,
+            "f_max": 3.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 0.498,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 0.61,
+            "cash_plus_rep_at_pstar": 0.68,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 10888,
+            "rep_at_pstar": 1304
+          },
+          "charges_usd": 13919,
+          "covered_share": 0.057,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 11.64,
+            "last_month": 8.57,
+            "benign_last_month": 8.17,
+            "f_max": 15.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.529,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": -0.0,
+            "cash_plus_rep_at_pstar": 0.36,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": -1965,
+            "rep_at_pstar": 378538
+          },
+          "charges_usd": 4749966,
+          "covered_share": 0.202,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.89
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 59.82,
+            "last_month": 66.07,
+            "benign_last_month": 52.02,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.306,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 8.49,
+            "cash_plus_rep_at_pstar": 12.99,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 106779,
+            "rep_at_pstar": 56499
+          },
+          "charges_usd": 124821,
+          "covered_share": 0.607,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.205
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 60.86,
+            "last_month": 48.61,
+            "benign_last_month": 42.68,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.415,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 11.86,
+            "cash_plus_rep_at_pstar": 16.45,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 6538,
+            "rep_at_pstar": 2531
+          },
+          "charges_usd": 7365,
+          "covered_share": 0.507,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.434
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 66.59,
+            "last_month": 60.16,
+            "benign_last_month": 51.26,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.3,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 6.84,
+            "cash_plus_rep_at_pstar": 10.8,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 48928,
+            "rep_at_pstar": 28331
+          },
+          "charges_usd": 81920,
+          "covered_share": 0.539,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.988
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 66.86,
+            "last_month": 48.81,
+            "benign_last_month": 45.12,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.337,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 2.79,
+            "cash_plus_rep_at_pstar": 4.11,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 63017,
+            "rep_at_pstar": 29752
+          },
+          "charges_usd": 357708,
+          "covered_share": 0.264,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.629
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 26,
+          "fee_bp": {
+            "first_week": 15.0,
+            "last_month": 9.78,
+            "benign_last_month": 9.5,
+            "f_max": 15.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.627,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": -3.94,
+            "cash_plus_rep_at_pstar": -3.1,
+            "target": 0.0
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": -1054964,
+            "rep_at_pstar": 225910
+          },
+          "charges_usd": 3007195,
+          "covered_share": 0.034,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.44
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 5.117,
+        "end": 3.89
+      }
+    },
+    "theta=0.5x eta=0 fmax=1x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 0.98,
+            "last_month": 0.92,
+            "benign_last_month": 0.92,
+            "f_max": 1.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 2.57,
+            "cash_plus_rep_at_pstar": 2.58,
+            "target": 0.5
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 91983,
+            "rep_at_pstar": 162
+          },
+          "charges_usd": 14426,
+          "covered_share": 0.057,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 8.158
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 48,
+          "fee_bp": {
+            "first_week": 5.0,
+            "last_month": 4.99,
+            "benign_last_month": 4.99,
+            "f_max": 5.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": -0.82,
+            "cash_plus_rep_at_pstar": -0.82,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": -1605035,
+            "rep_at_pstar": 4722
+          },
+          "charges_usd": 7109853,
+          "covered_share": 0.001,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 11,
+          "fee_bp": {
+            "first_week": 30.0,
+            "last_month": 29.94,
+            "benign_last_month": 29.74,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": -2.94,
+            "cash_plus_rep_at_pstar": -2.91,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": -120713,
+            "rep_at_pstar": 966
+          },
+          "charges_usd": 246771,
+          "covered_share": 0.01,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.987
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 48,
+          "fee_bp": {
+            "first_week": 30.0,
+            "last_month": 28.17,
+            "benign_last_month": 27.81,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": -0.25,
+            "cash_plus_rep_at_pstar": -0.21,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": -328,
+            "rep_at_pstar": 43
+          },
+          "charges_usd": 12378,
+          "covered_share": 0.012,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.948
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 37,
+          "fee_bp": {
+            "first_week": 30.0,
+            "last_month": 30.0,
+            "benign_last_month": 30.0,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": -4.33,
+            "cash_plus_rep_at_pstar": -4.32,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": -103406,
+            "rep_at_pstar": 393
+          },
+          "charges_usd": 175997,
+          "covered_share": 0.004,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 0.0
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 11,
+          "fee_bp": {
+            "first_week": 30.0,
+            "last_month": 29.97,
+            "benign_last_month": 29.92,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": -3.1,
+            "cash_plus_rep_at_pstar": -3.09,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": -207186,
+            "rep_at_pstar": 268
+          },
+          "charges_usd": 619427,
+          "covered_share": 0.002,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.241
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 11,
+          "fee_bp": {
+            "first_week": 5.0,
+            "last_month": 4.99,
+            "benign_last_month": 4.98,
+            "f_max": 5.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": -1.03,
+            "cash_plus_rep_at_pstar": -1.02,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": -441415,
+            "rep_at_pstar": 5652
+          },
+          "charges_usd": 4683145,
+          "covered_share": 0.001,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.837
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 5.787,
+        "end": 8.158
+      }
+    },
+    "theta=0.5x eta=0 fmax=1.5x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 1.42,
+            "last_month": 1.23,
+            "benign_last_month": 1.23,
+            "f_max": 1.5,
+            "f_min": 0.2
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 2.92,
+            "cash_plus_rep_at_pstar": 2.95,
+            "target": 0.5
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 104637,
+            "rep_at_pstar": 809
+          },
+          "charges_usd": 14300,
+          "covered_share": 0.062,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.587
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 11,
+          "fee_bp": {
+            "first_week": 7.5,
+            "last_month": 7.17,
+            "benign_last_month": 7.05,
+            "f_max": 7.5,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.952,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": 1.5,
+            "cash_plus_rep_at_pstar": 1.53,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": 2802112,
+            "rep_at_pstar": 42358
+          },
+          "charges_usd": 5736837,
+          "covered_share": 0.016,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.501
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 41.53,
+            "last_month": 43.48,
+            "benign_last_month": 39.35,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.413,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 11.42,
+            "cash_plus_rep_at_pstar": 11.89,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 193934,
+            "rep_at_pstar": 8040
+          },
+          "charges_usd": 84435,
+          "covered_share": 0.151,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.302
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 43.57,
+            "last_month": 36.6,
+            "benign_last_month": 34.39,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.78,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 14.17,
+            "cash_plus_rep_at_pstar": 14.7,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 14678,
+            "rep_at_pstar": 548
+          },
+          "charges_usd": 6381,
+          "covered_share": 0.11,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.742
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 42.57,
+            "last_month": 42.53,
+            "benign_last_month": 39.55,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.446,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 9.19,
+            "cash_plus_rep_at_pstar": 9.49,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 97720,
+            "rep_at_pstar": 3167
+          },
+          "charges_usd": 73481,
+          "covered_share": 0.071,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.717
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 3,
+          "fee_bp": {
+            "first_week": 44.88,
+            "last_month": 42.88,
+            "benign_last_month": 40.56,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.527,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 13.58,
+            "cash_plus_rep_at_pstar": 13.69,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 479418,
+            "rep_at_pstar": 3871
+          },
+          "charges_usd": 336932,
+          "covered_share": 0.037,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.846
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 3,
+          "fee_bp": {
+            "first_week": 7.42,
+            "last_month": 7.33,
+            "benign_last_month": 7.26,
+            "f_max": 7.5,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.992,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": 1.29,
+            "cash_plus_rep_at_pstar": 1.5,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": 545180,
+            "rep_at_pstar": 89318
+          },
+          "charges_usd": 4216240,
+          "covered_share": 0.015,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 5.517,
+        "end": 2.846
+      }
+    },
+    "theta=0.5x eta=0 fmax=2x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 1.82,
+            "last_month": 1.49,
+            "benign_last_month": 1.49,
+            "f_max": 2.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 3.22,
+            "cash_plus_rep_at_pstar": 3.27,
+            "target": 0.5
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 115170,
+            "rep_at_pstar": 1954
+          },
+          "charges_usd": 14240,
+          "covered_share": 0.09,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 1,
+          "fee_bp": {
+            "first_week": 9.37,
+            "last_month": 7.87,
+            "benign_last_month": 7.5,
+            "f_max": 10.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.827,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": 3.07,
+            "cash_plus_rep_at_pstar": 3.19,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": 4971430,
+            "rep_at_pstar": 194151
+          },
+          "charges_usd": 5143613,
+          "covered_share": 0.087,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.361
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 43.77,
+            "last_month": 52.49,
+            "benign_last_month": 43.35,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.39,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 15.7,
+            "cash_plus_rep_at_pstar": 18.4,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 251769,
+            "rep_at_pstar": 43267
+          },
+          "charges_usd": 95566,
+          "covered_share": 0.401,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.535
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 47.16,
+            "last_month": 39.79,
+            "benign_last_month": 35.4,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.684,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 20.63,
+            "cash_plus_rep_at_pstar": 22.97,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 18728,
+            "rep_at_pstar": 2126
+          },
+          "charges_usd": 6845,
+          "covered_share": 0.366,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.725
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 49.5,
+            "last_month": 48.87,
+            "benign_last_month": 42.47,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.403,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 14.78,
+            "cash_plus_rep_at_pstar": 16.61,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 142192,
+            "rep_at_pstar": 17514
+          },
+          "charges_usd": 69085,
+          "covered_share": 0.281,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.425
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 56.16,
+            "last_month": 47.27,
+            "benign_last_month": 43.86,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.473,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 21.82,
+            "cash_plus_rep_at_pstar": 22.3,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 691266,
+            "rep_at_pstar": 15236
+          },
+          "charges_usd": 327052,
+          "covered_share": 0.135,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.092
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 9.17,
+            "last_month": 8.45,
+            "benign_last_month": 8.16,
+            "f_max": 10.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.966,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": 2.97,
+            "cash_plus_rep_at_pstar": 3.67,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": 1226611,
+            "rep_at_pstar": 287044
+          },
+          "charges_usd": 3896450,
+          "covered_share": 0.065,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.437
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 4.342,
+        "end": 3.361
+      }
+    },
+    "theta=0.5x eta=0 fmax=3x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 2.47,
+            "last_month": 2.1,
+            "benign_last_month": 2.1,
+            "f_max": 3.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 3.76,
+            "cash_plus_rep_at_pstar": 3.84,
+            "target": 0.5
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 134662,
+            "rep_at_pstar": 2821
+          },
+          "charges_usd": 14162,
+          "covered_share": 0.134,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 10.56,
+            "last_month": 8.5,
+            "benign_last_month": 8.1,
+            "f_max": 15.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.798,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": 4.07,
+            "cash_plus_rep_at_pstar": 4.39,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": 6368645,
+            "rep_at_pstar": 494014
+          },
+          "charges_usd": 4937721,
+          "covered_share": 0.251,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.949
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 55.76,
+            "last_month": 67.84,
+            "benign_last_month": 52.9,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.409,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 20.36,
+            "cash_plus_rep_at_pstar": 25.68,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 342433,
+            "rep_at_pstar": 89430
+          },
+          "charges_usd": 128888,
+          "covered_share": 0.642,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.557
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 55.72,
+            "last_month": 49.0,
+            "benign_last_month": 43.06,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.659,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 28.99,
+            "cash_plus_rep_at_pstar": 32.54,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 25392,
+            "rep_at_pstar": 3112
+          },
+          "charges_usd": 8158,
+          "covered_share": 0.547,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.238
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 63.89,
+            "last_month": 59.04,
+            "benign_last_month": 50.7,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.419,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 19.3,
+            "cash_plus_rep_at_pstar": 23.15,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 193078,
+            "rep_at_pstar": 38502
+          },
+          "charges_usd": 86667,
+          "covered_share": 0.561,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.675
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 62.44,
+            "last_month": 51.01,
+            "benign_last_month": 47.4,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.509,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 24.0,
+            "cash_plus_rep_at_pstar": 25.02,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 816912,
+            "rep_at_pstar": 34833
+          },
+          "charges_usd": 368362,
+          "covered_share": 0.288,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.25
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 10.92,
+            "last_month": 9.26,
+            "benign_last_month": 8.94,
+            "f_max": 15.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.946,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": 5.0,
+            "cash_plus_rep_at_pstar": 6.45,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": 2020334,
+            "rep_at_pstar": 583443
+          },
+          "charges_usd": 3535822,
+          "covered_share": 0.196,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.054
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 4.573,
+        "end": 3.949
+      }
+    },
+    "theta=0.5x eta=1 fmax=1x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 0.98,
+            "last_month": 0.92,
+            "benign_last_month": 0.92,
+            "f_max": 1.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 2.57,
+            "cash_plus_rep_at_pstar": 2.58,
+            "target": 0.5
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 91983,
+            "rep_at_pstar": 162
+          },
+          "charges_usd": 14426,
+          "covered_share": 0.057,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 8.158
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 48,
+          "fee_bp": {
+            "first_week": 5.0,
+            "last_month": 4.99,
+            "benign_last_month": 4.99,
+            "f_max": 5.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": -0.82,
+            "cash_plus_rep_at_pstar": -0.82,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": -1605035,
+            "rep_at_pstar": 4722
+          },
+          "charges_usd": 7109853,
+          "covered_share": 0.001,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 11,
+          "fee_bp": {
+            "first_week": 30.0,
+            "last_month": 29.94,
+            "benign_last_month": 29.74,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": -2.94,
+            "cash_plus_rep_at_pstar": -2.91,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": -120713,
+            "rep_at_pstar": 966
+          },
+          "charges_usd": 246771,
+          "covered_share": 0.01,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.987
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 48,
+          "fee_bp": {
+            "first_week": 30.0,
+            "last_month": 28.17,
+            "benign_last_month": 27.81,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": -0.25,
+            "cash_plus_rep_at_pstar": -0.21,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": -328,
+            "rep_at_pstar": 43
+          },
+          "charges_usd": 12378,
+          "covered_share": 0.012,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.948
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 37,
+          "fee_bp": {
+            "first_week": 30.0,
+            "last_month": 30.0,
+            "benign_last_month": 30.0,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": -4.33,
+            "cash_plus_rep_at_pstar": -4.32,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": -103406,
+            "rep_at_pstar": 393
+          },
+          "charges_usd": 175997,
+          "covered_share": 0.004,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 0.0
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 11,
+          "fee_bp": {
+            "first_week": 30.0,
+            "last_month": 29.97,
+            "benign_last_month": 29.92,
+            "f_max": 30.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": -3.1,
+            "cash_plus_rep_at_pstar": -3.09,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": -207186,
+            "rep_at_pstar": 268
+          },
+          "charges_usd": 619427,
+          "covered_share": 0.002,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.241
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 11,
+          "fee_bp": {
+            "first_week": 5.0,
+            "last_month": 4.99,
+            "benign_last_month": 4.98,
+            "f_max": 5.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 1.0,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": -1.03,
+            "cash_plus_rep_at_pstar": -1.02,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": -441415,
+            "rep_at_pstar": 5652
+          },
+          "charges_usd": 4683145,
+          "covered_share": 0.001,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.837
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 5.787,
+        "end": 8.158
+      }
+    },
+    "theta=0.5x eta=1 fmax=1.5x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 1.44,
+            "last_month": 1.29,
+            "benign_last_month": 1.29,
+            "f_max": 1.5,
+            "f_min": 0.2
+          },
+          "volume_kept": 0.753,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 1.95,
+            "cash_plus_rep_at_pstar": 1.95,
+            "target": 0.5
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 52475,
+            "rep_at_pstar": 146
+          },
+          "charges_usd": 14245,
+          "covered_share": 0.027,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 4.498
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 38,
+          "fee_bp": {
+            "first_week": 7.5,
+            "last_month": 7.33,
+            "benign_last_month": 7.27,
+            "f_max": 7.5,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.755,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": -0.15,
+            "cash_plus_rep_at_pstar": -0.15,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": -223428,
+            "rep_at_pstar": 5800
+          },
+          "charges_usd": 5703610,
+          "covered_share": 0.002,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.851
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 41.46,
+            "last_month": 43.64,
+            "benign_last_month": 39.85,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.334,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 10.13,
+            "cash_plus_rep_at_pstar": 10.24,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 139026,
+            "rep_at_pstar": 1635
+          },
+          "charges_usd": 79136,
+          "covered_share": 0.105,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 7.739
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 44.53,
+            "last_month": 38.22,
+            "benign_last_month": 36.57,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.615,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 9.99,
+            "cash_plus_rep_at_pstar": 10.15,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 8164,
+            "rep_at_pstar": 137
+          },
+          "charges_usd": 6017,
+          "covered_share": 0.064,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.652
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 43.05,
+            "last_month": 42.88,
+            "benign_last_month": 40.19,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.359,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 6.53,
+            "cash_plus_rep_at_pstar": 6.62,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 55912,
+            "rep_at_pstar": 731
+          },
+          "charges_usd": 70317,
+          "covered_share": 0.05,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 5.204
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 6,
+          "fee_bp": {
+            "first_week": 45.0,
+            "last_month": 43.37,
+            "benign_last_month": 41.34,
+            "f_max": 45.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.397,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 7.34,
+            "cash_plus_rep_at_pstar": 7.37,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 194964,
+            "rep_at_pstar": 796
+          },
+          "charges_usd": 325304,
+          "covered_share": 0.013,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 4.879
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 125,
+          "fee_bp": {
+            "first_week": 7.5,
+            "last_month": 7.44,
+            "benign_last_month": 7.41,
+            "f_max": 7.5,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.822,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": -3.15,
+            "cash_plus_rep_at_pstar": -3.15,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": -1106192,
+            "rep_at_pstar": 739
+          },
+          "charges_usd": 4182563,
+          "covered_share": 0.0,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 4.686,
+        "end": 7.739
+      }
+    },
+    "theta=0.5x eta=1 fmax=2x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 1.92,
+            "last_month": 1.61,
+            "benign_last_month": 1.61,
+            "f_max": 2.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 0.616,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 1.45,
+            "cash_plus_rep_at_pstar": 1.46,
+            "target": 0.5
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 31913,
+            "rep_at_pstar": 366
+          },
+          "charges_usd": 14112,
+          "covered_share": 0.034,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 2.192
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 6,
+          "fee_bp": {
+            "first_week": 10.0,
+            "last_month": 8.54,
+            "benign_last_month": 8.25,
+            "f_max": 10.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.542,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": 0.59,
+            "cash_plus_rep_at_pstar": 0.64,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": 627756,
+            "rep_at_pstar": 49063
+          },
+          "charges_usd": 4981896,
+          "covered_share": 0.026,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 4.688
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 45.54,
+            "last_month": 53.55,
+            "benign_last_month": 44.94,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.28,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 13.27,
+            "cash_plus_rep_at_pstar": 14.29,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 153064,
+            "rep_at_pstar": 11658
+          },
+          "charges_usd": 79758,
+          "covered_share": 0.318,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.974
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 51.65,
+            "last_month": 42.92,
+            "benign_last_month": 39.05,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.455,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 14.65,
+            "cash_plus_rep_at_pstar": 15.84,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 8850,
+            "rep_at_pstar": 721
+          },
+          "charges_usd": 5518,
+          "covered_share": 0.267,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.288
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 51.81,
+            "last_month": 50.84,
+            "benign_last_month": 44.58,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.278,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 11.71,
+            "cash_plus_rep_at_pstar": 12.39,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 77584,
+            "rep_at_pstar": 4494
+          },
+          "charges_usd": 57395,
+          "covered_share": 0.2,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.037
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 1,
+          "fee_bp": {
+            "first_week": 57.24,
+            "last_month": 49.47,
+            "benign_last_month": 46.15,
+            "f_max": 60.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.286,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 11.39,
+            "cash_plus_rep_at_pstar": 11.63,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 218265,
+            "rep_at_pstar": 4612
+          },
+          "charges_usd": 297951,
+          "covered_share": 0.076,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 6.049
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 125,
+          "fee_bp": {
+            "first_week": 10.0,
+            "last_month": 9.21,
+            "benign_last_month": 9.07,
+            "f_max": 10.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.708,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": -4.03,
+            "cash_plus_rep_at_pstar": -4.01,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": -1220159,
+            "rep_at_pstar": 8177
+          },
+          "charges_usd": 3727962,
+          "covered_share": 0.002,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 4.334,
+        "end": 6.049
+      }
+    },
+    "theta=0.5x eta=1 fmax=3x": {
+      "pools": {
+        "dai_usdc_001": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 2.82,
+            "last_month": 2.36,
+            "benign_last_month": 2.36,
+            "f_max": 3.0,
+            "f_min": 0.2
+          },
+          "volume_kept": 0.477,
+          "lp_net_bp": {
+            "today": 2.69,
+            "cash": 0.65,
+            "cash_plus_rep_at_pstar": 0.7,
+            "target": 0.5
+          },
+          "lp_net_usd": {
+            "today": 96160,
+            "cash": 11112,
+            "rep_at_pstar": 907
+          },
+          "charges_usd": 13858,
+          "covered_share": 0.039,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.015
+        },
+        "eth_usdc_005": {
+          "days_to_first_mint": 1,
+          "fee_bp": {
+            "first_week": 13.05,
+            "last_month": 10.11,
+            "benign_last_month": 9.68,
+            "f_max": 15.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.434,
+          "lp_net_bp": {
+            "today": -0.81,
+            "cash": 0.98,
+            "cash_plus_rep_at_pstar": 1.25,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -1582772,
+            "cash": 828513,
+            "rep_at_pstar": 236945
+          },
+          "charges_usd": 4397194,
+          "covered_share": 0.113,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.083
+        },
+        "link_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 62.18,
+            "last_month": 71.65,
+            "benign_last_month": 59.49,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.253,
+          "lp_net_bp": {
+            "today": -1.94,
+            "cash": 16.01,
+            "cash_plus_rep_at_pstar": 20.0,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -79837,
+            "cash": 166516,
+            "rep_at_pstar": 41511
+          },
+          "charges_usd": 86425,
+          "covered_share": 0.534,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.703
+        },
+        "pepe_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 66.7,
+            "last_month": 56.05,
+            "benign_last_month": 49.91,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.362,
+          "lp_net_bp": {
+            "today": -0.05,
+            "cash": 18.38,
+            "cash_plus_rep_at_pstar": 22.86,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -62,
+            "cash": 8845,
+            "rep_at_pstar": 2154
+          },
+          "charges_usd": 5805,
+          "covered_share": 0.42,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.974
+        },
+        "uni_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 70.82,
+            "last_month": 67.16,
+            "benign_last_month": 58.16,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.241,
+          "lp_net_bp": {
+            "today": -4.14,
+            "cash": 15.65,
+            "cash_plus_rep_at_pstar": 19.36,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -98843,
+            "cash": 89894,
+            "rep_at_pstar": 21290
+          },
+          "charges_usd": 56297,
+          "covered_share": 0.452,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.413
+        },
+        "usdc_weth_030": {
+          "days_to_first_mint": 0,
+          "fee_bp": {
+            "first_week": 76.19,
+            "last_month": 58.04,
+            "benign_last_month": 54.23,
+            "f_max": 90.0,
+            "f_min": 6.0
+          },
+          "volume_kept": 0.261,
+          "lp_net_bp": {
+            "today": -3.04,
+            "cash": 10.81,
+            "cash_plus_rep_at_pstar": 11.91,
+            "target": 15.0
+          },
+          "lp_net_usd": {
+            "today": -203405,
+            "cash": 188865,
+            "rep_at_pstar": 19209
+          },
+          "charges_usd": 296631,
+          "covered_share": 0.174,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 3.103
+        },
+        "wbtc_weth_005": {
+          "days_to_first_mint": 28,
+          "fee_bp": {
+            "first_week": 15.0,
+            "last_month": 11.15,
+            "benign_last_month": 10.91,
+            "f_max": 15.0,
+            "f_min": 1.0
+          },
+          "volume_kept": 0.598,
+          "lp_net_bp": {
+            "today": -1.02,
+            "cash": -3.87,
+            "cash_plus_rep_at_pstar": -3.48,
+            "target": 2.5
+          },
+          "lp_net_usd": {
+            "today": -436003,
+            "cash": -988218,
+            "rep_at_pstar": 100173
+          },
+          "charges_usd": 2931456,
+          "covered_share": 0.012,
+          "max_area_over_backing": 1.0,
+          "end_price_over_pstar": 1.0
+        }
+      },
+      "price_dispersion_max_over_min": {
+        "median": 4.727,
+        "end": 3.103
+      }
+    }
+  },
+  "notes": {
+    "allowance_bps": 2.0,
+    "tau": 0.025,
+    "rho": 0.0005,
+    "f_min_x": 0.2,
+    "epoch": "UTC day",
+    "start": "zero REP in every pool, no premint",
+    "scores": "study pool canonical q; census pools approximate mid q (Binance 1s closes)"
+  }
+}
