@@ -137,7 +137,7 @@ proof verification on mainnet even at 2026 gas prices. Without amortization
 across pools, only large pools are served. Two levers: multi-pool proofs
 (§3.1c) and paying keepers in a unit that is not tied to one small pool (§4).
 
-## 4. Joint REP and proof of useful work (proposal, open)
+## 4. Joint REP and proof of useful work (future work, out of scope)
 
 ### 4.1 Why per-pair REP alone does not pay keepers well
 REP is per pair by design (P§4.4): a pair-native trading license whose value

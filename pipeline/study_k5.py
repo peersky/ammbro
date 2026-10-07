@@ -1,4 +1,5 @@
-"""Study K5 — one global REP valued by per-pool virtual curves (paper §4.9, §5.8, Appendix G).
+"""Study K5 — one global REP valued by per-pool virtual curves. Out of the paper's scope (future work):
+minting from surplus paid to a pool's own LPs is costless to a self-dealing LP, which a shared token exposes.
 
 Seven mainnet pools, daily epochs, March as an observation window and April–August
 simulated. Each pool keeps a virtual curve for the common REP: marginal price

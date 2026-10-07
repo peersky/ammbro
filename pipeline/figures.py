@@ -267,38 +267,9 @@ def gas_tank() -> None:
     save(fig, "fig_gas_tank")
 
 
-def global_rep() -> None:
-    r = j(R / "study_k" / "global_rep.json")["runs"]
-    fx = [1.5, 2, 3, 5]
-    name = {"usdc_weth_030": "USDC/WETH 30", "uni_weth_030": "UNI/WETH 30", "link_weth_030": "LINK/WETH 30",
-            "pepe_weth_030": "PEPE/WETH 30", "eth_usdc_005": "ETH/USDC 5", "wbtc_weth_005": "WBTC/WETH 5", "dai_usdc_001": "DAI/USDC 1"}
-    panels = [("(a) 30 bp pools", ["usdc_weth_030", "uni_weth_030", "link_weth_030", "pepe_weth_030"], 15.0, "target θ*"),
-              ("(b) 5 bp and 1 bp pools", ["eth_usdc_005", "wbtc_weth_005", "dai_usdc_001"], 2.5, "target θ* (5 bp pools)")]
-    fig, axes = plt.subplots(1, 2, figsize=(7.6, 3.0))
-    ci = 0
-    for ax, (title, pools, tgt, tlab) in zip(axes, panels):
-        for pool in pools:
-            col = C[ci]; ci += 1
-            for eta, ls in (("0", "-"), ("1", "--")):
-                y = [r[f"theta=0.5x eta={eta} fmax={x:g}x start=zero"]["pools"][pool]["lp_net_bp"]["cash_plus_rep_at_pstar"] for x in fx]
-                ax.plot(fx, y, ls, color=col, marker="o", ms=3, label=name[pool] if eta == "0" else None)
-            today = r["theta=0.5x eta=0 fmax=2x start=zero"]["pools"][pool]["lp_net_bp"]["today"]
-            ax.plot([1], [today], "s", color=col, ms=5)
-        ax.axhline(tgt, color=MUTED, lw=1, ls=":", label=tlab)
-        ax.axhline(0, color=MUTED, lw=0.6)
-        ax.set_xticks([1] + fx, ["today"] + [f"{x:g}×" for x in fx])
-        ax.set_xlabel("f_max (multiple of today's fee tier)")
-        ax.set_title(title)
-        ax.legend(fontsize=7, loc="upper left")
-    axes[0].set_ylabel("LP net income (bp of volume)")
-    axes[1].text(0.98, 0.04, "solid: fixed flow; dashed: elastic benign flow (η = 1)\nsquare: today's fixed fee",
-                 transform=axes[1].transAxes, ha="right", fontsize=6.5, color=MUTED)
-    save(fig, "fig_global_rep")
-
-
 def main() -> None:
     for f in (coverage_curve, payout_rule, supply_cliff, latency_profile, score_distributions, extraction_by_position,
-              recapture_frontier, controller_paths, oracle_error, settlement_cost, gas_tank, global_rep):
+              recapture_frontier, controller_paths, oracle_error, settlement_cost, gas_tank):
         f()
 
 
