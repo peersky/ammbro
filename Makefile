@@ -82,3 +82,6 @@ test:
 
 clean:
 	rm -rf data/parquet data/bars
+
+paper-pdf:               # render paper.md (LaTeX math) to paper.pdf via pandoc + xelatex
+	pandoc paper.md -o paper.pdf --pdf-engine=xelatex -V mainfont="Times New Roman" -V geometry:margin=2.2cm -V fontsize=10pt --resource-path=.

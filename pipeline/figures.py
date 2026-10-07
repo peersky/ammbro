@@ -88,7 +88,7 @@ def payout_rule() -> None:
     ax2.plot(V, avg, color=C[3], label="average-edge cap: kept grows past the oracle")
     ax2.axvline(stop, color=MUTED, lw=0.8)
     ax2.text(stop + 0.15, ax2.get_ylim()[1] * 0.95 if False else 15.5, "oracle reached", color=MUTED, fontsize=7.5, va="top")
-    ax2.set_xlabel("trade size V"); ax2.set_ylabel("arbitrageur's kept rent")
+    ax2.set_xlabel("trade size v"); ax2.set_ylabel("arbitrageur's kept rent")
     ax2.set_title("(b) why the average-edge cap invites overshoot")
     ax2.legend(loc="lower left", fontsize=7, bbox_to_anchor=(0.0, -0.02))
     save(fig, "fig_payout_rule")
