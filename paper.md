@@ -119,6 +119,8 @@ where `f_min` and `f_max` are the floor and ceiling of the pool's fee band and �
 
 ### 4.3 Arbitrage as a paid job
 
+Payments for position — priority gas auctions (Daian et al., 2020), builder bids on Ethereum, express-lane bids on rollups — are a toxic by-product of a poorly priced arbitrage opportunity. An AMM that leaves the whole gap between its price and the market to whoever corrects it first invites arbitrageurs to compete for that gap by paying for ordering, and the surplus that should return to LPs accrues to block producers instead: mainnet arbitrageurs in our sample paid $6.57 M for position (§5.4). A well-designed AMM should instead price the correction itself, capturing the surplus for LPs and making their return independent of how the underlying chain's consensus orders transactions.
+
 Each price-correcting swap keeps
 
 ```
@@ -294,6 +296,8 @@ Buterin, V., Hernandez, D., Kamphefner, T., Pham, K., Qiao, Z., Ryan, D., Sin, J
 Buterin, V., Weiss, Y., Tirosh, D., Nacson, S., Forshtat, A., Gazso, K., and Hess, T. (2021). ERC-4337: Account abstraction using alt mempool. Ethereum Improvement Proposals. https://eips.ethereum.org/EIPS/eip-4337
 
 Chainlink. Data Streams: liquidity-weighted bid and ask prices. https://docs.chain.link/data-streams/concepts/liquidity-weighted-prices
+
+Daian, P., Goldfeder, S., Kell, T., Li, Y., Zhao, X., Bentov, I., Breidenbach, L., and Juels, A. (2020). Flash Boys 2.0: Frontrunning in decentralized exchanges, miner extractable value, and consensus instability. In *IEEE Symposium on Security and Privacy*. arXiv:1904.05234.
 
 Eskandari, S., Salehi, M., Gu, W. C., and Clark, J. (2021). SoK: Oracles from the ground truth to market manipulation. In *Proceedings of the 3rd ACM Conference on Advances in Financial Technologies (AFT '21)*. arXiv:2106.00667.
 
