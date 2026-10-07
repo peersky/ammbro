@@ -12,13 +12,13 @@ We pursue two goals: to return as much of the arbitrage surplus as possible to L
 
 1. a per-swap quality score `q_LP`, measured against signed bid/ask prices at an empirically measured decision instant (§3);
 2. a payout rule for arbitrage — a per-unit cap with an allowance discovered on-chain — under which bidding for position earns nothing (§4.2–4.3);
-3. a reputation asset and a collateral design that make the charge collectable after the fact (§4.4–4.5);
+3. a per-pair reputation asset and a collateral design that make the charge collectable after the fact (§4.4–4.5);
 4. a settlement layer that is pair-native and costs a fraction of the swaps it settles (§4.6);
 5. an evaluation on Ethereum and Arbitrum covering scoring validity, recapture, payout rules, oracle error and settlement cost (§5).
 
 ## 2. Related work
 
-Approaches to LVR either remove the information asymmetry or redistribute its surplus (Appendix A). Milionis et al. (2022) define LVR and suggest backward-looking fee adjustment and the sale of arbitrage rights as directions; REP-AMM is a concrete, farming-resistant instance of the first. Auction designs — am-AMM (Adams et al., 2024), McAMM and Angstrom — sell the right to arbitrage or manage the pool and return the proceeds to LPs; Angstrom additionally clears ordinary orders at a uniform price, but relies on app-specific sequencing, whereas REP-AMM is a plain hook. Diamond and V0LVER reduce liquidity for arbitrageurs only, and argue against oracle dependence; we accept a trusted signed oracle and quantify the consequences of its error (§5.6). MEV taxes (Robinson and White, 2024) charge a fee increasing in the priority fee and capture competitive MEV under honest priority ordering; they do not hold under builder auctions on Ethereum and cannot reach extraction in the middle of a block. Reputation-based fee tiers (zScore; Karma on Status Network) and optimal dynamic fees (Ghasemlu, 2026; Nezlobin and Tassy, 2025) set fees by behaviour or volatility but specify neither an oracle-reconciled scoring rule nor resistance to concentration of the discount.
+Approaches to LVR either remove the information asymmetry or redistribute its surplus (Appendix A). Milionis et al. (2022) define LVR and suggest backward-looking fee adjustment and the sale of arbitrage rights as directions; REP-AMM is a concrete, farming-resistant instance of the first. Auction designs — am-AMM (Adams et al., 2024), McAMM (Josojo, 2022) and Angstrom (Sorella Labs) — sell the right to arbitrage or manage the pool and return the proceeds to LPs; Angstrom additionally clears ordinary orders at a uniform price, but relies on app-specific sequencing, whereas REP-AMM is a plain hook. Diamond (McMenamin et al., 2022) and V0LVER (McMenamin and Daza, 2023) reduce liquidity for arbitrageurs only, and argue against oracle dependence; we accept a trusted signed oracle and quantify the consequences of its error (§5.6). MEV taxes (Robinson and White, 2024) charge a fee increasing in the priority fee and capture competitive MEV under honest priority ordering; they do not hold under builder auctions on Ethereum and cannot reach extraction in the middle of a block. Reputation systems (zScore: Udupi et al., 2025; Karma: Status Network) and optimal dynamic fees (Baggiani et al., 2025; Ghasemlu, 2026) set fees or access by behaviour or market state but specify neither an oracle-reconciled scoring rule nor resistance to concentration of the discount.
 
 ## 3. Measurement model
 
@@ -31,18 +31,45 @@ No blockchain finalises as quickly as a centralised order book observes prices. 
 For a swap with pool-perspective token deltas (Δ₀, Δ₁),
 
 ```
-q_LP = (Δ₀ + P_dir(t*)·Δ₁) / notional
+q_LP = (Δ₀ + P_dir(t*)·Δ₁) / notional                                (1)
 ```
 
 where `P_dir` is the directional benchmark — the liquidity-weighted bid when the pool sells the risky asset and the ask when it buys it — so that swaps executed inside the bid–ask band are never scored as extractive (Chainlink Data Streams supplies both sides). The score is invariant to the choice of numeraire, needs no sign convention by trade direction, and is evaluated at horizon zero, where extraction occurs, rather than against later prices that mix extraction with drift. Negative values are losses to LPs.
 
 ### 3.3 When a swap is priced
 
-A block executes as one instant, so a transaction's index records ordering, not time; and under proposer–builder separation a block's timestamp labels its slot rather than the moment its content was decided. We therefore measure the decision instant *t\** = block timestamp + *L*: a swap that closes a gap stops where the pool price net of the fee meets the hedgeable external price, and minimising that residual over offsets identifies *L* (Figure 5). Every swap in a block is scored at the same instant and over a one-second window around it. A per-block anchor is position-invariant — no position maps to a more lenient benchmark — which is the property that makes buying position useless. Finer, index-based clocks can be bought by whoever controls ordering (Appendix B).
+A block executes as one instant, so a transaction's index records ordering, not time; and under proposer–builder separation a block's timestamp labels its slot rather than the moment its content was decided. We therefore measure the decision instant *t\** = block timestamp + *L*: a swap that closes a gap stops where the pool price net of the fee meets the hedgeable external price, and minimising that residual over offsets identifies *L* (Figure 5). Every swap in a block is scored at the same instant and over a one-second window around it. A per-block anchor is position-invariant — no position maps to a more lenient benchmark — which is the property that makes buying position useless. A finer clock derived from a transaction's index within the block would be set by whoever controls ordering — the builder or sequencer — and could be sold to the swap that benefits from it; anchoring every swap to the block's timestamp removes that lever (Appendix B).
 
 On chains whose blocks are shorter than their timestamps, such as Arbitrum (about four blocks per second), we place the *N* blocks sharing second *S* at *S* + (*k* + ½)/*N*. This orders blocks, not transactions, and on a first-come-first-served sequencer block order follows arrival; its error of at most ±1/(2*N*) s is absorbed by the scoring window.
 
+### 3.4 Assumptions and threat model
+
+We assume the following.
+
+- **A1 (oracle).** Signed bid and ask prices exist for every block, are retained for a window of about a month, and are correct up to a bias and noise that the tolerance ε of §4.3 bounds (§5.6). A compromised or censored oracle is outside the model.
+- **A2 (chain).** The hook executes atomically with the swap, and the chain exposes its base fee to contracts. Reorganisations beyond finality are not considered.
+- **A3 (ordering).** No ordering is assumed to be honest: builders and sequencers may order, insert and exclude transactions and sell position. The only ordering property used is whether a chain runs builder auctions or a first-come-first-served sequencer, which selects the allowance controller (§4.3).
+- **A4 (arbitrage).** Arbitrageurs are rational and have private, time-varying costs, and at least one is active; competition among them is not assumed (§5.4).
+- **A5 (liveness).** At least one keeper settles each epoch before its deadline at the bounty the gas tank pays.
+
+The adversary is any trader, LP, arbitrageur, builder, sequencer or keeper, or any coalition of them. It may create any number of accounts, split trades, buy position, trade REP and choose when to settle its own swaps. Accounts carry no identity: an account is known only by its stake, and a new account pays `f_max`. The mechanism is designed to provide five properties: (G1) a swap's score does not depend on its position in the block; (G2) splitting a trade reduces neither its charge nor its parked stake; (G3) charges are collected from stake posted before the trade and never from another trader's stake; (G4) outstanding REP never exceeds, at its internal rate, the surplus LPs have received (Theorem 1); and (G5) no keeper can alter a charge. Implementation errors in the contracts are outside the model.
+
 ## 4. Mechanism
+
+REP-AMM separates the execution of a swap from its pricing. A swap executes at once, at a fee set by the stake its sender has posted; after the block, it is scored against signed prices and settled against that stake. A swap that corrects the pool's price keeps an allowance per unit of correction, and whatever it extracts beyond the allowance is charged to its stake for the LPs; traders whose payments exceed the LPs' target earn the stake that lowers their fees. The subsections follow a swap through this cycle, and Table 1 collects the notation.
+
+| Symbol | Meaning |
+|---|---|
+| `q_LP`, *t\**, *L* | quality score (1); decision instant *t\** = block timestamp + *L*; measured decision latency |
+| *r*, *V* | an account's staked REP and its volume in the epoch |
+| `f_min`, `f_max`, ρ | fee band and capacity scale of the coverage curve (2); ρ is also the base parking rate |
+| *m*, *m*₀, ε | job allowance per unit of correction (3), its starting value, and the oracle tolerance |
+| ℓ, *k*, `Δ_block` | parked share of volume (5), its speed, and the pool's price move so far in the block |
+| *N*, θ\*, τ | pool's net income per epoch (4), LPs' target take-rate, and protocol take |
+| *P*_int, *P*_mkt, δ | internal mint and burn rate of REP, its market price, and the buyback margin (§4.8) |
+| *G*, epoch | gas withheld per swap for settlement; per-pool settlement period |
+
+*Table 1. Notation. Activation and exit delays of stake, the controller's steps and thresholds, and the keeper bounty and deadline are further parameters.*
 
 ### 4.1 Execute, then reconcile
 
@@ -69,7 +96,7 @@ At execution the hook reads the trader's active REP stake, charges the fee given
 Staked reputation *r* grants discounted capacity *r*/ρ per epoch, and the fee on covered volume *V* is
 
 ```
-f(r, V) = f_min + (f_max − f_min) · exp(−r / (ρ·V))
+f(r, V) = f_min + (f_max − f_min) · exp(−r / (ρ·V))                  (2)
 ```
 
 The curve (Figure 2) is convex and decreasing in *r* (diminishing returns, which discourages concentration), asymptotic to `f_min` (LPs always earn a floor) and homogeneous of degree zero (it prices the coverage ratio, not wealth). Volume beyond capacity pays `f_max`.
@@ -83,7 +110,7 @@ The curve (Figure 2) is convex and decreasing in *r* (diminishing returns, which
 Each price-correcting swap keeps
 
 ```
-kept = ∫ min(edge(u), m) du
+kept = ∫ min(edge(u), m) du                                           (3)
 ```
 
 where `edge(u)` is the marginal gap between the oracle and the pool price, beyond the pool fee, along the trade's price path, and *m* is the job allowance per unit of correction; everything beyond is recaptured for LPs (Figure 3a). The allowance covers all of the arbitrageur's costs, gas included, so the pool never values gas in its own units. Capping rent per unit rather than on the trade's average edge stops the arbitrageur at the competitive band: under an average-edge cap, rent keeps growing past the oracle, inviting overshoot (Figure 3b). The integral is additive, so splitting a trade gains nothing, and the rule pays any correcting swap regardless of its position.
@@ -100,14 +127,20 @@ The competitive cost of rebalancing is private and changes, so *m* is discovered
 
 ### 4.4 The reputation asset
 
-Per epoch, the pool's net income `N = Σ fees + Σ markouts` is compared with the LPs' target `θ*·ΣV`. Surplus mints REP to accounts whose payments exceeded the target on their own volume, at a fixed internal rate; extraction beyond the allowance burns stake at the same rate, so no market price of REP enters either formula. Minting is self-funding — a wash trader's mint is prepaid by its own overpayment — and self-enforcing: over-earning mints capacity that lowers fees, under-earning halts minting. REP is minted slightly below the surplus it claims; this protocol take τ funds the per-pool reserve. Staked REP is a slashable trading licence, preferable to escrowed cash because it earns its holder the discount, is costly only to extractors, and appreciates with the pool's benign volume.
+Per epoch, the pool's net income — fees and markouts, with charges recaptured — is compared with the LPs' target:
+
+```
+N = Σ fees + Σ markouts + Σ charges,     minted = (1 − τ) · max(N − θ*·ΣV, 0) / P_int     (4)
+```
+
+The surplus mints REP to the accounts whose payments exceeded the target on their own volume, pro rata to the excess, at a fixed internal rate *P*_int; extraction beyond the allowance burns stake at the same rate, so no market price of REP enters either formula. Minting is self-funding — a wash trader's mint is prepaid by its own overpayment — and self-enforcing: over-earning mints capacity that lowers fees, under-earning halts minting. REP is minted below the surplus it claims by the protocol take τ, which funds the per-pool reserve. Staked REP is a slashable trading licence, preferable to escrowed cash because it earns its holder the discount, is costly only to extractors, and appreciates with the pool's benign volume.
 
 ### 4.5 Stake, parking and collection
 
 Only staked REP affects fees, which precludes flash-renting the discount. A trade parks `ℓ·V` of active stake until it is settled, with
 
 ```
-ℓ = ρ + k · Δ_block
+ℓ = ρ + k · Δ_block                                                   (5)
 ```
 
 where `Δ_block` is the pool's price move so far in the block: corrections after a market jump move the pool quickly and park more. Splitting a trade cannot reduce `Δ_block`, whereas rules keyed to trade size can be defeated by splitting. Charges are collected first from the trade's parked stake, then from the rest of the account's stake (which cannot be withdrawn while settlements are pending), and finally from the per-pool reserve. Charges are never taken from other traders' stake.
@@ -118,7 +151,7 @@ The hook extends each swapper's record — post-trade price, active liquidity an
 
 Settlement is paid in gas, not in the pool's assets. Every swap prefunds `G × block.basefee` into a gas tank — a count of gas units times a value the chain exposes, with no price involved — from which keepers are reimbursed with an escalating bounty, directly or through an ERC-4337 paymaster. Since every pool contributes in the same unit, one tank can serve many pools. Two rules keep it inexpensive: settlement is never forced into the current block, and each pool chooses its epoch length. Where charges are computed on-chain, an open race among keepers is efficient; where they are proven off-chain, a designated leader avoids duplicated proving. A leader cannot alter a charge, which is fixed by the record and the signed prices.
 
-The per-swap work of settlement — a multiply-add against a verified price, a comparison and a state write — is smaller than executing the swap, so settlement is bounded by the pool's own execution footprint. §5.7 measures it. Parameters are listed in Appendix E.
+The per-swap work of settlement — a multiply-add against a verified price, a comparison and a state write — is smaller than executing the swap, so settlement is bounded by the pool's own execution footprint. §5.7 measures it.
 
 ### 4.7 Launch and intermediaries
 
@@ -126,19 +159,31 @@ At launch no account holds REP, and none needs to be issued: unstaked volume pay
 
 ### 4.8 When REP trades below its mint rate
 
-REP is burned for charges at the internal rate *P*_int at which it was minted, while its secondary-market price *P*_mkt may fall below it. A trader can then buy REP cheaply, stake it, and pay charges for extraction at par with collateral that cost less. Three properties bound the consequences (Appendix F).
+REP is burned for charges at the internal rate *P*_int at which it was minted, while its secondary-market price *P*_mkt may fall below it. A trader can then buy REP cheaply, stake it, and pay charges for extraction at par with collateral that cost less. Three properties bound the consequences (Appendix E).
 
 First, the pool is solvent at par. REP is minted only from surplus above the LPs' target, and below that surplus by the take τ, so outstanding REP valued at *P*_int never exceeds the surplus LPs have already received. If every outstanding unit were eventually burned as collateral for extraction, LPs would return that surplus and end at their target θ*, not below it: a crash in REP's price removes the surplus, not the principal.
 
 Second, extractors provide a demand floor. A unit of REP saves an extractor up to *P*_int of charges, so extractors buy it whenever *P*_mkt < *P*_int and they have extraction to cover. The floor scales with expected extraction rather than being fixed at par: if circulating REP exceeds what extraction can absorb, the price can remain below par.
 
-Third, below par, outstanding REP is the pool's debt trading at a discount. When cheap REP covers a charge, LPs' accounting floor holds but the value recaptured falls to roughly (*P*_mkt/*P*_int) of its designed level, the difference accruing to the seller of the REP. The per-pool reserve, funded by τ, can retire that debt directly: buying REP below *P*_int and burning it extinguishes a liability of *P*_int per unit at a cost of *P*_mkt, for the benefit of all LPs pro rata and in the pool's own assets. An individual LP that extracts from its own pool to burn REP gains little by comparison, since most of that extraction is borne by the other LPs. Solvency is a property of the pool, not of each LP: LPs who join after the surplus was distributed inherit the outstanding REP without the surplus behind it, so REP outstanding per LP share is a quantity entering LPs should price.
+Third, below par, outstanding REP is the pool's debt trading at a discount. When cheap REP covers a charge, LPs' accounting floor holds, but the value recaptured falls to roughly *P*_mkt/*P*_int of its designed level, and the difference accrues to the seller of the REP.
+
+The reserve therefore acts as a buyer of last resort with a strictly bounded balance sheet. Funded only by the take τ, it buys REP when *P*_mkt falls below *P*_int by more than a margin δ and burns it: each unit retired at *P*_mkt extinguishes a liability of *P*_int, for the benefit of all LPs pro rata and in the pool's own assets. Its capacity is at most τ·*S*_t, the take on the surplus collected so far, so it can absorb moderate discounts but cannot hold par against a large, sustained overhang. An individual LP that extracts from its own pool to burn REP gains little by comparison, since most of that extraction is borne by the other LPs. Solvency is a property of the pool, not of each LP: LPs who join after the surplus was distributed inherit the outstanding REP without the surplus behind it, so REP outstanding per LP share is a quantity entering LPs should price.
+
+### 4.9 A worked example
+
+Consider an ETH/USDC pool with illustrative parameters `f_min` = 1 bp, `f_max` = 30 bp, ρ = 5 bp, θ\* = 2 bp, *m* = 2 bp, τ = 2.5%, and an internal rate of 1 USDC per REP; both swaps below are $10,000 and fall in one epoch.
+
+*Alice*, an uninformed trader holding 5 REP, swaps in a quiet block. Her coverage ratio is 5/(0.0005 × 10,000) = 1, so by (2) she pays 1 + 29·e⁻¹ = 11.67 bp, or $11.67. Her markout before fees is zero, so her `q_LP` is +11.67 bp. With no price move in the block she parks ℓ·*V* = 5 bp × $10,000, all 5 of her REP, until settlement.
+
+*Bob*, an arbitrageur holding 15 REP (coverage ratio 3), corrects the pool after a market move, paying 1 + 29·e⁻³ = 2.44 bp. Along his trade the edge beyond the fee falls linearly from 10 bp to zero, so he extracts 5 bp on average — $5.00 — and his `q_LP` is −5 bp. By (3) he keeps ∫ min(10(1 − *u*), 2) d*u* = 1.80 bp, and the remaining 3.20 bp, $3.20, is charged. The block had already moved by 10 bp, so by (5) with *k* = 0.5 he parked ℓ = 5 + 5 = 10 bp of his volume, $10 of stake; the charge burns 3.20 REP from it, and the other 6.80 are released at settlement.
+
+At reconciliation, by (4), *N* = 11.67 − 5.00 + 3.20 = $9.87 against a target of 2 bp × $20,000 = $4.00, leaving a surplus of $5.87. Only Alice paid more than the target on her own volume (Bob's net is −1.8 bp), so she receives (1 − 0.025) × 5.87 = 5.72 REP. Her next $10,000 swap, with 10.72 REP staked, pays 1 + 29·e^(−2.14) = 4.40 bp. Bob kept his allowance of $1.80 and paid nothing for position, since any position would have been scored at the same instant (§3.3). The LPs received $6.67 in the pool's assets; Bob's charge was settled in REP, which retires claims on surplus the LPs already hold (Theorem 1).
 
 ## 5. Evaluation
 
 ### 5.1 Data and method
 
-We study the Uniswap v3 ETH/USDC 5 bp pool on Ethereum mainnet and the corresponding WETH/USDC pool on Arbitrum from 1 March to 31 August 2026 (Table 1). The benchmark is Binance ETHUSDT corrected by USDCUSDT, with a touch-level bid/ask proxy built from aggressor-flagged trades. A stable–stable control pool on each chain scored a median absolute `q_LP` of 0.9–1.1 bp, well within the 38.4 bp ceiling implied by peg noise. Payout rules are compared in a block-level simulation that replays the real oracle path and non-arbitrage flow, with optimising arbitrageurs whose costs range from 0.3 to 2.5 bp and are multiplied by four or eight from June (Appendix C).
+We study the Uniswap v3 ETH/USDC 5 bp pool on Ethereum mainnet and the corresponding WETH/USDC pool on Arbitrum from 1 March to 31 August 2026 (Table 2). The benchmark is Binance ETHUSDT corrected by USDCUSDT, with a touch-level bid/ask proxy built from aggressor-flagged trades. A stable–stable control pool on each chain scored a median absolute `q_LP` of 0.9–1.1 bp, well within the 38.4 bp ceiling implied by peg noise. Payout rules are compared in a block-level simulation that replays the real oracle path and non-arbitrage flow, with optimising arbitrageurs whose costs range from 0.3 to 2.5 bp and are multiplied by four or eight from June (Appendix C).
 
 | | Ethereum mainnet | Arbitrum One |
 |---|---|---|
@@ -146,7 +191,7 @@ We study the Uniswap v3 ETH/USDC 5 bp pool on Ethereum mainnet and the correspon
 | Blocks (with a pool swap) | 1.32 M (595 k) | 63.4 M (1.87 M) |
 | Volume | $19.6 B | $11.2 B |
 
-*Table 1. Sample, March–August 2026.*
+*Table 2. Sample, March–August 2026.*
 
 ### 5.2 Decision latency and scoring validity
 
@@ -210,9 +255,49 @@ Funding keepers from the gas tank requires a modest contribution per swap (Figur
 
 ### 5.8 Limitations
 
-The benchmark is a Binance touch proxy, not the signed liquidity-weighted quote, so oracle error is modelled rather than measured. The simulation assumes linear daily depth, fixed user flow, a population of arbitrage costs and a second-price auction for position; sender diversity presumes a first-come-first-served race. Labels are conservative heuristics. Gas was measured on a locally deployed v4 pool manager with mock tokens, and swaps crossing a liquidity boundary are outside the closed-form charge. Keeper costs are assumed, and the seven-pool census applies the study pool's recapture rate to the other pairs. The behaviour of REP below its mint rate is analysed (§4.8, Appendix F) but not simulated; its sufficiency as collateral relative to a plain bond remains to be tested empirically.
+The benchmark is a Binance touch proxy, not the signed liquidity-weighted quote, so oracle error is modelled rather than measured. The simulation assumes linear daily depth, fixed user flow, a population of arbitrage costs and a second-price auction for position; sender diversity presumes a first-come-first-served race. Labels are conservative heuristics. Gas was measured on a locally deployed v4 pool manager with mock tokens, and swaps crossing a liquidity boundary are outside the closed-form charge. Keeper costs are assumed, and the seven-pool census applies the study pool's recapture rate to the other pairs. The behaviour of REP below its mint rate is analysed (§4.8, Appendix E) but not simulated; its sufficiency as collateral relative to a plain bond remains to be tested empirically.
 
 **Future work.** REP is issued per pair. A single reputation token shared by all pools would let standing earned in one pool count in another, but we have not found a design that satisfies our constraints in principle. REP is minted from surplus paid to a pool's LPs, so an account that is also the LP of its own pool mints at the cost of the protocol take alone; per pair this is harmless, since the LPs who bear a charge are the LPs whose surplus backs the REP, but a shared token lets REP minted against one pool's surplus be charged against another's. Per-pool valuation curves, oracle pricing and closed surplus vaults bound the loss to each pool's accumulated surplus but do not make minting costly; locking part of the backing or admitting pools by seasoning would, at the cost of the LPs' claim to their surplus or of permissionless entry. We leave a shared token to future work.
+
+## 6. Conclusion
+
+REP-AMM shows that loss-versus-rebalancing can be recaptured by a plain Uniswap v4 hook, without delaying execution, without consulting an oracle at trade time and without relying on honest ordering. Execution remains synchronous; pricing is completed after the block against signed prices, at a decision instant that is measured from the data and shared by every swap in the block, so that no position buys a more lenient benchmark. Arbitrage is retained as a paid job whose allowance is discovered on-chain, extraction beyond the allowance is collected from stake posted before trading, and benign traders earn the stake that lowers their fees.
+
+On six months of Ethereum and Arbitrum data, the mechanism recaptured 70–73% of extraction while overcharging benign flow by less than 0.1 bp, raised LPs' worst-case position by $4.81 M on mainnet and $0.66–0.71 M on Arbitrum while keeping the pool as well rebalanced as today, and settled for 0.18–0.19 of the swaps' execution gas, paid from a tank that every swap prefunds. Its binding requirements are a sub-second oracle on fast chains and a tolerance matched to the feed's error. The market behaviour of REP, oracle error measured on the signed feed itself, and a reputation shared across pools remain open.
+
+## References
+
+Adams, A., Moallemi, C. C., Reynolds, S., and Robinson, D. (2024). am-AMM: An auction-managed automated market maker. arXiv:2403.03367.
+
+Baggiani, L., Herdegen, M., and Sánchez-Betancourt, L. (2025). Optimal dynamic fees in automated market makers. arXiv:2506.02869.
+
+Buterin, V., Weiss, Y., Tirosh, D., Nacson, S., Forshtat, A., Gazso, K., and Hess, T. (2021). ERC-4337: Account abstraction using alt mempool. Ethereum Improvement Proposals. https://eips.ethereum.org/EIPS/eip-4337
+
+Chainlink. Data Streams: liquidity-weighted bid and ask prices. https://docs.chain.link/data-streams/concepts/liquidity-weighted-prices
+
+Ghasemlu, F. (2026). Optimal dynamic fees for automated market makers: A stochastic control approach to loss-versus-rebalancing. arXiv:2606.21769.
+
+Groth, J. (2016). On the size of pairing-based non-interactive arguments. In *Advances in Cryptology – EUROCRYPT 2016*, LNCS 9666, pp. 305–326. Springer.
+
+Josojo (2022). MEV capturing AMM (McAMM). Ethereum Research. https://ethresear.ch/t/mev-capturing-amm-mcamm/13336
+
+McMenamin, C., and Daza, V. (2023). An AMM minimizing user-level extractable value and loss-versus-rebalancing. arXiv:2301.13599.
+
+McMenamin, C., Daza, V., and Mazorra, B. (2022). Diamonds are forever, loss-versus-rebalancing is not. arXiv:2210.10601; published as "An automated market maker minimizing loss-versus-rebalancing".
+
+Milionis, J., Moallemi, C. C., Roughgarden, T., and Zhang, A. L. (2022). Automated market making and loss-versus-rebalancing. arXiv:2208.06046.
+
+Robinson, D., and White, D. (2024). Priority is all you need. Paradigm. https://www.paradigm.xyz/writing/priority-is-all-you-need
+
+Sorella Labs. A new era of DeFi with app-specific sequencing. https://sorellalabs.xyz/writing/a-new-era-of-defi-with-ass
+
+Status Network. Karmic tokenomics. https://docs.status.network/overview/tokenomics/karmic-tokenomics
+
+Succinct Labs. SP1 zero-knowledge virtual machine. https://github.com/succinctlabs/sp1
+
+Udupi, H., Sahoo, A., Akshay, S. P., Gurukiran, S., Paul, P., and Martens, P. C. (2025). zScore: A universal decentralised reputation system for the blockchain economy. arXiv:2503.05718.
+
+Uniswap Labs. Uniswap v4 core. https://github.com/Uniswap/v4-core
 
 ---
 
@@ -220,15 +305,15 @@ The benchmark is a Binance touch proxy, not the signed liquidity-weighted quote,
 
 **Milionis, Moallemi, Roughgarden and Zhang (2022).** Define LVR with a closed form and propose (a) fees set by comparing LVR with fee income over a backward-looking window and (b) the sale of arbitrage rights to capture LVR for LPs. Both are directions, not specified or farming-robust mechanisms; REP-AMM's oracle reconciliation instantiates (a).
 
-**am-AMM (Adams, Moallemi and Reynolds, 2024).** A Harberger-lease auction for the role of pool manager, who sets the fee and may arbitrage at zero fee; surplus accrues to LPs. By its authors' account it offers fewer sandwich protections than a fixed-fee AMM and depends on a single manager; the convex coverage curve of §4.2 is in part an argument against winner-take-all structures.
+**am-AMM (Adams, Moallemi, Reynolds and Robinson, 2024).** A Harberger-lease auction for the role of pool manager, who sets the fee and may arbitrage at zero fee; surplus accrues to LPs. By its authors' account it offers fewer sandwich protections than a fixed-fee AMM and depends on a single manager; the convex coverage curve of §4.2 is in part an argument against winner-take-all structures.
 
-**Diamond and V0LVER (McMenamin et al., 2022–2023).** Reduce liquidity only for arbitrageurs and rebate a share of LVR; V0LVER extends protection to user-level MEV. The authors regard oracle dependence as unsatisfactory; REP-AMM accepts a trusted signed oracle and bounds the effect of its error (§5.6).
+**Diamond and V0LVER (McMenamin, Daza and Mazorra, 2022; McMenamin and Daza, 2023).** Reduce liquidity only for arbitrageurs and rebate a share of LVR; V0LVER extends protection to user-level MEV. The authors regard oracle dependence as unsatisfactory; REP-AMM accepts a trusted signed oracle and bounds the effect of its error (§5.6).
 
 **Angstrom (Sorella Labs).** A live v4 hook that auctions the top-of-block arbitrage right, distributes the proceeds to in-range LPs and clears other orders at a uniform price, which removes the positions a sandwich needs. It relies on app-specific sequencing by a decentralised operator set; REP-AMM requires no sequencer.
 
-**zScore (2025) and Karma (Status Network).** zScore proposes v4 fee tiers keyed to behavioural reputation; it does not specify an oracle-reconciled per-swap rule or anti-farming curve. Karma is a soulbound token for access and rate limiting, not LVR-specific pricing; REP is deliberately transferable.
+**zScore (Udupi et al., 2025) and Karma (Status Network).** zScore scores accounts' on-chain behaviour and points to v4 hooks as a vehicle for reputation-dependent fees; it does not specify an oracle-reconciled per-swap rule or an anti-farming curve. Karma is a soulbound token for access and rate limiting, not LVR-specific pricing; REP is deliberately transferable.
 
-**Optimal dynamic fees (Ghasemlu, 2026; Nezlobin and Tassy, 2025).** Derive optimal scalar fees as functions of volatility; they do not address a reputation-eligibility curve that must resist concentration.
+**Optimal dynamic fees (Baggiani, Herdegen and Sánchez-Betancourt, 2025; Ghasemlu, 2026).** Derive optimal fees as functions of the pool's state — inventory and external price moves, or volatility through a stochastic-control formulation; they set one fee for all flow and do not address a reputation-eligibility curve that must resist concentration.
 
 **MEV taxes (Robinson and White, 2024).** A fee increasing in the priority fee captures competitive MEV under strict priority ordering — plausible on OP-Stack sequencers, not under Ethereum builder auctions — and cannot reach extraction in the middle of a block. REP-AMM's ex-post reconciliation does not depend on honest ordering.
 
@@ -292,33 +377,21 @@ Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum b
 
 **Small pools** (protocol take needed to fund keepers, hourly, at a recapture rate of 3.6 bp of volume): $19.6 B pool 0.10–0.16%; $0.24–0.67 B pools 0.5–1.2%; $13 M pool 11–16%, falling to 1.5–2.5% at daily epochs. Funded jointly, all seven pools need 0.11–0.19%.
 
-## Appendix E. Parameters
+## Appendix E. REP below its mint rate
 
-| Parameter | Role |
-|---|---|
-| θ* | LPs' target take-rate; fixed point of the mint |
-| `f_min`, `f_max` | fee band of the coverage curve |
-| ρ | capacity scale and base parking rate |
-| k | parking speed per unit of in-block price move |
-| τ | protocol take; funds the reserve and its REP buyback |
-| mint scalar | internal mint rate; its inverse is the burn rate |
-| L, window width | decision latency (measured) and scoring window |
-| ε | tolerance; ε ≈ max(\|bias\|, 2σ) of the feed |
-| m₀, controller steps and thresholds | starting allowance and the controller of §4.3; *m* itself is discovered |
-| G, epoch length | gas withheld per swap; per-pool settlement period |
-| bounty slope, deadline | keeper payment and settlement deadline |
-| activation and exit delays | stake lifecycle |
-| δ | buyback margin below the internal rate (Appendix F) |
+Index epochs by *s* = 1, 2, …. In epoch *s* let *V*_s be the pool's volume, *N*_s its net income (4), *X*_s the charges covered by burning REP, and *B*_s = *X*_s/*P*_int the units burned. Write Δ*S*_s = max(*N*_s − θ\*·*V*_s, 0) for the epoch's surplus, *D*_s = max(θ\*·*V*_s − *N*_s, 0) for its shortfall, and *S*_t, *D*_t, *X*_t for cumulative sums up to epoch *t*. Let *Q*_t be the outstanding REP, with *Q*_0 = 0, and *C*_t = Σ_{s≤t} (*N*_s − *X*_s) the LPs' cumulative income in the pool's assets, charges settled in REP excluded.
 
-## Appendix F. REP below its mint rate
+**Theorem 1 (solvency at par).** For every *t*,
 
-Let *S*_t be the cumulative surplus above the LPs' target paid into the pool up to epoch *t*, *Q*_t the outstanding REP, *P*_int the internal mint and burn rate, and τ the take.
+(i) *P*_int·*Q*_t = (1 − τ)·*S*_t − *X*_t, and hence *X*_t ≤ (1 − τ)·*S*_t;
 
-**Proposition (solvency at par).** *P*_int·*Q*_t ≤ (1 − τ)·*S*_t for all *t*. Consequently, if every outstanding unit is burned as collateral for extraction, LPs' cumulative income is at least the target θ*·ΣV.
+(ii) *C*_t ≥ θ\*·Σ_{s≤t} *V*_s + τ·*S*_t − *D*_t.
 
-*Sketch.* Minting adds at most (1 − τ)·ΔS to *P*_int·*Q*; burning reduces *Q*; nothing else changes *Q*. Each burned unit covers *P*_int of extraction, so total extraction covered by REP is at most *P*_int·*Q*_t ≤ (1 − τ)·*S*_t, and LPs' cumulative income, target plus surplus minus covered extraction, is at least θ*·ΣV + τ·*S*_t. ∎
+In particular, if no epoch falls short of the target, LPs' income in the pool's assets is at least θ\*·Σ*V*, even if every unit of REP ever minted is burned as collateral for extraction.
 
-The bound is cumulative and pool-level. It does not hold for an LP cohort that entered after the surplus was collected and withdrawn, and it concerns extraction covered by REP; extraction beyond an account's stake is covered by the reserve (§4.5).
+*Proof.* (i) By (4), epoch *s* mints (1 − τ)·Δ*S*_s/*P*_int units and burns *B*_s; no other operation changes *Q*. Hence *Q*_t = Σ_{s≤t} [(1 − τ)·Δ*S*_s/*P*_int − *B*_s], and multiplying by *P*_int gives *P*_int·*Q*_t = (1 − τ)·*S*_t − *X*_t. Since burns are taken only from existing stake, *Q*_t ≥ 0, which gives *X*_t ≤ (1 − τ)·*S*_t. (ii) For each epoch, *N*_s − θ\*·*V*_s = Δ*S*_s − *D*_s, so Σ_{s≤t} *N*_s = θ\*·Σ*V*_s + *S*_t − *D*_t. Subtracting *X*_t and using (i), *C*_t = θ\*·Σ*V*_s + *S*_t − *D*_t − *X*_t ≥ θ\*·Σ*V*_s + τ·*S*_t − *D*_t. ∎
+
+The bound is cumulative and pool-level, and an initial sale of REP at no less than *P*_int per unit (§4.7) preserves it, its proceeds entering the reserve. It does not hold for an LP cohort that entered after the surplus was collected and withdrawn, and it concerns extraction covered by REP; extraction beyond an account's stake is covered by the reserve (§4.5).
 
 **Demand floor.** An extractor with expected extraction *E* beyond the allowance over the period it holds REP values a unit at min(*P*_int, *E*/*Q*_e), where *Q*_e is the REP it would hold: the full rate while extraction can absorb the units, less when it cannot. Aggregate extractor demand therefore supports *P*_mkt near *P*_int only while expected extraction is large relative to circulating REP.
 
