@@ -134,6 +134,14 @@ S_STAR_SR = 0.02
 S_LOW_SR = 0.01                 # daily decay allowed only below this
 MIN_STALE_SR = 5                # hourly raise needs at least this many stale blocks
 RAISE_SR, DECAY_SR = 2.0, 0.95  # feasible controller step sizes
+# Unstaked alternative (review point 1): every arb may instead trade from a fresh,
+# unstaked account, paying f_max + c * |own ln-price move| on its volume and keeping
+# its whole edge (no stake, so no charge). None = all arbs staked (paper v1).
+UNSTAKED = None                 # (f_max, c), f_max as a rate
+# Staleness rule (review point 2): "first_swap" = the block's first swap did not move
+# the pool toward the oracle (paper v1, dust-gameable); "outcome" = no point of the
+# block brought the pool within f + m + EPS_SR of the oracle.
+STALE_RULE = "outcome"
 DIV_TAU = 0.25                  # ctl_div: lower m only if > this share of wins went past the top winner
 REB_TOL = 0.005                 # rebalancing constraint: within-band share may drop <= 0.5pp vs today
 USER_STALE_TOL_BPS = 0.1        # ... and user pre-trade gap may rise <= 0.1bp vs today
@@ -161,13 +169,15 @@ def _init():
 
 
 def arb_choice(rule: str, a: float, D: float, h: float, g: float, m: float, gap_abs: float):
-    """(profit, V, kept) for one arb; V = 0 means no trade."""
-    best = (0.0, 0.0, 0.0)
+    """(profit, V, kept, unstaked) for one arb; V = 0 means no trade. kept is the
+    arb's take beyond the pool fee F (for an unstaked trade: its edge net of the
+    extra fee it pays over F)."""
+    best = (0.0, 0.0, 0.0, 0)
     if a <= 0:
         return best
 
-    def ev(V, kept):
-        return (kept - h * V - g, V, kept)
+    def ev(V, kept, u=0):
+        return (kept - h * V - g, V, kept, u)
 
     if rule == "today":
         V = D * (a - h)
@@ -193,6 +203,13 @@ def arb_choice(rule: str, a: float, D: float, h: float, g: float, m: float, gap_
                 if rule == "marginal_cap_gas":
                     kept += min(g, (a - V / (2 * D)) * V - kept)
                 best = max(best, ev(V, kept))
+        if UNSTAKED is not None:
+            fmax, c = UNSTAKED
+            Vu = D * (gap_abs - fmax - h) / (1 + 2 * c)
+            if Vu > 0:
+                E = (a - Vu / (2 * D)) * Vu                 # edge beyond F
+                extra = (fmax - (gap_abs - a) + c * Vu / D) * Vu
+                best = max(best, ev(Vu, E - extra, 1))
     return best
 
 
@@ -201,6 +218,10 @@ def run_one(args) -> dict:
     phase = args[4] if len(args) > 4 else "open"     # open | close | both
     record = bool(args[5]) if len(args) > 5 else False  # keep per-trade arrays (Study C)
     extra_cost = (args[6] if len(args) > 6 else 0.0) / 1e4   # added to every arb's cost (e.g. capital cost of stake)
+    global UNSTAKED, STALE_RULE
+    settings = args[7] if len(args) > 7 else {}
+    UNSTAKED = settings.get("unstaked", None)
+    STALE_RULE = settings.get("stale_rule", "outcome")
     trades = []
     if not _DATA:
         _init()
@@ -233,6 +254,7 @@ def run_one(args) -> dict:
     daily = []
     d_cur = day[0]; d_stale = d_n = d_arb = d_cont = 0; d_m = m
     n_corr = n_uncorr = 0
+    unst_n = 0; unst_vol = 0.0
     d_sr_obs = d_sr_stale = 0
     for i in range(len(o)):
         if day[i] != d_cur:
@@ -285,7 +307,7 @@ def run_one(args) -> dict:
               costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) + extra_cost for c in costs_base]
               correctable = arb_choice("today", a, D, costs[0], gas[i], 0.0, gab)[0] > 0
               res = sorted(((*arb_choice(rule, a, D, h, gas[i], m, gab), h) for h in costs), reverse=True)
-              w, r2 = res[0], (res[1] if len(res) > 1 else (0.0, 0.0, 0.0, 0.0))   # monopoly: no runner-up
+              w, r2 = res[0], (res[1] if len(res) > 1 else (0.0, 0.0, 0.0, 0, 0.0))   # monopoly: no runner-up
               traded = w[0] > 0 and w[1] > 0
               if correctable:
                   n_corr += 1; d_n += 1; w_corr += 1
@@ -294,8 +316,10 @@ def run_one(args) -> dict:
               if traded:
                   if diverse:     # FCFS race: any arb that would profit can be first
                       prof = [k for k, x in enumerate(res) if x[0] > 0 and x[1] > 0]
-                      d_wins[costs.index(res[prof[rng.integers(len(prof))]][3])] += 1
+                      d_wins[costs.index(res[prof[rng.integers(len(prof))]][4])] += 1
                   V, kept = w[1], w[2]
+                  if w[3]:
+                      unst_n += 1; unst_vol += V
                   E = (a - V / (2 * D)) * V
                   bid = max(r2[0], 0.0) + premium / 1e4 * V
                   lp_arb -= kept + premium / 1e4 * V
@@ -305,19 +329,45 @@ def run_one(args) -> dict:
                   arb_vol += V
                   pass_trades[_pass] += 1; pass_vol[_pass] += V
                   if record:
-                      trades.append((i, day[i], V, E, kept, w[3], m, p, G))   # p = post-trade ln price
+                      trades.append((i, day[i], V, E, kept, w[4], m, p, G))   # p = post-trade ln price
                   p += math.copysign(V / D, G)
                   if (oi - p) * G < 0 and abs(oi - p) > 0.5e-4:
                       overshoot += 1
                   d_arb += 1
                   if r2[0] > 0:
                       d_cont += 1
+                  if w[3]:
+                      # an unstaked trade stops short of the band; staked arbs correct the
+                      # remainder in the same block (second-price among them)
+                      G2 = oi - p; a2 = abs(G2) - F
+                      if a2 > 0:
+                          _u, UNSTAKED = UNSTAKED, None
+                          res2 = sorted(((*arb_choice(rule, a2, D, h, gas[i], m, abs(G2)), h) for h in costs), reverse=True)
+                          UNSTAKED = _u
+                          w2 = res2[0]; r22 = res2[1] if len(res2) > 1 else (0.0, 0.0, 0.0, 0, 0.0)
+                          if w2[0] > 0 and w2[1] > 0:
+                              V2, kept2 = w2[1], w2[2]
+                              E2 = (a2 - V2 / (2 * D)) * V2
+                              lp_arb -= kept2; charge_tot += E2 - kept2
+                              builder += max(r22[0], 0.0); margin += w2[0] - max(r22[0], 0.0)
+                              arb_vol += V2
+                              p += math.copysign(V2 / D, G2)
         # self-referential staleness: resting gap beyond f + m + eps at block start,
         # and the block's first swap did not correct it (open phase only)
         traded_this_block = pass_trades[0] + pass_trades[1] > _trades_before
         if phase == "open" and _pre_gap > F + m + EPS_SR and (traded_this_block or es[i] < ee[i]):
             sr_obs += 1; w_sr_obs += 1; d_sr_obs += 1
-            first_corrects = traded_this_block or (xs[es[i]] * _pre_sign > 0)
+            if STALE_RULE == "first_swap":
+                first_corrects = traded_this_block or (xs[es[i]] * _pre_sign > 0)
+            else:                                 # outcome: any point of the block within the band
+                thr = F + m + EPS_SR
+                first_corrects = abs(oi - p) <= thr   # after the arb phase (an unstaked arb may stop outside)
+                if not first_corrects:
+                    pp = p
+                    for k in range(es[i], ee[i]):
+                        pp += xs[k] * xv[k] / D
+                        if abs(oi - pp) <= thr:
+                            first_corrects = True; break
             if not first_corrects:
                 sr_stale += 1; w_sr_stale += 1; d_sr_stale += 1
         if fast:
@@ -366,6 +416,7 @@ def run_one(args) -> dict:
         "lp_from_arbs_m": round(lp_arb / 1e6, 3), "lp_from_users_m": round(lp_exo / 1e6, 3),
         "lp_recapture_m": round(charge_tot / 1e6, 3),
         "builder_payments_m": round(builder / 1e6, 3), "arb_margin_m": round(margin / 1e6, 3),
+        "unstaked": {"setting": UNSTAKED, "trades": unst_n, "volume_b": round(unst_vol / 1e9, 3)}, "stale_rule": STALE_RULE,
         "arb_volume_b": round(arb_vol / 1e9, 3),
         "uncorrected_share_of_correctable": round(n_uncorr / max(n_corr, 1), 5),
         "uncorrected_hours": round(n_uncorr * _DATA["step_s"] / 3600, 2),
