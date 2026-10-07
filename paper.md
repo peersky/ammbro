@@ -119,7 +119,7 @@ where `f_min` and `f_max` are the floor and ceiling of the pool's fee band and �
 
 ### 4.3 Arbitrage as a paid job
 
-Payments for position — priority gas auctions (Daian et al., 2020), builder bids on Ethereum, express-lane bids on rollups — are a toxic by-product of a poorly priced arbitrage opportunity. An AMM that leaves the whole gap between its price and the market to whoever corrects it first invites arbitrageurs to compete for that gap by paying for ordering, and the surplus that should return to LPs accrues to block producers instead: mainnet arbitrageurs in our sample paid $6.57 M for position (§5.4). A well-designed AMM should instead price the correction itself, capturing the surplus for LPs and making their return independent of how the underlying chain's consensus orders transactions.
+Payments for position — priority gas auctions (Daian et al., 2020), builder bids on Ethereum, express-lane bids on rollups — are a toxic by-product of a poorly priced arbitrage opportunity. An AMM that leaves the whole gap between its price and the market to whoever corrects it first invites arbitrageurs to compete for that gap by paying for ordering, and the surplus that should return to LPs accrues to block producers instead: mainnet arbitrageurs in our sample paid $6.57 M for position (§5.4). A well-designed AMM should instead price the correction itself, capturing the surplus for LPs and making their return independent of how the underlying chain's consensus orders transactions — unless the AMM becomes part of that consensus itself.
 
 Each price-correcting swap keeps
 
