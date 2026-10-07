@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Low-risk decentralised finance — payments, savings, fully collateralised lending and synthetic assets — needs an exchange between these assets in which supplying liquidity is not a steady loss. Liquidity providers in automated market makers lose value to arbitrageurs who trade against stale on-chain prices (loss-versus-rebalancing, LVR). REP-AMM is a Uniswap v4 hook that prices each swap at execution and reconciles it after the block against signed oracle prices. Arbitrage is treated as a paid job: a price-correcting swap keeps a market-discovered allowance per unit of correction, and extraction beyond it is recaptured for liquidity providers from stake posted before trading, so that paying block builders for position becomes useless. Traders who overpay mint a per-pair reputation token (REP) whose stake grants fee discounts. All value settles in each pool's own pair, and the work of settlement is paid in gas from a tank that every swap prefunds. On six months of Ethereum and Arbitrum data the mechanism recaptures 70–73% of extraction at a benign-flow overcharge below 0.1 bp, and settlement costs 0.18× the gas of the swaps it settles.
+Low-risk decentralised finance — payments, savings, fully collateralised lending and synthetic assets — needs an exchange between these assets in which supplying liquidity is not a steady loss. Liquidity providers in automated market makers lose value to arbitrageurs who trade against stale on-chain prices (loss-versus-rebalancing, LVR). REP-AMM is a Uniswap v4 hook that prices each swap at execution and reconciles it after the block against signed oracle prices. Arbitrage is treated as a paid job: a price-correcting swap keeps a market-discovered allowance per unit of volume, and extraction beyond it is recaptured for liquidity providers from stake posted before trading, so that paying block builders for position becomes useless. Traders who overpay mint a per-pair reputation token (REP) whose stake grants fee discounts. All value settles in each pool's own pair, and the work of settlement is paid in gas from a tank that every swap prefunds. On six months of Ethereum and Arbitrum data the mechanism recaptures 70–73% of extraction at a benign-flow overcharge below 0.1 bp, and settlement costs 0.18× the gas of the swaps it settles.
 
 ## 1. Introduction
 
@@ -66,15 +66,15 @@ The adversary is any trader, LP, arbitrageur, builder, sequencer or keeper, or a
 
 ## 4. Mechanism
 
-REP-AMM separates the execution of a swap from its pricing. A swap executes at once, at a fee set by the stake its sender has posted; after the block, it is scored against signed prices and settled against that stake. A swap that corrects the pool's price keeps an allowance per unit of correction, and whatever it extracts beyond the allowance is charged to its stake for the LPs; traders whose payments exceed the LPs' target earn the stake that lowers their fees. The subsections follow a swap through this cycle, and Table 1 collects the notation.
+REP-AMM separates the execution of a swap from its pricing. A swap executes at once, at a fee set by the stake its sender has posted; after the block, it is scored against signed prices and settled against that stake. A swap that corrects the pool's price keeps an allowance per unit of volume, and whatever it extracts beyond the allowance is charged to its stake for the LPs; traders whose payments exceed the LPs' target earn the stake that lowers their fees. The subsections follow a swap through this cycle, and Table 1 collects the notation.
 
 | Symbol | Meaning |
 |---|---|
 | `q_LP`, *t\**, *L* | quality score (1); decision instant *t\** = block timestamp + *L*; measured decision latency |
 | *r*, *V* | an account's staked REP and its volume in the epoch |
 | `f_min`, `f_max`, ρ | fee band and capacity scale of the coverage curve (2); ρ is also the base parking rate |
-| *f*, *u*, `edge(u)` | pool fee; a trade's progress along its price correction; the marginal gap beyond the fee at *u* (3) |
-| *m*, *m*₀, ε, σ_o | job allowance per unit of correction (3), its starting value, the oracle tolerance, and the standard deviation of the oracle's random error |
+| *f*, *u*, `edge(u)` | pool fee; volume a swap has executed so far; the gap beyond the fee between oracle and pool marginal price after *u* (3) |
+| *m*, *m*₀, ε, σ_o | job allowance per unit of volume (3), its starting value, the oracle tolerance, and the standard deviation of the oracle's random error |
 | ℓ, *k*, `Δ_block` | parked share of volume (5), its speed, and the pool's price move so far in the block |
 | *N*, θ\*, τ | pool's net income per epoch (4), LPs' target take-rate, and protocol take |
 | *P*_int, *P*_mkt, δ | internal mint and burn rate of REP, its market price, and the buyback margin (§4.8) |
@@ -127,7 +127,7 @@ Each price-correcting swap keeps
 kept = ∫ min(edge(u), m) du                                           (3)
 ```
 
-where *u* measures the trade's progress along its price path, in units of price correction from zero to the full move it makes, `edge(u)` is the marginal gap at *u* between the oracle and the pool price beyond the pool fee, and *m* is the job allowance per unit of correction; everything beyond is recaptured for LPs (Figure 3a). The allowance covers all of the arbitrageur's costs, gas included, so the pool never values gas in its own units. Capping rent per unit rather than on the trade's average edge stops the arbitrageur at the competitive band: under an average-edge cap, rent keeps growing past the oracle, inviting overshoot (Figure 3b). The integral is additive, so splitting a trade gains nothing, and the rule pays any correcting swap regardless of its position.
+where the integral runs over the swap's volume: *u* is the volume executed so far, in units of token 0, from zero to the swap's notional; `edge(u)` is the gap, beyond the pool fee, between the oracle price and the pool's marginal price after volume *u* has executed, as a fraction of price, which falls as the swap moves the pool toward the oracle; and *m* is the job allowance, a rate per unit of volume; everything beyond is recaptured for LPs (Figure 3a). The allowance covers all of the arbitrageur's costs, gas included, so the pool never values gas in its own units. Capping rent per unit rather than on the trade's average edge stops the arbitrageur at the competitive band: under an average-edge cap, rent keeps growing past the oracle, inviting overshoot (Figure 3b). The integral is additive, so splitting a trade gains nothing, and the rule pays any correcting swap regardless of its position.
 
 ![Payout rule](figures/fig_payout_rule.png)
 
@@ -191,7 +191,7 @@ Consider an ETH/USDC pool with illustrative parameters `f_min` = 1 bp, `f_max` =
 
 *Alice*, an uninformed trader holding 5 REP, swaps in a quiet block. Her coverage ratio is 5/(0.0005 × 10,000) = 1, so by (2) she pays 1 + 29·e⁻¹ = 11.67 bp, or $11.67. Her markout before fees is zero, so her `q_LP` is +11.67 bp. With no price move in the block she parks ℓ·*V* = 5 bp × $10,000, all 5 of her REP, until settlement.
 
-*Bob*, an arbitrageur holding 15 REP (coverage ratio 3), corrects the pool after a market move, paying 1 + 29·e⁻³ = 2.44 bp. Along his trade the edge beyond the fee falls linearly from 10 bp to zero, so he extracts 5 bp on average — $5.00 — and his `q_LP` is −5 bp. By (3) he keeps ∫ min(10(1 − *u*), 2) d*u* = 1.80 bp, and the remaining 3.20 bp, $3.20, is charged. The block had already moved by 10 bp, so by (5) with *k* = 0.5 he parked ℓ = 5 + 5 = 10 bp of his volume, $10 of stake; the charge burns 3.20 REP from it, and the other 6.80 are released at settlement.
+*Bob*, an arbitrageur holding 15 REP (coverage ratio 3), corrects the pool after a market move, paying 1 + 29·e⁻³ = 2.44 bp. Along his trade the edge beyond the fee falls linearly from 10 bp to zero, so he extracts 5 bp on average — $5.00 — and his `q_LP` is −5 bp. Writing *u* as a fraction of his notional, by (3) he keeps ∫₀¹ min(10(1 − *u*), 2) d*u* = 1.80 bp of it, and the remaining 3.20 bp, $3.20, is charged. The block had already moved by 10 bp, so by (5) with *k* = 0.5 he parked ℓ = 5 + 5 = 10 bp of his volume, $10 of stake; the charge burns 3.20 REP from it, and the other 6.80 are released at settlement.
 
 At reconciliation, by (4), *N* = 11.67 − 5.00 + 3.20 = $9.87 against a target of 2 bp × $20,000 = $4.00, leaving a surplus of $5.87. Only Alice paid more than the target on her own volume (Bob's net is −1.8 bp), so she receives (1 − 0.025) × 5.87 = 5.72 REP. Her next $10,000 swap, with 10.72 REP staked, pays 1 + 29·e^(−2.14) = 4.40 bp. Bob kept his allowance of $1.80 and paid nothing for position, since any position would have been scored at the same instant (§3.3). The LPs received $6.67 in the pool's assets; Bob's charge was settled in REP, which retires claims on surplus the LPs already hold (Theorem 1).
 
