@@ -73,8 +73,9 @@ REP-AMM separates the execution of a swap from its pricing. A swap executes at o
 | `q_LP`, *t\**, *L* | quality score (1); decision instant *t\** = block timestamp + *L*; measured decision latency |
 | *r*, *V* | an account's staked REP and its volume in the epoch |
 | `f_min`, `f_max`, ρ | fee band and capacity scale of the coverage curve (2); ρ is also the base parking rate |
-| *f*, *u*, `edge(u)` | pool fee; volume a swap has executed so far; the gap beyond the fee between oracle and pool marginal price after *u* (3) |
-| *m*, *m*₀, ε, σ_o | job allowance per unit of volume (3), its starting value, the oracle tolerance, and the standard deviation of the oracle's random error |
+| *f*, *u*, *p*(*u*), *s* | pool fee; volume of a swap of notional *v* executed so far, in token 0; the pool's marginal price after *u*; direction of mispricing (3a) |
+| `edge(u)`, kept, charge | marginal edge beyond the fee (3a); allowance kept and charge recaptured by a correcting swap (3b) |
+| *m*, *m*₀, ε, σ_o | job allowance per unit of volume (3b), its starting value, the oracle tolerance, and the standard deviation of the oracle's random error |
 | ℓ, *k*, `Δ_block` | parked share of volume (5), its speed, and the pool's price move so far in the block |
 | *N*, θ\*, τ | pool's net income per epoch (4), LPs' target take-rate, and protocol take |
 | *P*_int, *P*_mkt, δ | internal mint and burn rate of REP, its market price, and the buyback margin (§4.8) |
@@ -121,19 +122,25 @@ where `f_min` and `f_max` are the floor and ceiling of the pool's fee band and �
 
 Payments for position — priority gas auctions (Daian et al., 2020), builder bids on Ethereum, express-lane bids on rollups — are a toxic by-product of a poorly priced arbitrage opportunity. An AMM that leaves the whole gap between its price and the market to whoever corrects it first invites arbitrageurs to compete for that gap by paying for ordering, and the surplus that should return to LPs accrues to block producers instead: mainnet arbitrageurs in our sample paid $6.57 M for position (§5.4). A well-designed AMM should instead price the correction itself, capturing the surplus for LPs and making their return independent of how the underlying chain's consensus orders transactions — unless the AMM becomes part of that consensus itself.
 
-Each price-correcting swap keeps
+Consider a swap of notional *v* in a pool with fee *f*, and let *P̂* = `P_dir(t*)` be its benchmark from (1). For *u* ∈ [0, *v*], let *p*(*u*) be the pool's marginal price, in the units of *P̂*, after the first *u* units of token 0 of the swap have executed, so that *p*(0) is the pre-trade price. Let *s* = sgn ln(*P̂*/*p*(0)) be the direction in which the pool is mispriced; the swap is *price-correcting* if it moves *p* in direction *s*. Its marginal edge is the log-distance from the pool's marginal price to the benchmark, net of the fee and of a tolerance ε ≥ 0 for oracle error (§5.6):
 
 ```
-kept = ∫ min(edge(u), m) du                                           (3)
+edge(u) = max( s · ln(P̂ / p(u)) − f − ε, 0 )                         (3a)
 ```
 
-where the integral runs over the swap's volume: *u* is the volume executed so far, in units of token 0, from zero to the swap's notional; `edge(u)` is the gap, beyond the pool fee, between the oracle price and the pool's marginal price after volume *u* has executed, as a fraction of price, which falls as the swap moves the pool toward the oracle; and *m* is the job allowance, a rate per unit of volume; everything beyond is recaptured for LPs (Figure 3a). The allowance covers all of the arbitrageur's costs, gas included, so the pool never values gas in its own units. Capping rent per unit rather than on the trade's average edge stops the arbitrageur at the competitive band: under an average-edge cap, rent keeps growing past the oracle, inviting overshoot (Figure 3b). The integral is additive, so splitting a trade gains nothing, and the rule pays any correcting swap regardless of its position.
+which is non-increasing in *u* for a price-correcting swap and is zero once the pool has entered the band of width *f* + ε around the benchmark or passed it. With a job allowance *m* ≥ 0, a rate per unit of volume, the swap keeps and is charged, in units of token 0,
+
+```
+kept = ∫₀^v min(edge(u), m) du,     charge = ∫₀^v max(edge(u) − m, 0) du     (3b)
+```
+
+and the charge is recaptured for LPs (Figure 3a). The allowance covers all of the arbitrageur's costs, gas included, so the pool never values gas in its own units. Capping rent per unit rather than on the trade's average edge stops the arbitrageur at the competitive band: under an average-edge cap, rent keeps growing past the oracle, inviting overshoot (Figure 3b). The integral is additive, so splitting a trade gains nothing, and the rule pays any correcting swap regardless of its position.
 
 ![Payout rule](figures/fig_payout_rule.png)
 
 *Figure 3. (a) Rent kept and recaptured under the per-unit cap. (b) Kept rent as a function of trade size under the two caps.*
 
-The competitive cost of rebalancing is private and changes, so *m* is discovered by a controller rather than set. It raises *m* hourly when blocks begin with uncorrected gaps beyond `f + m + ε`, where *f* is the pool fee and ε a tolerance for oracle error (§5.6), and lowers it daily. Lowering requires care: when *m* falls below the cheapest arbitrageur's cost, no correction is profitable at any gap size (Figure 4), and a blind decay finds the cost only by crossing this cliff. On first-come-first-served chains the controller therefore lowers *m* only when more than a quarter of the day's correcting swaps come from senders other than the most frequent one, evidence that several arbitrageurs can still profit; it then settles between the cheapest and second-cheapest cost. Under builder auctions sender diversity under-reports competition, and blind decay is used.
+The competitive cost of rebalancing is private and changes, so *m* is discovered by a controller rather than set. It raises *m* hourly when blocks begin with uncorrected gaps beyond `f + m + ε`, and lowers it daily. Lowering requires care: when *m* falls below the cheapest arbitrageur's cost, no correction is profitable at any gap size (Figure 4), and a blind decay finds the cost only by crossing this cliff. On first-come-first-served chains the controller therefore lowers *m* only when more than a quarter of the day's correcting swaps come from senders other than the most frequent one, evidence that several arbitrageurs can still profit; it then settles between the cheapest and second-cheapest cost. Under builder auctions sender diversity under-reports competition, and blind decay is used.
 
 ![Supply cliff](figures/fig_supply_cliff.png)
 
@@ -147,7 +154,7 @@ Per epoch, the pool's net income — fees and markouts, with charges recaptured 
 N = Σ fees + Σ markouts + Σ charges,     minted = (1 − τ) · max(N − θ*·ΣV, 0) / P_int     (4)
 ```
 
-where the sums run over the epoch's swaps, markouts are the LPs' gains on the swaps, `q_LP` × notional by (1), net of fees, charges are those recaptured under (3), Σ*V* is the pool's volume, θ\* the LPs' target take-rate and τ the protocol take. The surplus mints REP to the accounts whose payments exceeded the target on their own volume, pro rata to the excess, at a fixed internal rate *P*_int; extraction beyond the allowance burns stake at the same rate, so no market price of REP enters either formula. Minting is self-funding — a wash trader's mint is prepaid by its own overpayment — and self-enforcing: over-earning mints capacity that lowers fees, under-earning halts minting. REP is minted below the surplus it claims by the protocol take τ, which funds the per-pool reserve. Staked REP is a slashable trading licence, preferable to escrowed cash because it earns its holder the discount, is costly only to extractors, and appreciates with the pool's benign volume.
+where the sums run over the epoch's swaps, markouts are the LPs' gains on the swaps, `q_LP` × notional by (1), net of fees, charges are those recaptured under (3b), Σ*V* is the pool's volume, θ\* the LPs' target take-rate and τ the protocol take. The surplus mints REP to the accounts whose payments exceeded the target on their own volume, pro rata to the excess, at a fixed internal rate *P*_int; extraction beyond the allowance burns stake at the same rate, so no market price of REP enters either formula. Minting is self-funding — a wash trader's mint is prepaid by its own overpayment — and self-enforcing: over-earning mints capacity that lowers fees, under-earning halts minting. REP is minted below the surplus it claims by the protocol take τ, which funds the per-pool reserve. Staked REP is a slashable trading licence, preferable to escrowed cash because it earns its holder the discount, is costly only to extractors, and appreciates with the pool's benign volume.
 
 ### 4.5 Stake, parking and collection
 
@@ -187,11 +194,11 @@ The reserve therefore acts as a buyer of last resort with a strictly bounded bal
 
 ### 4.9 A worked example
 
-Consider an ETH/USDC pool with illustrative parameters `f_min` = 1 bp, `f_max` = 30 bp, ρ = 5 bp, θ\* = 2 bp, *m* = 2 bp, τ = 2.5%, and an internal rate of 1 USDC per REP; both swaps below are $10,000 and fall in one epoch.
+Consider an ETH/USDC pool with illustrative parameters `f_min` = 1 bp, `f_max` = 30 bp, ρ = 5 bp, θ\* = 2 bp, *m* = 2 bp, ε = 0, τ = 2.5%, and an internal rate of 1 USDC per REP; both swaps below are $10,000 and fall in one epoch.
 
 *Alice*, an uninformed trader holding 5 REP, swaps in a quiet block. Her coverage ratio is 5/(0.0005 × 10,000) = 1, so by (2) she pays 1 + 29·e⁻¹ = 11.67 bp, or $11.67. Her markout before fees is zero, so her `q_LP` is +11.67 bp. With no price move in the block she parks ℓ·*V* = 5 bp × $10,000, all 5 of her REP, until settlement.
 
-*Bob*, an arbitrageur holding 15 REP (coverage ratio 3), corrects the pool after a market move, paying 1 + 29·e⁻³ = 2.44 bp. Along his trade the edge beyond the fee falls linearly from 10 bp to zero, so he extracts 5 bp on average — $5.00 — and his `q_LP` is −5 bp. Writing *u* as a fraction of his notional, by (3) he keeps ∫₀¹ min(10(1 − *u*), 2) d*u* = 1.80 bp of it, and the remaining 3.20 bp, $3.20, is charged. The block had already moved by 10 bp, so by (5) with *k* = 0.5 he parked ℓ = 5 + 5 = 10 bp of his volume, $10 of stake; the charge burns 3.20 REP from it, and the other 6.80 are released at settlement.
+*Bob*, an arbitrageur holding 15 REP (coverage ratio 3), corrects the pool after a market move, paying 1 + 29·e⁻³ = 2.44 bp. Along his trade the edge beyond the fee falls linearly from 10 bp to zero, so he extracts 5 bp on average — $5.00 — and his `q_LP` is −5 bp. Writing *u* as a fraction of his notional, by (3b) he keeps ∫₀¹ min(10(1 − *u*), 2) d*u* = 1.80 bp of it, and the remaining 3.20 bp, $3.20, is charged. The block had already moved by 10 bp, so by (5) with *k* = 0.5 he parked ℓ = 5 + 5 = 10 bp of his volume, $10 of stake; the charge burns 3.20 REP from it, and the other 6.80 are released at settlement.
 
 At reconciliation, by (4), *N* = 11.67 − 5.00 + 3.20 = $9.87 against a target of 2 bp × $20,000 = $4.00, leaving a surplus of $5.87. Only Alice paid more than the target on her own volume (Bob's net is −1.8 bp), so she receives (1 − 0.025) × 5.87 = 5.72 REP. Her next $10,000 swap, with 10.72 REP staked, pays 1 + 29·e^(−2.14) = 4.40 bp. Bob kept his allowance of $1.80 and paid nothing for position, since any position would have been scored at the same instant (§3.3). The LPs received $6.67 in the pool's assets; Bob's charge was settled in REP, which retires claims on surplus the LPs already hold (Theorem 1).
 
