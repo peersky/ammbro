@@ -6,7 +6,7 @@ Low-risk decentralised finance — payments, savings, fully collateralised lendi
 
 ## 1. Introduction
 
-LVR is a permanent, non-mean-reverting cost for liquidity providers (LPs), commonly estimated at 5–7% of liquidity value per year — enough to make many major pools unprofitable after fees. Arbitrage itself is necessary: it keeps the pool's price aligned with the market. The problem is its price. Arbitrageurs capture the full gap between pool and market, and on Ethereum they pass much of it to block builders in competition for position, a cost ultimately borne by LPs. Fixed fee tiers fragment liquidity without resolving the trade-off.
+LVR is a permanent, non-mean-reverting cost for liquidity providers (LPs). For a constant-product pool it accrues at σ²/8 of the pool's value per unit of time (Milionis et al., 2022), about 11% a year at a daily volatility of 5%; measured arbitrage losses exceed the fees LPs earn in many of the largest Uniswap pools (Fritsch and Canidio, 2024), and in our sample LPs of the mainnet ETH/USDC pool ended $1.58 M down after fees (§5.2). Arbitrage itself is necessary: it keeps the pool's price aligned with the market. The problem is its price. Arbitrageurs capture the full gap between pool and market, and on Ethereum they pass much of it to block builders in competition for position, a cost ultimately borne by LPs. Fixed fee tiers fragment liquidity without resolving the trade-off.
 
 This matters beyond the returns of LPs. Buterin (2025) argues that low-risk DeFi — payments and savings, well-understood tools such as synthetic assets and fully collateralised lending, "and the ability to exchange between these assets" — can be for Ethereum what search was for Google. Exchange is the primitive the others rely on, and it is low-risk only if supplying liquidity is: an LP who expects to lose a predictable share of liquidity to arbitrage each year is not holding a savings-grade position. We therefore design an exchange whose risks to LPs are bounded and stated. Execution stays synchronous and permissionless; nothing is lent or leveraged; all value settles in the pool's own pair, with no third asset or numeraire; extraction is collected from stake posted in advance; and the reputation asset is solvent at par against the surplus LPs have already received (Theorem 1), so a collapse in its price removes surplus, not principal. The mechanism does add a dependency: a signed oracle, whose error we bound by a tolerance rather than eliminate (§5.6). Oracle risk and contract risk are the very risks that Buterin names as having held low-risk DeFi back, and we list them explicitly among our assumptions (§3.4).
 
@@ -28,6 +28,8 @@ Approaches to LVR either remove the information asymmetry or redistribute its su
 
 No blockchain finalises as quickly as a centralised order book observes prices. Even a price signed into the transaction leaves a lag between the signature and execution that can be exploited. The ground truth about a swap is therefore available only after the fact, and an AMM that prices against it must span at least two blocks: the swap, and its reconciliation.
 
+Reconciliation is to prices what finality is to blocks. Consensus protocols separate inclusion from finality: Nakamoto consensus makes a block final only probabilistically, as further blocks are built on it (Garay et al., 2015); Ethereum produces a block every 12 s but finalises a checkpoint only after two epochs of attestations, about 13 minutes (Buterin et al., 2020); and an optimistic rollup such as Arbitrum treats its results as final only once a challenge period has passed (Kalodner et al., 2018). REP-AMM applies the same separation to price. A swap executes at once and provisionally, as a block is included; its price becomes final at reconciliation, once the signed prices for its block are available and agreed. As in those protocols, slowness is what makes agreement possible (§4.6).
+
 ### 3.2 The quality score
 
 For a swap with pool-perspective token deltas (Δ₀, Δ₁),
@@ -48,7 +50,7 @@ On chains whose blocks are shorter than their timestamps, such as Arbitrum (abou
 
 We assume the following.
 
-- **A1 (oracle).** Signed bid and ask prices exist for every block, are retained for a window of about a month, and are correct up to a bias and noise that the tolerance ε of §4.3 bounds (§5.6). A compromised or censored oracle is outside the model.
+- **A1 (oracle).** Signed bid and ask prices exist for every block, are retained for a window of about a month, and are correct up to a bias and noise that the tolerance ε of §4.3 bounds (§5.6). A compromised or censored oracle is outside the model; §4.6 discusses attestation that reduces this trust.
 - **A2 (chain).** The hook executes atomically with the swap, and the chain exposes its base fee to contracts. Reorganisations beyond finality are not considered.
 - **A3 (ordering).** No ordering is assumed to be honest: builders and sequencers may order, insert and exclude transactions and sell position. The only ordering property used is whether a chain runs builder auctions or a first-come-first-served sequencer, which selects the allowance controller (§4.3).
 - **A4 (arbitrage).** Arbitrageurs are rational and have private, time-varying costs, and at least one is active; competition among them is not assumed (§5.4).
@@ -152,6 +154,8 @@ where `Δ_block` is the pool's price move so far in the block: corrections after
 The hook extends each swapper's record — post-trade price, active liquidity and token deltas, chained by hash in the account's storage — so that an account's unsettled swaps form a self-contained segment. An account may settle itself at any time against the signed prices for its blocks, which releases its parked stake; at the end of each epoch a keeper settles every account still in flight. Both paths advance the same pointer, and a keeper's entry for an account that has already settled is skipped rather than reverted. Flights still unsettled when the oracle's retention window expires are burned in full.
 
 Settlement is paid in gas, not in the pool's assets. Every swap prefunds `G × block.basefee` into a gas tank — a count of gas units times a value the chain exposes, with no price involved — from which keepers are reimbursed with an escalating bounty, directly or through an ERC-4337 paymaster. Since every pool contributes in the same unit, one tank can serve many pools. Two rules keep it inexpensive: settlement is never forced into the current block, and each pool chooses its epoch length. Where charges are computed on-chain, an open race among keepers is efficient; where they are proven off-chain, a designated leader avoids duplicated proving. A leader cannot alter a charge, which is fixed by the record and the signed prices.
+
+Because reconciliation is not time-critical, the prices it uses can themselves be subject to consensus, which an oracle read at execution cannot afford. Oracle networks already aggregate the reports of independent nodes and sign the result once (Breidenbach et al., 2021); REP-AMM can add a second, independent layer, applying a batch only after a threshold of attesters has co-signed it, or after a challenge window has passed without dispute. A corrupted feed must then also corrupt that threshold. The natural attesters are the parties exposed to the batch, but they are not neutral: LPs gain from prices that inflate charges and traders from prices that deflate them. Attestation therefore needs both sides — LPs weighted by liquidity and stakers weighted by stake — and what an epoch settles to when they disagree must not give either side a free option; we leave the design of dispute resolution to future work (for a survey of oracle designs and attacks, see Eskandari et al., 2021). The cost is latency rather than gas: a few signature checks per epoch, against a settlement deadline that is already long. Only epoch-based reconciliation can absorb that delay, a further reason to price after the fact.
 
 The per-swap work of settlement — a multiply-add against a verified price, a comparison and a state write — is smaller than executing the swap, so settlement is bounded by the pool's own execution footprint. §5.7 measures it.
 
@@ -273,15 +277,27 @@ Adams, A., Moallemi, C. C., Reynolds, S., and Robinson, D. (2024). am-AMM: An au
 
 Baggiani, L., Herdegen, M., and Sánchez-Betancourt, L. (2025). Optimal dynamic fees in automated market makers. arXiv:2506.02869.
 
+Breidenbach, L., Cachin, C., Coventry, A., Juels, A., and Miller, A. (2021). Chainlink off-chain reporting protocol. https://research.chain.link/ocr.pdf
+
 Buterin, V. (2025). Low-risk defi can be for Ethereum what search was for Google. https://vitalik.eth.limo/general/2025/09/21/low_risk_defi.html
+
+Buterin, V., Hernandez, D., Kamphefner, T., Pham, K., Qiao, Z., Ryan, D., Sin, J., Wang, Y., and Zhang, Y. X. (2020). Combining GHOST and Casper. arXiv:2003.03052.
 
 Buterin, V., Weiss, Y., Tirosh, D., Nacson, S., Forshtat, A., Gazso, K., and Hess, T. (2021). ERC-4337: Account abstraction using alt mempool. Ethereum Improvement Proposals. https://eips.ethereum.org/EIPS/eip-4337
 
 Chainlink. Data Streams: liquidity-weighted bid and ask prices. https://docs.chain.link/data-streams/concepts/liquidity-weighted-prices
 
+Eskandari, S., Salehi, M., Gu, W. C., and Clark, J. (2021). SoK: Oracles from the ground truth to market manipulation. In *Proceedings of the 3rd ACM Conference on Advances in Financial Technologies (AFT '21)*. arXiv:2106.00667.
+
+Fritsch, R., and Canidio, A. (2024). Measuring arbitrage losses and profitability of AMM liquidity. arXiv:2404.05803.
+
+Garay, J., Kiayias, A., and Leonardos, N. (2015). The Bitcoin backbone protocol: Analysis and applications. In *Advances in Cryptology – EUROCRYPT 2015*, LNCS 9057, pp. 281–310. Springer.
+
 Ghasemlu, F. (2026). Optimal dynamic fees for automated market makers: A stochastic control approach to loss-versus-rebalancing. arXiv:2606.21769.
 
 Groth, J. (2016). On the size of pairing-based non-interactive arguments. In *Advances in Cryptology – EUROCRYPT 2016*, LNCS 9666, pp. 305–326. Springer.
+
+Kalodner, H., Goldfeder, S., Chen, X., Weinberg, S. M., and Felten, E. W. (2018). Arbitrum: Scalable, private smart contracts. In *27th USENIX Security Symposium*.
 
 Josojo (2022). MEV capturing AMM (McAMM). Ethereum Research. https://ethresear.ch/t/mev-capturing-amm-mcamm/13336
 
