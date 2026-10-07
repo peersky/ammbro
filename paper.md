@@ -40,11 +40,17 @@ q_LP = (Δ₀ + P_dir(t*)·Δ₁) / notional                                (1)
 
 where `P_dir` is the directional benchmark — the liquidity-weighted bid when the pool sells the risky asset and the ask when it buys it — so that swaps executed inside the bid–ask band are never scored as extractive (Chainlink Data Streams supplies both sides). The score is invariant to the choice of numeraire, needs no sign convention by trade direction, and is evaluated at horizon zero, where extraction occurs, rather than against later prices that mix extraction with drift. Negative values are losses to LPs.
 
-### 3.3 When a swap is priced
+### 3.3 The reference instant: decision latency under delayed execution
 
-A block executes as one instant, so a transaction's index records ordering, not time; and under proposer–builder separation a block's timestamp labels its slot rather than the moment its content was decided. We therefore measure the decision instant *t\** = block timestamp + *L*: a swap that closes a gap stops where the pool price net of the fee meets the hedgeable external price, and minimising that residual over offsets identifies *L* (Figure 5). Every swap in a block is scored at the same instant and over a one-second window around it. A per-block anchor is position-invariant — no position maps to a more lenient benchmark — which is the property that makes buying position useless. A finer clock derived from a transaction's index within the block would be set by whoever controls ordering — the builder or sequencer — and could be sold to the swap that benefits from it; anchoring every swap to the block's timestamp removes that lever (Appendix B).
+The score (1) compares a swap with the external price at the moment its sender decided to trade. That moment is neither when the transaction was submitted nor when the block was stamped: between the two lies a pipeline that differs by chain and by the kind of trader.
 
-On chains whose blocks are shorter than their timestamps, such as Arbitrum (about four blocks per second), we place the *N* blocks sharing second *S* at *S* + (*k* + ½)/*N*. This orders blocks, not transactions, and on a first-come-first-served sequencer block order follows arrival; its error of at most ±1/(2*N*) s is absorbed by the scoring window.
+On Ethereum, a block's timestamp is the start of its slot, a label fixed before the block's content is chosen. Ordinary swaps are typically signed and broadcast through the public mempool seconds before inclusion. Arbitrage between centralised and decentralised exchanges is non-atomic: the arbitrageur hedges on the centralised exchange and sends its on-chain leg privately to block builders, and a few searchers closely tied to builders account for most of its volume (Heimbach et al., 2024). Builders bid for the block in the MEV-Boost auction, and arbitrageurs re-price their bundles as the external price moves until the proposer takes the winning header — which proposers delay into the slot to collect higher bids (Schwarz-Schilling et al., 2023; Öz et al., 2023). An arbitrageur's last decision therefore falls after the timestamp, by about the time the winning bid is taken.
+
+Arbitrum has no public mempool. Its sequencer orders transactions by arrival into blocks of about 250 ms whose timestamps have a resolution of one second. Since April 2025, a sealed-bid second-price auction held every minute sells an express lane, and all other transactions are delayed by 200 ms (Timeboost; Mamageishvili et al., 2023). Three entities won almost all of these auctions (Messias and Torres, 2025). An arbitrageur reacting to an external move is sequenced within its network latency plus at most that delay, so its decision lies close to its inclusion, wherever in the block that happens to be.
+
+Rather than assume a latency, we measure it. A swap that corrects the pool trades until the pool price net of the fee meets the external price at which it can hedge, at the instant it decides; the offset from the block timestamp that minimises this residual over correcting swaps therefore identifies the decision latency *L*, and we score at *t\** = block timestamp + *L* (Figure 5). The estimate is 1.5 s on mainnet (bracketed by 1.25–1.75 s), consistent with bids taken one to two seconds into the slot, and 0.75 s on Arbitrum (0–1.5 s), where the staleness of our price proxy dominates the bracket and its earliest estimate places the match at block time itself, as arrival ordering implies. Benign flow shows no relation to the offset: it is uninformed, so its decision instant does not affect its score. The anchor matters for informed flow: anchoring at the timestamp scores arbitrageurs against prices from before they traded (§5.2).
+
+Every swap in a block is scored at the same instant and over a one-second window around it. A per-block anchor is position-invariant — no position maps to a more lenient benchmark — which is what makes buying position useless; a finer clock derived from a transaction's index within the block would instead be set by whoever orders the block, and could be sold (Appendix B). On chains whose blocks are shorter than their timestamps, we place the *N* blocks sharing second *S* at *S* + (*k* + ½)/*N*. This orders blocks, not transactions; on an arrival-ordered sequencer block order follows arrival, and the error of at most ±1/(2*N*) s is absorbed by the scoring window.
 
 ### 3.4 Assumptions and threat model
 
@@ -261,7 +267,7 @@ Funding keepers from the gas tank requires a modest contribution per swap (Figur
 
 ### 5.8 Limitations
 
-The benchmark is a Binance touch proxy, not the signed liquidity-weighted quote, so oracle error is modelled rather than measured. The simulation assumes linear daily depth, fixed user flow, a population of arbitrage costs and a second-price auction for position; sender diversity presumes a first-come-first-served race. Labels are conservative heuristics. Gas was measured on a locally deployed v4 pool manager with mock tokens, and swaps crossing a liquidity boundary are outside the closed-form charge. Keeper costs are assumed, and the seven-pool census applies the study pool's recapture rate to the other pairs. The behaviour of REP below its mint rate is analysed (§4.8, Appendix E) but not simulated; its sufficiency as collateral relative to a plain bond remains to be tested empirically.
+The benchmark is a Binance touch proxy, not the signed liquidity-weighted quote, so oracle error is modelled rather than measured. The simulation assumes linear daily depth, fixed user flow, a population of arbitrage costs and a second-price auction for position; sender diversity presumes a first-come-first-served race, whereas Arbitrum's sequencer sold a 200 ms express lane throughout our sample, so the gated controller may read a few express-lane holders as weak competition. Labels are conservative heuristics. Gas was measured on a locally deployed v4 pool manager with mock tokens, and swaps crossing a liquidity boundary are outside the closed-form charge. Keeper costs are assumed, and the seven-pool census applies the study pool's recapture rate to the other pairs. The behaviour of REP below its mint rate is analysed (§4.8, Appendix E) but not simulated; its sufficiency as collateral relative to a plain bond remains to be tested empirically.
 
 **Future work.** REP is issued per pair. A single reputation token shared by all pools would let standing earned in one pool count in another, but we have not found a design that satisfies our constraints in principle. REP is minted from surplus paid to a pool's LPs, so an account that is also the LP of its own pool mints at the cost of the protocol take alone; per pair this is harmless, since the LPs who bear a charge are the LPs whose surplus backs the REP, but a shared token lets REP minted against one pool's surplus be charged against another's. Per-pool valuation curves, oracle pricing and closed surplus vaults bound the loss to each pool's accumulated surplus but do not make minting costly; locking part of the backing or admitting pools by seasoning would, at the cost of the LPs' claim to their surplus or of permissionless entry. We leave a shared token to future work.
 
@@ -299,15 +305,25 @@ Groth, J. (2016). On the size of pairing-based non-interactive arguments. In *Ad
 
 Kalodner, H., Goldfeder, S., Chen, X., Weinberg, S. M., and Felten, E. W. (2018). Arbitrum: Scalable, private smart contracts. In *27th USENIX Security Symposium*.
 
+Heimbach, L., Pahari, V., and Schertenleib, E. (2024). Non-atomic arbitrage in decentralized finance. In *IEEE Symposium on Security and Privacy*. arXiv:2401.01622.
+
 Josojo (2022). MEV capturing AMM (McAMM). Ethereum Research. https://ethresear.ch/t/mev-capturing-amm-mcamm/13336
+
+Mamageishvili, A., Kelkar, M., Schlegel, J. C., and Felten, E. W. (2023). Buying time: Latency racing vs. bidding for transaction ordering. In *5th Conference on Advances in Financial Technologies (AFT 2023)*. arXiv:2306.02179.
 
 McMenamin, C., and Daza, V. (2023). An AMM minimizing user-level extractable value and loss-versus-rebalancing. arXiv:2301.13599.
 
 McMenamin, C., Daza, V., and Mazorra, B. (2022). Diamonds are forever, loss-versus-rebalancing is not. arXiv:2210.10601; published as "An automated market maker minimizing loss-versus-rebalancing".
 
+Messias, J., and Torres, C. F. (2025). The express lane to spam and centralization: An empirical analysis of Arbitrum's Timeboost. arXiv:2509.22143.
+
 Milionis, J., Moallemi, C. C., Roughgarden, T., and Zhang, A. L. (2022). Automated market making and loss-versus-rebalancing. arXiv:2208.06046.
 
+Öz, B., Kraner, B., Vallarano, N., Kruger, B. S., Matthes, F., and Tessone, C. J. (2023). Time moves faster when there is nothing you anticipate: The role of time in MEV rewards. arXiv:2307.05814.
+
 Robinson, D., and White, D. (2024). Priority is all you need. Paradigm. https://www.paradigm.xyz/writing/priority-is-all-you-need
+
+Schwarz-Schilling, C., Saleh, F., Thiery, T., Pan, J., Shah, N. B., and Monnot, B. (2023). Time is money: Strategic timing games in proof-of-stake protocols. In *5th Conference on Advances in Financial Technologies (AFT 2023)*. arXiv:2305.09032.
 
 Sorella Labs. A new era of DeFi with app-specific sequencing. https://sorellalabs.xyz/writing/a-new-era-of-defi-with-ass
 
