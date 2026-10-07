@@ -231,6 +231,15 @@ def run_one(args) -> dict:
     fmax_fee = settings.get("fmax", 500e-4)
     ramp_days = settings.get("stake_ramp_days", 0)
     pooled = settings.get("alloc", "equal") == "pooled"
+    # Premium mint (review follow-up): a correcting swap's fee premium above F, net of
+    # its charge, mints REP to the arbitrageur at par (less TAU), credited to its own
+    # stake an hour later; arbs value the credit at a fraction v of par. Starts at 0 REP.
+    pm_v = settings.get("premium_mint", None)
+    TAU = settings.get("pm_tau", 0.0)               # take on premium credits (benign surplus keeps its own)
+    if pm_v is not None:
+        stake_K = 0.0; UNSTAKED = None
+        _n = len(POPULATIONS.get(scenario, ARB_COSTS_BPS)); r_arb = np.zeros(_n); pend = np.zeros(_n)
+    pm_minted = pm_leak = 0.0
     if stake_K is not None and UNSTAKED is None:
         UNSTAKED = (fmax_fee, 0.0)                       # fresh accounts always available
     vol_k = float(scenario.split("_x")[1]) if scenario.startswith("vol_x") else 1.0
@@ -264,6 +273,11 @@ def run_one(args) -> dict:
     def arb_fee(j):
         if stake_K is None or rule == "today":
             return F
+        if pm_v is not None:
+            r, v = r_arb[j], vol_ep[j]
+            if r <= 0:
+                return fmax_fee
+            return F if v <= 0 else F + (fmax_fee - F) * math.exp(-r / (RHO * v))
         ramp = min(1.0, (day[i] - day0) / ramp_days) if ramp_days else 1.0
         if pooled:                                   # one staker (e.g. a solver) covers all arbs
             r, v = stake_K * ramp, vol_ep.sum()
@@ -313,6 +327,8 @@ def run_one(args) -> dict:
             d_wins[:] = 0
             vol_ep[:] = 0.0
         oi = o0 + vol_k * (o[i] - o0); D = Dd[i] * depth_x
+        if pm_v is not None and i % _DATA["raise_steps"] == 0:
+            r_arb += pend; pend[:] = 0.0
         _trades_before = pass_trades[0] + pass_trades[1]
         G = oi - p; gab = abs(G)
         _pre_gap = gab; _pre_sign = 1.0 if G > 0 else -1.0     # +1: pool below oracle, a buy corrects
@@ -338,8 +354,12 @@ def run_one(args) -> dict:
               costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) + extra_cost for c in costs_base]
               correctable = arb_choice("today", a, D, costs[0], gas[i], 0.0, gab)[0] > 0
               fees = [arb_fee(j) for j in range(n_arb)]
-              res = sorted(((*arb_choice(rule, gab - fees[j], D, h, gas[i], m, gab), h, fees[j], j)
-                            for j, h in enumerate(costs)), reverse=True)
+              if pm_v is None:
+                  res = sorted(((*arb_choice(rule, gab - fees[j], D, h, gas[i], m, gab), h, fees[j], j)
+                                for j, h in enumerate(costs)), reverse=True)
+              else:
+                  res = sorted(((*arb_choice(rule, gab - F, D, h + (1 - pm_v * (1 - TAU)) * (fees[j] - F), gas[i], m, gab), h, fees[j], j)
+                                for j, h in enumerate(costs)), reverse=True)
               w, r2 = res[0], (res[1] if len(res) > 1 else (0.0, 0.0, 0.0, 0, 0.0, F, 0))   # monopoly: no runner-up
               if correctable and not (w[0] > 0 and w[1] > 0) and min(fees) > F + 1e-6:
                   stalled_fee += 1
@@ -357,10 +377,21 @@ def run_one(args) -> dict:
                       unst_n += 1; unst_vol += V
                   else:
                       vol_ep[w[6]] += V
-                  aw = gab - w[5]                        # edge beyond the fee this arb pays
-                  E = (aw - V / (2 * D)) * V
-                  extra_fee = (w[5] - F) * V             # fee above the pool fee, to LPs
-                  fee_prem += extra_fee
+                  if pm_v is None:
+                      aw = gab - w[5]                        # edge beyond the fee this arb pays
+                      E = (aw - V / (2 * D)) * V
+                      extra_fee = (w[5] - F) * V             # fee above the pool fee, to LPs
+                      fee_prem += extra_fee
+                  else:
+                      E = (gab - F - V / (2 * D)) * V
+                      prem = (w[5] - F) * V; ch = E - kept; jw = w[6]
+                      credit = max(prem - ch, 0.0)
+                      excess = max(ch - prem, 0.0)           # charge beyond the premium: from stake
+                      burn = min(excess, r_arb[jw]); r_arb[jw] -= burn
+                      pm_leak += excess - burn
+                      pend[jw] += (1 - TAU) * credit; pm_minted += (1 - TAU) * credit
+                      extra_fee = -(excess - burn)           # uncovered charge is lost to LPs
+                      fee_prem += prem
                   bid = max(r2[0], 0.0) + premium / 1e4 * V
                   lp_arb -= kept - extra_fee + premium / 1e4 * V
                   charge_tot += E - kept
@@ -462,7 +493,9 @@ def run_one(args) -> dict:
         "builder_payments_m": round(builder / 1e6, 3), "arb_margin_m": round(margin / 1e6, 3),
         "unstaked": {"setting": UNSTAKED, "trades": unst_n, "volume_b": round(unst_vol / 1e9, 3)}, "stale_rule": STALE_RULE,
         "stake": {"usd": stake_K, "fmax_bps": round(fmax_fee * 1e4), "ramp_days": ramp_days, "alloc": "pooled" if pooled else "equal", "fee_premium_to_lps_m": round(fee_prem / 1e6, 3),
-                  "correctable_blocks_uncorrected_for_lack_of_stake": stalled_fee}, "vol_x": vol_k,
+                  "correctable_blocks_uncorrected_for_lack_of_stake": stalled_fee,
+                  "premium_mint_v": pm_v, "rep_minted_to_arbs_m": round(pm_minted / 1e6, 3), "uncovered_charges_m": round(pm_leak / 1e6, 3),
+                  "arb_stake_end_m": None if pm_v is None else round(float(r_arb.sum()) / 1e6, 3)}, "vol_x": vol_k,
         "arb_volume_b": round(arb_vol / 1e9, 3),
         "uncorrected_share_of_correctable": round(n_uncorr / max(n_corr, 1), 5),
         "uncorrected_hours": round(n_uncorr * _DATA["step_s"] / 3600, 2),
