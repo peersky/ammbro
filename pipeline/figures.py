@@ -267,9 +267,48 @@ def gas_tank() -> None:
     save(fig, "fig_gas_tank")
 
 
+def stake_and_shocks() -> None:
+    chains = [("Ethereum mainnet", R / "study_i" / "stake.json"), ("Arbitrum One", R / "arbitrum" / "study_i" / "stake.json")]
+    chains = [(n, p) for n, p in chains if p.exists()]
+    fig, axes = plt.subplots(1, 2, figsize=(8.0, 3.1))
+    ax = axes[0]
+    for ci, (name, path) in enumerate(chains):
+        d = j(path)
+        for alloc, ls in (("pooled", "-"), ("equal", "--")):
+            pts = sorted((r["stake_mult"], r["uncorrected_hours"]) for r in d["rows"]
+                         if r["scenario"] == "stable" and r["alloc"] == alloc and not r["ramp_days"] and r["stake_mult"])
+            base = next(r["uncorrected_hours"] for r in d["rows"] if r["scenario"] == "stable" and r["stake_mult"] is None
+                        and r["unstaked_fmax_bps"] is None)
+            ax.plot([x for x, _ in pts], [max(y, 0.1) for _, y in pts], ls, color=C[ci], marker="o", ms=3,
+                    label=f"{name}, {'pooled' if alloc == 'pooled' else 'held separately'}")
+            if alloc == "pooled":
+                ax.axhline(max(base, 0.1), color=C[ci], lw=0.8, ls=":", label=f"{name}, fully covered")
+    ax.set_xscale("log"); ax.set_yscale("log")
+    ax.set_xlabel("arbitrageurs' stake (multiples of ρ × mean daily arbitrage volume)")
+    ax.set_ylabel("uncorrected hours in six months")
+    ax.set_title("(a) stake needed to keep the pool corrected")
+    ax.legend(fontsize=6.5)
+    ax = axes[1]
+    vols = [("stable", "shocks ×1"), ("vol_x2", "shocks ×2"), ("vol_x4", "shocks ×4")]
+    for ci, (name, path) in enumerate(chains):
+        d = j(path)
+        for vi, (sc, lab) in enumerate(vols):
+            ref = next(r["lp_gain_vs_today_m"] for r in d["rows"] if r["scenario"] == sc and r["stake_mult"] is None
+                       and r["unstaked_fmax_bps"] is None)
+            pts = sorted((r["unstaked_fmax_bps"], 100 * (ref - r["lp_gain_vs_today_m"]) / ref) for r in d["rows"]
+                         if r["scenario"] == sc and r["stake_mult"] is None and r["unstaked_fmax_bps"])
+            ax.plot([x for x, _ in pts], [y for _, y in pts], ["-", "--", ":"][vi], color=C[ci], marker="o", ms=3,
+                    label=f"{name}, {lab}")
+    ax.set_xscale("log"); ax.set_ylim(bottom=0)
+    ax.set_xlabel("$f_{max}$ (bp)"); ax.set_ylabel("LP gain lost to fresh accounts (%)")
+    ax.set_title("(b) leakage to unstaked accounts")
+    ax.legend(fontsize=6.5)
+    save(fig, "fig_stake_shocks")
+
+
 def main() -> None:
     for f in (coverage_curve, payout_rule, supply_cliff, latency_profile, score_distributions, extraction_by_position,
-              recapture_frontier, controller_paths, oracle_error, settlement_cost, gas_tank):
+              recapture_frontier, controller_paths, oracle_error, settlement_cost, gas_tank, stake_and_shocks):
         f()
 
 
