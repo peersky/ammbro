@@ -124,6 +124,16 @@ The per-swap work of settlement — a multiply-add against a verified price, a c
 
 At launch no account holds REP. An initial supply is sold, not granted; its proceeds seed the reserve and the gas tank. Intermediaries — solvers, RFQ desks — can hold stake and pass the discount to users. The protocol never identifies arbitrageurs: arbitrage is a role carried by a swap, and any swap that moves the pool toward the oracle is paid the allowance on it. The charge is computed per correcting swap rather than per account, so an intermediary cannot net customers' overpayments against its own extraction.
 
+### 4.8 When REP trades below its mint rate
+
+REP is burned for charges at the internal rate *P*_int at which it was minted, while its secondary-market price *P*_mkt may fall below it. A trader can then buy REP cheaply, stake it, and pay charges for extraction at par with collateral that cost less. Three properties bound the consequences (Appendix F).
+
+First, the pool is solvent at par. REP is minted only from surplus above the LPs' target, and below that surplus by the take τ, so outstanding REP valued at *P*_int never exceeds the surplus LPs have already received. If every outstanding unit were eventually burned as collateral for extraction, LPs would return that surplus and end at their target θ*, not below it: a crash in REP's price removes the surplus, not the principal.
+
+Second, extractors provide a demand floor. A unit of REP saves an extractor up to *P*_int of charges, so extractors buy it whenever *P*_mkt < *P*_int and they have extraction to cover. The floor scales with expected extraction rather than being fixed at par: if circulating REP exceeds what extraction can absorb, the price can remain below par.
+
+Third, below par, outstanding REP is the pool's debt trading at a discount. When cheap REP covers a charge, LPs' accounting floor holds but the value recaptured falls to roughly (*P*_mkt/*P*_int) of its designed level, the difference accruing to the seller of the REP. The per-pool reserve, funded by τ, can retire that debt directly: buying REP below *P*_int and burning it extinguishes a liability of *P*_int per unit at a cost of *P*_mkt, for the benefit of all LPs pro rata and in the pool's own assets. An individual LP that extracts from its own pool to burn REP gains little by comparison, since most of that extraction is borne by the other LPs. Solvency is a property of the pool, not of each LP: LPs who join after the surplus was distributed inherit the outstanding REP without the surplus behind it, so REP outstanding per LP share is a quantity entering LPs should price.
+
 ## 5. Evaluation
 
 ### 5.1 Data and method
@@ -200,7 +210,7 @@ Funding keepers from the gas tank requires a modest contribution per swap (Figur
 
 ### 5.8 Limitations
 
-The benchmark is a Binance touch proxy, not the signed liquidity-weighted quote, so oracle error is modelled rather than measured. The simulation assumes linear daily depth, fixed user flow, a population of arbitrage costs and a second-price auction for position; sender diversity presumes a first-come-first-served race. Labels are conservative heuristics. Gas was measured on a locally deployed v4 pool manager with mock tokens, and swaps crossing a liquidity boundary are outside the closed-form charge. Keeper costs are assumed, and the seven-pool census applies the study pool's recapture rate to the other pairs. The sufficiency of REP as collateral when it trades below its mint rate remains to be tested against a plain bond.
+The benchmark is a Binance touch proxy, not the signed liquidity-weighted quote, so oracle error is modelled rather than measured. The simulation assumes linear daily depth, fixed user flow, a population of arbitrage costs and a second-price auction for position; sender diversity presumes a first-come-first-served race. Labels are conservative heuristics. Gas was measured on a locally deployed v4 pool manager with mock tokens, and swaps crossing a liquidity boundary are outside the closed-form charge. Keeper costs are assumed, and the seven-pool census applies the study pool's recapture rate to the other pairs. The behaviour of REP below its mint rate is analysed (§4.8, Appendix F) but not simulated; its sufficiency as collateral relative to a plain bond remains to be tested empirically.
 
 ---
 
@@ -288,7 +298,7 @@ Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum b
 | `f_min`, `f_max` | fee band of the coverage curve |
 | ρ | capacity scale and base parking rate |
 | k | parking speed per unit of in-block price move |
-| τ | protocol take; funds the reserve |
+| τ | protocol take; funds the reserve and its REP buyback |
 | mint scalar | internal mint rate; its inverse is the burn rate |
 | L, window width | decision latency (measured) and scoring window |
 | ε | tolerance; ε ≈ max(\|bias\|, 2σ) of the feed |
@@ -296,3 +306,18 @@ Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum b
 | G, epoch length | gas withheld per swap; per-pool settlement period |
 | bounty slope, deadline | keeper payment and settlement deadline |
 | activation and exit delays | stake lifecycle |
+| δ | buyback margin below the internal rate (Appendix F) |
+
+## Appendix F. REP below its mint rate
+
+Let *S*_t be the cumulative surplus above the LPs' target paid into the pool up to epoch *t*, *Q*_t the outstanding REP, *P*_int the internal mint and burn rate, and τ the take.
+
+**Proposition (solvency at par).** *P*_int·*Q*_t ≤ (1 − τ)·*S*_t for all *t*. Consequently, if every outstanding unit is burned as collateral for extraction, LPs' cumulative income is at least the target θ*·ΣV.
+
+*Sketch.* Minting adds at most (1 − τ)·ΔS to *P*_int·*Q*; burning reduces *Q*; nothing else changes *Q*. Each burned unit covers *P*_int of extraction, so total extraction covered by REP is at most *P*_int·*Q*_t ≤ (1 − τ)·*S*_t, and LPs' cumulative income, target plus surplus minus covered extraction, is at least θ*·ΣV + τ·*S*_t. ∎
+
+The bound is cumulative and pool-level. It does not hold for an LP cohort that entered after the surplus was collected and withdrawn, and it concerns extraction covered by REP; extraction beyond an account's stake is covered by the reserve (§4.5).
+
+**Demand floor.** An extractor with expected extraction *E* beyond the allowance over the period it holds REP values a unit at min(*P*_int, *E*/*Q*_e), where *Q*_e is the REP it would hold: the full rate while extraction can absorb the units, less when it cannot. Aggregate extractor demand therefore supports *P*_mkt near *P*_int only while expected extraction is large relative to circulating REP.
+
+**Buyback.** Let the reserve buy and burn REP whenever *P*_mkt < (1 − δ)·*P*_int, for a margin δ covering trading costs. Each unit retired at *P*_mkt removes a liability of up to *P*_int, so the reserve converts a discount on the pool's debt into LP value, and its bid adds a second floor independent of extraction demand. Because the REP market trades against the pool's own assets, the buyback requires no external numeraire. The reserve's capacity to buy is bounded by τ·*S*_t, so the buyback stabilises moderate discounts but cannot support par against a large, sustained overhang.
