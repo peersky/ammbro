@@ -238,8 +238,15 @@ def run_one(args) -> dict:
     TAU = settings.get("pm_tau", 0.0)               # take on premium credits (benign surplus keeps its own)
     if pm_v is not None:
         stake_K = 0.0; UNSTAKED = None
-        _n = len(POPULATIONS.get(scenario, ARB_COSTS_BPS)); r_arb = np.zeros(_n); pend = np.zeros(_n)
+        _n = len(POPULATIONS.get(scenario, ARB_COSTS_BPS)); pend = np.zeros(_n)
+        r_arb = np.full(_n, settings.get("pm_initial_stake", 0.0) / _n)   # e.g. a launch sale, held equally
     pm_minted = pm_leak = 0.0
+    # Shock bonus (review follow-up): the allowance in a block is m + kappa * shock, where
+    # shock is the benchmark's own move across the block ("jump", exogenous, use it or lose
+    # it) or the standing gap at the block's start ("gap", endogenous; the rejected variant).
+    shock_k = settings.get("shock_k", 0.0)
+    shock_key = settings.get("shock_key", "jump")
+    o_prev = None
     if stake_K is not None and UNSTAKED is None:
         UNSTAKED = (fmax_fee, 0.0)                       # fresh accounts always available
     vol_k = float(scenario.split("_x")[1]) if scenario.startswith("vol_x") else 1.0
@@ -327,10 +334,12 @@ def run_one(args) -> dict:
             d_wins[:] = 0
             vol_ep[:] = 0.0
         oi = o0 + vol_k * (o[i] - o0); D = Dd[i] * depth_x
+        _jump = 0.0 if o_prev is None else abs(oi - o_prev); o_prev = oi
         if pm_v is not None and i % _DATA["raise_steps"] == 0:
             r_arb += pend; pend[:] = 0.0
         _trades_before = pass_trades[0] + pass_trades[1]
         G = oi - p; gab = abs(G)
+        m_blk = m + shock_k * (_jump if shock_key == "jump" else gab)
         _pre_gap = gab; _pre_sign = 1.0 if G > 0 else -1.0     # +1: pool below oracle, a buy corrects
         if es[i] < ee[i] and i % 10 == 0:
             pre_gaps.append(gab)
@@ -355,10 +364,10 @@ def run_one(args) -> dict:
               correctable = arb_choice("today", a, D, costs[0], gas[i], 0.0, gab)[0] > 0
               fees = [arb_fee(j) for j in range(n_arb)]
               if pm_v is None:
-                  res = sorted(((*arb_choice(rule, gab - fees[j], D, h, gas[i], m, gab), h, fees[j], j)
+                  res = sorted(((*arb_choice(rule, gab - fees[j], D, h, gas[i], m_blk, gab), h, fees[j], j)
                                 for j, h in enumerate(costs)), reverse=True)
               else:
-                  res = sorted(((*arb_choice(rule, gab - F, D, h + (1 - pm_v * (1 - TAU)) * (fees[j] - F), gas[i], m, gab), h, fees[j], j)
+                  res = sorted(((*arb_choice(rule, gab - F, D, h + (1 - pm_v * (1 - TAU)) * (fees[j] - F), gas[i], m_blk, gab), h, fees[j], j)
                                 for j, h in enumerate(costs)), reverse=True)
               w, r2 = res[0], (res[1] if len(res) > 1 else (0.0, 0.0, 0.0, 0, 0.0, F, 0))   # monopoly: no runner-up
               if correctable and not (w[0] > 0 and w[1] > 0) and min(fees) > F + 1e-6:
@@ -414,7 +423,7 @@ def run_one(args) -> dict:
                       if a2 > 0:
                           _u, UNSTAKED = UNSTAKED, None
                           fees2 = [arb_fee(j) for j in range(n_arb)]
-                          res2 = sorted(((*arb_choice(rule, abs(G2) - fees2[j], D, h, gas[i], m, abs(G2)), h, fees2[j], j)
+                          res2 = sorted(((*arb_choice(rule, abs(G2) - fees2[j], D, h, gas[i], m_blk, abs(G2)), h, fees2[j], j)
                                          for j, h in enumerate(costs)), reverse=True)
                           UNSTAKED = _u
                           w2 = res2[0]; r22 = res2[1] if len(res2) > 1 else (0.0, 0.0, 0.0, 0, 0.0, F, 0)
@@ -494,7 +503,7 @@ def run_one(args) -> dict:
         "unstaked": {"setting": UNSTAKED, "trades": unst_n, "volume_b": round(unst_vol / 1e9, 3)}, "stale_rule": STALE_RULE,
         "stake": {"usd": stake_K, "fmax_bps": round(fmax_fee * 1e4), "ramp_days": ramp_days, "alloc": "pooled" if pooled else "equal", "fee_premium_to_lps_m": round(fee_prem / 1e6, 3),
                   "correctable_blocks_uncorrected_for_lack_of_stake": stalled_fee,
-                  "premium_mint_v": pm_v, "rep_minted_to_arbs_m": round(pm_minted / 1e6, 3), "uncovered_charges_m": round(pm_leak / 1e6, 3),
+                  "premium_mint_v": pm_v, "shock_k": shock_k, "shock_key": shock_key, "rep_minted_to_arbs_m": round(pm_minted / 1e6, 3), "uncovered_charges_m": round(pm_leak / 1e6, 3),
                   "arb_stake_end_m": None if pm_v is None else round(float(r_arb.sum()) / 1e6, 3)}, "vol_x": vol_k,
         "arb_volume_b": round(arb_vol / 1e9, 3),
         "uncorrected_share_of_correctable": round(n_uncorr / max(n_corr, 1), 5),
