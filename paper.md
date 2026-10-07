@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Liquidity providers in automated market makers lose value to arbitrageurs who trade against stale on-chain prices (loss-versus-rebalancing, LVR). REP-AMM is a Uniswap v4 hook that prices each swap at execution and reconciles it after the block against signed oracle prices. Arbitrage is treated as a paid job: a price-correcting swap keeps a market-discovered allowance per unit of correction, and extraction beyond it is recaptured for liquidity providers from stake posted before trading, so that paying block builders for position becomes useless. Traders who overpay mint a per-pair reputation token (REP) whose stake grants fee discounts. All value settles in each pool's own pair, and the work of settlement is paid in gas from a tank that every swap prefunds. On six months of Ethereum and Arbitrum data the mechanism recaptures 70–73% of extraction at a benign-flow overcharge below 0.1 bp, and settlement costs 0.18× the gas of the swaps it settles.
+Liquidity providers in automated market makers lose value to arbitrageurs who trade against stale on-chain prices (loss-versus-rebalancing, LVR). REP-AMM is a Uniswap v4 hook that prices each swap at execution and reconciles it after the block against signed oracle prices. Arbitrage is treated as a paid job: a price-correcting swap keeps a market-discovered allowance per unit of correction, and extraction beyond it is recaptured for liquidity providers from stake posted before trading, so that paying block builders for position becomes useless. Traders who overpay mint a reputation token (REP) whose stake grants fee discounts; one REP serves every pool through per-pool virtual curves that value it in each pair's own assets, and a pool starts from zero REP by charging unstaked flow a high fee. All value settles in each pool's own pair, and the work of settlement is paid in gas from a tank that every swap prefunds. On six months of Ethereum and Arbitrum data the mechanism recaptures 70–73% of extraction at a benign-flow overcharge below 0.1 bp, and settlement costs 0.18× the gas of the swaps it settles.
 
 ## 1. Introduction
 
@@ -12,7 +12,7 @@ We pursue two goals: to return as much of the arbitrage surplus as possible to L
 
 1. a per-swap quality score `q_LP`, measured against signed bid/ask prices at an empirically measured decision instant (§3);
 2. a payout rule for arbitrage — a per-unit cap with an allowance discovered on-chain — under which bidding for position earns nothing (§4.2–4.3);
-3. a reputation asset and a collateral design that make the charge collectable after the fact (§4.4–4.5);
+3. a reputation asset and a collateral design that make the charge collectable after the fact, with one REP across pools that leaves each pool's surplus with its own LPs (§4.4–4.5, §4.9);
 4. a settlement layer that is pair-native and costs a fraction of the swaps it settles (§4.6);
 5. an evaluation on Ethereum and Arbitrum covering scoring validity, recapture, payout rules, oracle error and settlement cost (§5).
 
@@ -122,7 +122,7 @@ The per-swap work of settlement — a multiply-add against a verified price, a c
 
 ### 4.7 Launch and intermediaries
 
-At launch no account holds REP. An initial supply is sold, not granted; its proceeds seed the reserve and the gas tank. Intermediaries — solvers, RFQ desks — can hold stake and pass the discount to users. The protocol never identifies arbitrageurs: arbitrage is a role carried by a swap, and any swap that moves the pool toward the oracle is paid the allowance on it. The charge is computed per correcting swap rather than per account, so an intermediary cannot net customers' overpayments against its own extraction.
+At launch no account holds REP, and none needs to be issued: unstaked volume pays `f_max`, and the first epoch's surplus mints the first REP (§4.9). Intermediaries — solvers, RFQ desks — can hold stake and pass the discount to users. The protocol never identifies arbitrageurs: arbitrage is a role carried by a swap, and any swap that moves the pool toward the oracle is paid the allowance on it. The charge is computed per correcting swap rather than per account, so an intermediary cannot net customers' overpayments against its own extraction.
 
 ### 4.8 When REP trades below its mint rate
 
@@ -133,6 +133,24 @@ First, the pool is solvent at par. REP is minted only from surplus above the LPs
 Second, extractors provide a demand floor. A unit of REP saves an extractor up to *P*_int of charges, so extractors buy it whenever *P*_mkt < *P*_int and they have extraction to cover. The floor scales with expected extraction rather than being fixed at par: if circulating REP exceeds what extraction can absorb, the price can remain below par.
 
 Third, below par, outstanding REP is the pool's debt trading at a discount. When cheap REP covers a charge, LPs' accounting floor holds but the value recaptured falls to roughly (*P*_mkt/*P*_int) of its designed level, the difference accruing to the seller of the REP. The per-pool reserve, funded by τ, can retire that debt directly: buying REP below *P*_int and burning it extinguishes a liability of *P*_int per unit at a cost of *P*_mkt, for the benefit of all LPs pro rata and in the pool's own assets. An individual LP that extracts from its own pool to burn REP gains little by comparison, since most of that extraction is borne by the other LPs. Solvency is a property of the pool, not of each LP: LPs who join after the surplus was distributed inherit the outstanding REP without the surplus behind it, so REP outstanding per LP share is a quantity entering LPs should price.
+
+### 4.9 One reputation across pools
+
+What REP records — whether an account's swaps have, on balance, paid the pool more than its target or extracted from it — is a property of the account rather than of the pair. Issued per pair, it fragments: an account active in many pools must earn standing in each, and a small pool offers too little flow for reputation to accumulate. We therefore let a single REP serve every pool, under two constraints: fees and surplus remain with the LPs of the pool that earned them, and no pool values REP in any unit other than its own pair.
+
+Each pool keeps a virtual curve for the common REP. The curve holds no reserves and cannot be traded against; it is an accounting device in the pool's own assets. With *R*_p the REP attributed to pool *p*, the curve's marginal price is
+
+```
+P_p = c_p · R_p,     c_p = α / L̂_p
+```
+
+where *L̂*_p is the high-water mark of the pool's liquidity and α a global constant that fixes the unit of REP. The internal rate of §4.4 becomes this marginal price. Surplus Δ*S* above the LPs' target mints REP along the curve, *R*_p ← (*R*_p² + 2(1 − τ)Δ*S*/*c*_p)^½, to the accounts whose payments exceeded the target. A charge *X* is taken from the charged account's stake along the same curve, *R*_p ← (*R*_p² − 2*X*/*c*_p)^½, and the REP removed is transferred to the pool's LPs rather than burned. Stake is held globally per account and locked to a pool at swap time by the parking rule of §4.5; in the coverage curve of §4.2 it is valued at the pool's own price *P*_p.
+
+Four properties follow (Appendix G). First, the area under each curve, *c*_p*R*_p²/2, never exceeds the surplus that pool has paid in net of the charges it has covered, so the solvency of Appendix F holds pool by pool whatever REP an account brings from elsewhere; because *L̂*_p can only rise, *c*_p can only fall, which lowers the area. Second, REP moves only between accounts and the LPs of the pool in which it was charged, so no pool's fees or surplus pass to another. Third, a pool that has not yet earned surplus prices REP at zero: REP brought from other pools buys no discount there and covers no charge, so a pool cannot be borrowed against before it has earned. Fourth, the cross-pool exposure is bounded. An account that stakes REP minted cheaply elsewhere and is charged until the pool's price falls from *P*₀ to *P*₁ extracts at most (*P*₀² − *P*₁²)/2*c*, while the LPs receive REP worth at least (*P*₀ − *P*₁)*P*₁/*c*; their net shortfall is at most (*P*₀ − *P*₁)²/2*c*, which reaches the curve's whole area only when the curve is emptied — the pool's accumulated surplus, never its principal.
+
+REP is therefore not a stable unit of account. Its price in pool *p* is (2α*A*_p/*L̂*_p)^½, where *A*_p is the area under the curve: it reflects that pool's accumulated surplus per unit of liquidity, and the value of a unit of REP is a surplus-weighted basket of the pools' own assets.
+
+No initial supply is required. Unstaked volume pays `f_max`, which is set high from the first block; when it exceeds the pool's losses to extraction by more than the LPs' target, the first epoch's surplus mints the first REP and fees fall for the accounts that earned it. `f_max` thereby plays two roles: it bootstraps the pool, and it is the whole charge on an account that holds no stake, since there is nothing to charge after the fact. An optional sale of initial supply can precede launch. It is held on each pool's curve for that pool's assets, at a uniform clearing price, with the proceeds paid to the pool's LPs; the area under the curve is then half the proceeds, so the sale also satisfies the first property. §5.8 compares both starts.
 
 ## 5. Evaluation
 
@@ -208,9 +226,21 @@ Funding keepers from the gas tank requires a modest contribution per swap (Figur
 
 *Figure 12. Smallest per-swap gas contribution that keeps the gas tank solvent.*
 
-### 5.8 Limitations
+### 5.8 One reputation across pools
 
-The benchmark is a Binance touch proxy, not the signed liquidity-weighted quote, so oracle error is modelled rather than measured. The simulation assumes linear daily depth, fixed user flow, a population of arbitrage costs and a second-price auction for position; sender diversity presumes a first-come-first-served race. Labels are conservative heuristics. Gas was measured on a locally deployed v4 pool manager with mock tokens, and swaps crossing a liquidity boundary are outside the closed-form charge. Keeper costs are assumed, and the seven-pool census applies the study pool's recapture rate to the other pairs. The behaviour of REP below its mint rate is analysed (§4.8, Appendix F) but not simulated; its sufficiency as collateral relative to a plain bond remains to be tested empirically.
+We simulated one REP over the seven mainnet pools of the census, from April to August with March as an observation window, in daily epochs (Appendix G). Every pool starts with no REP, the LPs' target θ* is half of today's fee tier, `f_min` is a fifth of it, and `f_max` ranges from 1.5 to 5 times the tier. Arbitrage swaps trade only if their edge covers the fee they would pay; other flow is either held fixed or shrinks in proportion to the fee increase (η = 1). Figure 13 shows LPs' net income per unit of volume.
+
+![Global REP](figures/fig_global_rep.png)
+
+*Figure 13. LP net income, including REP received for charges, against `f_max`. Squares: today's fixed fee. Dotted: the LPs' target.*
+
+Over the same months, LPs earned between −4.5 and −0.3 bp of volume under today's fees in six of the seven pools. With `f_max` at twice the tier and flow held fixed, every pool minted its first REP in the first epoch, and LPs earned 16.7–23.6 bp in the 30 bp pools and 3.5–3.7 bp in the 5 bp pools, above the targets of 15 and 2.5 bp. The area under every curve stayed within its backing in all 48 runs. When benign flow shrinks with the fee, the 30 bp pools reach their target from three times the tier; the WBTC/WETH pool does no better than today below five times, and the DAI/USDC pool, profitable under its current fee, loses volume and income as `f_max` rises. Of the volume that no longer trades, most belongs to arbitrage swaps whose edge falls short of `f_max`; their absence is credited to LPs in full, which overstates the gain (§5.9).
+
+The discount reaches accounts, not volume. Accounts holding REP carried 84–94% of the volume of the volatile pools, but paid 59–85% of `f_max` on it: the accounts with most volume are, on balance, takers, and earn little REP relative to their volume. A sale of initial supply changed little. Buyers valuing seven or thirty days of fee savings raised 0.04–0.5 bp of the following volume and left LPs' income within 0.5 bp of the start without REP: at `f_max` the first epoch's surplus is of the same size, so the first day acts as the sale. Some buyers that had been benign at `f_max` extracted once their stake lowered their fee, and in two pools their charges emptied the curve on the first day, the REP passing to those pools' LPs. Prices on the seven curves differed by a median factor of about four.
+
+### 5.9 Limitations
+
+The benchmark is a Binance touch proxy, not the signed liquidity-weighted quote, so oracle error is modelled rather than measured. The simulation assumes linear daily depth, fixed user flow, a population of arbitrage costs and a second-price auction for position; sender diversity presumes a first-come-first-served race. Labels are conservative heuristics. Gas was measured on a locally deployed v4 pool manager with mock tokens, and swaps crossing a liquidity boundary are outside the closed-form charge. Keeper costs are assumed, and the seven-pool census applies the study pool's recapture rate to the other pairs. The behaviour of REP below its mint rate is analysed (§4.8, Appendix F) but its market price is not simulated; its sufficiency as collateral relative to a plain bond remains to be tested empirically. The simulation of one REP across pools (§5.8) holds benign flow fixed or gives it a unit elasticity, and removes arbitrage swaps whose edge falls short of `f_max` without modelling the staler prices that other traders then meet; it scores the census pools against one-second closes rather than the touch proxy.
 
 ---
 
@@ -307,6 +337,7 @@ Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum b
 | bounty slope, deadline | keeper payment and settlement deadline |
 | activation and exit delays | stake lifecycle |
 | δ | buyback margin below the internal rate (Appendix F) |
+| α, *L̂*_p | scale of the REP curves and each pool's liquidity high-water mark (§4.9) |
 
 ## Appendix F. REP below its mint rate
 
@@ -321,3 +352,17 @@ The bound is cumulative and pool-level. It does not hold for an LP cohort that e
 **Demand floor.** An extractor with expected extraction *E* beyond the allowance over the period it holds REP values a unit at min(*P*_int, *E*/*Q*_e), where *Q*_e is the REP it would hold: the full rate while extraction can absorb the units, less when it cannot. Aggregate extractor demand therefore supports *P*_mkt near *P*_int only while expected extraction is large relative to circulating REP.
 
 **Buyback.** Let the reserve buy and burn REP whenever *P*_mkt < (1 − δ)·*P*_int, for a margin δ covering trading costs. Each unit retired at *P*_mkt removes a liability of up to *P*_int, so the reserve converts a discount on the pool's debt into LP value, and its bid adds a second floor independent of extraction demand. Because the REP market trades against the pool's own assets, the buyback requires no external numeraire. The reserve's capacity to buy is bounded by τ·*S*_t, so the buyback stabilises moderate discounts but cannot support par against a large, sustained overhang.
+
+## Appendix G. One REP across pools
+
+For pool *p*, let *c* = α/*L̂* be the curve's slope, *R* the REP attributed to it, *A* = *cR*²/2 the area under the curve, *S*_t the cumulative surplus above the target and *X*_t the cumulative charges covered by REP.
+
+**Proposition (per-pool solvency).** *A*_t ≤ (1 − τ)*S*_t − *X*_t for all *t*. Consequently, LPs' cumulative income in the pool is at least θ*·ΣV + τ*S*_t, whatever REP accounts bring from other pools.
+
+*Sketch.* A mint of (1 − τ)Δ*S* raises *A* by exactly that amount; a covered charge *X* lowers it by *X*, and no charge exceeds *A*. Between epochs *L̂* can only rise, so *c* falls and *A* = *cR*²/2 falls with *R* fixed. Hence *A* ≥ 0 implies *X*_t ≤ (1 − τ)*S*_t. ∎
+
+**Cross-pool exposure.** A charge that moves the price from *P*₀ = *cR*₀ to *P*₁ = *cR*₁ covers *X* = (*P*₀² − *P*₁²)/2*c* and transfers (*P*₀ − *P*₁)/*c* units of REP to LPs, each worth at least *P*₁ at the post-charge price. The LPs' shortfall is at most *X* − (*P*₀ − *P*₁)*P*₁/*c* = (*P*₀ − *P*₁)²/2*c* ≤ *A*. With *P*₁ = ¾*P*₀, for instance, the charge covers 44% of the area and the shortfall is 6% of it.
+
+**Sale on the curve.** A uniform-price sale of REP worth *V* at the clearing price sets *R* = (*V*/*c*)^½ and *P* = *cR*, so the proceeds are *PR* = 2*A*: half of them back the curve and half exceed it.
+
+**Simulation.** The seven mainnet pools of the settlement census (§5.7) are scored against Binance one-second closes at block time plus *L* (the ETH/USDC pool with the canonical score), with 182 k accounts linked across pools by sender. Per epoch and account, stake is split across the account's pools in proportion to its volume and valued at each pool's curve price; the fee follows the coverage curve with ρ = 5 bp. Swaps whose markout lost the LPs more than the allowance at today's fee are treated as arbitrage and trade only if that edge covers the new fee; other volume is scaled by min(1, (*f*_today/*f*)^η). Charges are taken from stake along the curve, capped by the account's stake and the curve's area; surplus above θ* in cash mints REP along the curve, pro rata to the accounts whose own payments exceeded the target. *L̂* is the running maximum of daily depth estimated from each pool's swaps. In the sale variant, accounts whose payments in March would have exceeded the target at `f_max` buy, before April, the stake *s* = ρ*V*·ln(*H*·Δ*f*/ρ) that maximises *H* days of fee savings *HV*Δ*f*(1 − e^{−*s*/ρ*V*}) net of its cost, with *V* their mean daily volume, Δ*f* = `f_max` − `f_min` and *H* ∈ {7, 30}.

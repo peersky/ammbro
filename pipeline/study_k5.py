@@ -1,29 +1,23 @@
-"""Study K5 — one global REP priced by per-pool virtual curves (paper §4.9 draft).
+"""Study K5 — one global REP valued by per-pool virtual curves (paper §4.9, §5.8, Appendix G).
 
-Seven mainnet pools. Per pool p and UTC day d:
+Seven mainnet pools, daily epochs, March as an observation window and April–August
+simulated. Each pool keeps a virtual curve for the common REP: marginal price
+P_p = c_p·R_p, c_p = α/L̂_p (L̂_p: liquidity high-water mark, from the pool's own
+swaps). Every pool starts with zero REP: unstaked volume pays f_max; cash surplus
+above θ* mints REP along the curve to accounts whose own payments exceeded θ*;
+extraction beyond the allowance is taken from the account's stake along the curve
+and paid to the pool's LPs. Stake is global per account, split across its pools by
+volume and valued at each pool's curve price in the coverage curve. Variant: an ICO
+on each curve priced by buyers' H-day fee-savings demand.
 
-    surplus_d  = Σ q·v − θ*_p·Σ v           (LP income above the target take-rate)
-    charges_d  = Σ min(max(−q − m, 0), cap)·v   (extraction beyond the allowance)
+Reported per pool: LP net income (cash and REP) against today and the target, fees
+paid by REP holders, charges covered, curve area vs backing, ICO proceeds, and the
+dispersion of curve prices across pools.
 
-Each pool keeps a virtual curve for the one global REP: marginal price
-P_p = c_p·R_p, c_p = α / L̂_p (L̂_p: liquidity high-water mark). Benign
-surplus mints REP along the curve (area += (1 − τ)·surplus); charges are paid
-with REP along the curve (area −= charge) and that REP is transferred to the
-pool's LPs. L̂_p is the running maximum of the pool's daily depth (USD per unit
-ln price, estimated from its own swaps). Extractors buy REP at the cheapest pool's marginal price (the
-global market price P*, the worst case for cross-pool drain).
-
-Reported per pool: LP outcome against the per-pool-REP baseline (charges
-recaptured at par), gross charges vs REP compensation at market value, net
-loss, charges left uncovered (curve empty), REP held by LPs, the curve area vs
-accumulated surplus (must never exceed it), and the dispersion of REP prices
-across pools.
-
-Scores: the study pool uses the canonical q (bid/ask at block + L); census
-pools use an approximate mid-price q from Binance 1-second closes at block + L
-(ETH legs from ETHUSDT trades; DAI/USDC at the peg). USD is the analyst's unit
-here; the curves are kept in USD for exposition (a pair-native implementation
-keeps each curve in its pool's own assets).
+Scores: the study pool uses the canonical q (bid/ask at block + L); census pools
+use an approximate mid-price q from Binance 1-second closes at block + L (ETH legs
+from ETHUSDT trades; DAI/USDC at the peg). Curves are kept in USD for exposition; a
+pair-native implementation keeps each curve in its pool's own assets.
 """
 from __future__ import annotations
 
