@@ -86,3 +86,9 @@ clean:
 paper-pdf: # render paper.md (LaTeX math) to paper.pdf via pandoc + xelatex
 	uv run python tools/mermaid2png.py
 	pandoc paper.md -o paper.pdf --pdf-engine=xelatex -V mainfont="Times New Roman" -V geometry:margin=2.2cm -V fontsize=10pt --resource-path=. --lua-filter=tools/math-block.lua
+
+preprint:                # preprint PDF for Zenodo: title block, page numbers, links → dist/bro-amm-preprint.pdf
+	uv run python tools/mermaid2png.py
+	mkdir -p dist
+	pandoc paper.md -o dist/bro-amm-preprint.pdf --pdf-engine=xelatex --resource-path=. \
+	  --metadata-file=tools/preprint.yaml --lua-filter=tools/preprint.lua --lua-filter=tools/math-block.lua

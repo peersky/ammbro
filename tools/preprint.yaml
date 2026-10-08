@@ -1,0 +1,19 @@
+# Title block for the preprint PDF (make preprint). paper.md carries the same title and author line
+# for the Forgejo view; tools/preprint.lua drops them from the body so they are not printed twice.
+title: "BRO-AMM: A Bonded Reconciliation Oracle AMM as a Low-Risk DeFi Primitive"
+author: "Tims Pecerskis — tim@peeramid.xyz"
+date: "Preprint, 8 October 2026"
+mainfont: "Times New Roman"
+monofont: "Menlo"
+monofontoptions: "Scale=0.85"
+fontsize: 10pt
+geometry: "margin=2.2cm"
+colorlinks: true
+linkcolor: "blue"
+urlcolor: "blue"
+link-citations: true
+header-includes:
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+  - \usepackage{etoolbox}
+  - \AtBeginEnvironment{longtable}{\small}

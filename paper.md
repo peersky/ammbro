@@ -1,5 +1,7 @@
 # BRO-AMM: A Bonded Reconciliation Oracle AMM as a Low-Risk DeFi Primitive
 
+**Tims Pecerskis** · tim@peeramid.xyz
+
 ## Abstract
 
 Liquidity providers (LPs) in automated market makers lose value to arbitrageurs trading against stale on-chain prices, and no existing AMM bounds this loss by design, so passive liquidity is not yet a low-risk DeFi primitive. BRO-AMM (Bonded Reconciliation Oracle AMM) is a Uniswap v4 hook built on one principle: after a block, chain history and signed market prices establish what each swap did to LPs, and that record can settle it. A price-correcting swap keeps an allowance per unit of volume, discovered on-chain; extraction beyond it is recaptured for LPs from stake posted before trading, which also bounds what arbitrageurs can pay for block position. Traders who overpay mint a reputation token (REP) that lowers their fees. On six months of Ethereum and Arbitrum ETH/USDC data, simulation shows LPs' losses to arbitrage falling by 68–79% on Ethereum and 49–55% on Arbitrum, mainnet LPs' net turning from a loss into a gain, and payments for position falling by 71–89%, with arbitrageurs' margin unchanged. Settlement costs 0.18× the gas of the swaps it settles.
@@ -315,6 +317,10 @@ The benchmark is a Binance touch proxy, so oracle error is modelled rather than 
 BRO-AMM is offered as a low-risk DeFi primitive for exchange. It shows that loss-versus-rebalancing can be recaptured by a plain Uniswap v4 hook, without delaying execution, without consulting an oracle at trade time and without relying on honest ordering. Execution remains synchronous; pricing is completed after the block against signed prices, at a decision instant that is measured from the data and shared by every swap in the block, so that no position buys a more lenient benchmark. Arbitrage is retained as a paid job whose allowance is discovered on-chain, extraction beyond the allowance is collected from stake posted before trading, and benign traders earn the stake that lowers their fees.
 
 On six months of Ethereum and Arbitrum data, a fixed schedule applied with perfect information recaptured 70–73% of extraction while overcharging benign flow by less than 0.1 bp. With the allowance discovered on-chain, simulation shows the value that arbitrage takes moving from payments for position to LPs: LPs' losses to arbitrage fall by 68–79% on mainnet and 49–55% on Arbitrum, mainnet LPs' net turns from a loss into a gain, payments for position fall by 71–89%, arbitrageurs keep their margin and the pools stay as well rebalanced as today. An optional correction lane removes the dependence on arbitrage stake, and settlement costs 0.18–0.19 of the swaps' execution gas, paid from a tank that every swap prefunds. Its binding requirements are a sub-second oracle on fast chains and a tolerance matched to the feed's error. Its residual risks are the signed oracle, the contracts themselves and the market for REP; the last is bounded by solvency at par but not yet observed. Oracle error measured on the signed feed itself, the behaviour of REP in a live market, and a reputation shared across pools remain open.
+
+## Acknowledgements
+
+We thank Chainstack for RPC infrastructure support, and the Chainlink team for consultations on the Data Streams report format and its capabilities.
 
 ## References
 
