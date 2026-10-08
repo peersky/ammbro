@@ -291,39 +291,42 @@ def stake_and_shocks() -> None:
 
 
 def urgency_block_space() -> None:
-    cal = j(R / "study_i" / "position_calibration.json")
     rec = j(R / "study_i" / "position_records.json")
     kap = rec["kappa"]
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.0, 3.9))
-    q = np.linspace(0, 1, 201)
-    eps = 1e-3
-    for arr, lab, col in ((cal["today_retail_frac_quantiles"], "normal retail swaps", C[0]),
-                          (cal["today_corrections_frac_quantiles"], "corrections (first correcting swap)", C[3])):
-        ax1.plot(np.maximum(np.array(arr), eps), q, color=col, label=lab)
-    ax1.set_xscale("log"); ax1.set_xlim(eps, 1)
-    ax1.set_xlabel("position in block (0 = top, 1 = bottom)"); ax1.set_ylabel("cumulative share")
-    ax1.set_title("(a) today: corrections race to the top")
-    ax1.legend(fontsize=6.5, loc="upper center", bbox_to_anchor=(0.5, -0.2), frameon=False)
     r = np.array([x for x in rec["records"] if x[5]], dtype=float)
-    xr, yc = np.maximum(r[:, 1], eps), np.maximum(r[:, 0], eps)
-    late, urgent = yc > xr, yc * kap < xr
-    jit = np.random.default_rng(0)
-    xr = xr * np.exp(jit.normal(0, 0.06, len(xr)))
-    yc = yc * np.exp(jit.normal(0, 0.06, len(yc)))
-    timely = ~late & ~urgent
-    for mask, lab, col in ((late, "late: retail traded first (allowance reduced)", C[1]),
-                           (timely, "timely: ahead of retail", C[2]),
-                           (urgent, f"urgent: over {kap:g}x closer to the top", C[3])):
-        ax2.scatter(xr[mask], yc[mask], s=3, alpha=0.25, color=col, label=f"{lab} ({mask.mean():.0%})", rasterized=True)
-    xx = np.logspace(np.log10(eps), 0, 50)
-    ax2.plot(xx, xx, color=INK, lw=0.8)
-    ax2.plot(xx, xx / kap, color=INK, lw=0.8, ls="--")
-    ax2.set_xscale("log"); ax2.set_yscale("log"); ax2.set_xlim(eps, 1); ax2.set_ylim(eps, 1)
-    ax2.set_xlabel("position of the earliest normal retail swap"); ax2.set_ylabel("position of the correction")
-    ax2.set_title("(b) BRO-AMM (simulation): urgency in block space")
-    leg = ax2.legend(fontsize=6.5, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=1, markerscale=3, frameon=False)
-    for h in leg.legend_handles:
-        h.set_alpha(1)
+    eps = 1e-3
+    zsim = np.log(np.maximum(r[:, 1], eps) / np.maximum(r[:, 0], eps))
+    rows = []
+    for chain, base in (("Mainnet", R), ("Arbitrum", R / "arbitrum")):
+        b = j(base / "study_i" / "block_index.json")
+        lv = np.array(b["quantile_levels"])
+        for key, lab in (("contested", "rent earned"), ("uncontested", "no rent")):
+            rows.append((f"{chain} today, {lab}", lv, np.array(b[f"z_quantiles_{key}"])))
+    lv = np.round(np.linspace(0.01, 0.99, 99), 2)
+    rows.append(("Mainnet BRO-AMM, simulated", lv, np.quantile(zsim, lv)))
+    lo, hi = -4.0, 6.0
+    fig, ax = plt.subplots(figsize=(7.6, 3.2))
+    ax.axvspan(lo, 0, color=C[1], alpha=0.12, lw=0)
+    ax.axvspan(0, np.log(kap), color=C[2], alpha=0.15, lw=0)
+    ax.axvspan(np.log(kap), hi, color=C[3], alpha=0.10, lw=0)
+    for x, t in ((lo / 2, "late"), (np.log(kap) / 2, "timely"), ((np.log(kap) + hi) / 2, "urgent")):
+        ax.text(x, len(rows) - 0.35, t, ha="center", va="bottom", fontsize=8, color=INK)
+    for k, (lab, lv_, zq) in enumerate(rows):
+        y = len(rows) - 1 - k
+        qv = lambda p: float(np.interp(p, lv_, zq))
+        q10, q25, q50, q75, q90 = (qv(p) for p in (0.10, 0.25, 0.50, 0.75, 0.90))
+        col = C[0] if "simulated" not in lab else C[4]
+        ax.plot([max(q10, lo), q25], [y, y], color=col, lw=1.2)
+        ax.plot([q75, min(q90, hi)], [y, y], color=col, lw=1.2)
+        ax.add_patch(plt.Rectangle((q25, y - 0.28), q75 - q25, 0.56, facecolor="white", edgecolor=col, lw=1.5))
+        ax.plot([q50, q50], [y - 0.28, y + 0.28], color=col, lw=2.2)
+        late = float(np.interp(0.0, zq, lv_)); urg = 1 - float(np.interp(np.log(kap), zq, lv_))
+        ax.text(hi + 0.15, y, f"{late:.0%} / {1 - late - urg:.0%} / {urg:.0%}", va="center", fontsize=7.5, color=INK)
+    ax.text(hi + 0.15, len(rows) - 0.35, "late / timely / urgent", va="bottom", fontsize=7.5, color=INK)
+    ax.set_yticks(range(len(rows))); ax.set_yticklabels([r_[0] for r_ in rows][::-1], fontsize=8)
+    ax.set_xlim(lo, hi); ax.set_ylim(-0.6, len(rows) + 0.1)
+    ax.set_xlabel(r"block-position index $z = \ln(\pi^{\mathrm{r}}_b / \pi_c)$")
+    ax.grid(axis="y", visible=False)
     save(fig, "fig_urgency_block_space")
 
 

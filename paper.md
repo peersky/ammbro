@@ -79,9 +79,10 @@ BRO-AMM separates the execution of a swap from its pricing. A swap executes at o
 | $\mathrm{edge}(u)$, kept, charge | marginal edge beyond the fee (3a); allowance kept and charge recaptured by a correcting swap (3b) |
 | $m$, $m_0$, $\varepsilon$, $\sigma_o$ | job allowance per unit of volume (3b), its starting value, the oracle tolerance, and the standard deviation of the oracle's random error |
 | $n^{\mathrm{c}}_H$, $n^{\mathrm{s}}_H$, $K_d$, $K_{\min}$, $u_d$, $\bar u$ | correctable and stale blocks in hour $H$; senders with at least 5% of corrections on day $d$ and its threshold; share of urgent corrections on day $d$ and its threshold (§4.4) |
-| $a$, $\lambda$, $\pi_c$, $\pi^{\mathrm{r}}_b$, $\kappa$ | protected retail volume share ahead of a correction and its penalty weight (§4.3); block positions of a correction and of the earliest protected retail swap, and the urgency separation factor (§4.4) |
-| $\ell$, $k$, $\Delta_{\mathrm{block}}$ | parked share of volume (5), its speed, and the pool's price move so far in the block |
-| $N$, $\theta^*$, $\tau$ | pool's net income per epoch (4), LPs' target take-rate, and protocol take |
+| $a$, $\lambda$ | protected retail volume share ahead of a correction and its penalty weight (§4.3) |
+| $\pi_b$, $\pi^{\mathrm{r}}_b$, $z_b$, $\kappa$ | block positions of the closing correction and of the earliest protected retail swap; block-position index (4) and its urgency boundary (§4.4) |
+| $\ell$, $k$, $\Delta_{\mathrm{block}}$ | parked share of volume (7), its speed, and the pool's price move so far in the block |
+| $N$, $\theta^*$, $\tau$ | pool's net income per epoch (6), LPs' target take-rate, and protocol take |
 | $P_{\mathrm{int}}$, $P_{\mathrm{mkt}}$, $\delta$ | internal mint and burn rate of REP, its market price, and the buyback margin (§4.9) |
 | $S_t$, $Q_t$ | cumulative surplus and outstanding REP after epoch $t$ (Appendix E) |
 | $G$, epoch | gas withheld per swap for settlement; per-pool settlement period |
@@ -159,39 +160,28 @@ and the charge is recaptured for LPs (Figure 3). Each unit keeps at most $m$ of 
 
 The allowance should equal the competitive cost of correcting the pool, which is private to arbitrageurs and changes over time: set too low, no one corrects the pool; set too high, the excess is rent. BRO-AMM discovers $m$ by feedback from what reconciliation observes, much as EIP-1559 sets Ethereum's base fee from observed demand for block space (Roughgarden, 2020).
 
-**Staleness.** For a block $b$ containing a swap in the pool, let $p_b$ be the pool's price at the start of the block and $\hat P_b$ the benchmark. The block is *correctable* if $\lvert \ln(\hat P_b / p_b) \rvert > f + m + \varepsilon$, and it is *left stale* if, in addition, none of its swaps leaves the pool within $f + m + \varepsilon$ of $\hat P_b$. Let $n^{\mathrm{c}}_H$ and $n^{\mathrm{s}}_H$ denote the numbers of correctable and stale blocks in hour $H$. At the end of each hour the controller sets
+**Block-position index.** Let $b$ be a block containing a swap in the pool, $p_b$ the pool's price at its start and $\hat P_b$ the benchmark. The block is *correctable* if $\lvert \ln(\hat P_b / p_b) \rvert > f + m + \varepsilon$. Let $\pi_b \in [0, 1]$ be the share of the block's transactions ordered before the first swap that leaves the pool within $f + m + \varepsilon$ of $\hat P_b$, and let $\pi^{\mathrm{r}}_b$ be the same share for the earliest protected retail swap of §4.3 in $b$ or, in a block without one, for the position a swap paying the epoch's 75th-percentile retail priority fee would take. The index of a correctable block is
 
 ```math
-m \leftarrow 2m \qquad \text{if } n^{\mathrm{s}}_H \ge 5 \ \text{ and } \ n^{\mathrm{s}}_H > 0.02\, n^{\mathrm{c}}_H .
+z_b = \ln\big(\pi^{\mathrm{r}}_b / \pi_b\big), \qquad z_b = -\infty \ \text{ if no swap in } b \text{ leaves the pool within } f + m + \varepsilon \text{ of } \hat P_b . \tag{4}
 ```
 
-Any arbitrageur whose cost lies below $m$ profits from correcting a correctable block, so stale blocks indicate that $m$ is below every active arbitrageur's cost. The signal is defined by the outcome of a block rather than by its first swap, so that an adversarial ordering (A3) cannot manufacture staleness (Appendix G.3).
+Reconciliation computes $z_b$ off-chain from the order of swaps in the block and the sign of each swap's $Q_{\mathrm{LP}}$, which identifies the swaps moving the pool toward the benchmark. A correctable block is *stale* if $z_b = -\infty$, *late* if $z_b < 0$ (protected retail traded at the stale price, which the penalty of §4.3 charges), *timely* if $0 \le z_b \le \ln \kappa$ and *urgent* if $z_b > \ln \kappa$, where $\kappa > 1$ is a separation factor (Figure 4). Both boundaries are relative to the block's own retail flow, not absolute indices, and priority fees are not used, since they miss payments made to builders outside the transaction.
 
-**Competition.** Lowering $m$ requires care: below the cheapest arbitrageur's cost no correction is profitable at any gap, and an allowance on which only one arbitrageur can live leaves the pool dependent on it. The controller therefore lowers $m$ only while arbitrageurs visibly compete for the job, that is, while the allowance leaves a margin that rivals bid away. Where builders auction position, that margin is spent on position, and reconciliation reads it from where corrections land relative to the retail flow they protect. For a correction $c$ in block $b$, identified as a swap that moves the pool toward the benchmark, let $\pi_c \in [0, 1]$ be the share of the block's transactions ordered before it, and let $\pi^{\mathrm{r}}_b$ be the same share for the earliest protected retail swap of §4.3 in $b$, or, in a block without one, the position a swap paying the epoch's 75th-percentile retail priority fee would take. Block space then splits into three regions (Figure 4). A correction is *late* if $\pi_c > \pi^{\mathrm{r}}_b$: protected retail traded at the stale price, which the penalty of §4.3 charges. It is *timely* if it lies ahead of that retail but within a factor $\kappa > 1$ of it, which is all the pool needs. It is *urgent* if
+**Controller.** The controller keeps both tails of the index's distribution thin. The lower tail measures supply: any arbitrageur whose cost lies below $m$ profits from correcting a correctable block, so stale blocks indicate that $m$ is below every active arbitrageur's cost. The upper tail measures competition: a lead over retail costs the arbitrageur a payment for position, which it makes only when a rival could otherwise take the job, so urgent blocks indicate that $m$ leaves a margin rivals bid away. Let $n^{\mathrm{c}}_H$ and $n^{\mathrm{s}}_H$ be the numbers of correctable and stale blocks in hour $H$, $n^{\mathrm{c}}_d$ and $n^{\mathrm{s}}_d$ those on day $d$, and $u_d$ the share of the day's corrected blocks that are urgent. At the end of each hour and of each day respectively, the controller sets
 
 ```math
-\kappa\, \pi_c < \pi^{\mathrm{r}}_b ,
+m \leftarrow 2m \ \ \text{if } n^{\mathrm{s}}_H \ge 5 \text{ and } n^{\mathrm{s}}_H > 0.02\, n^{\mathrm{c}}_H ; \qquad
+m \leftarrow \begin{cases} 0.8\, m & \text{if } u_d > \bar u, \\ 0.95\, m & \text{if } u_d \le \bar u \text{ and } n^{\mathrm{s}}_d < 0.01\, n^{\mathrm{c}}_d , \end{cases} \tag{5}
 ```
 
-a lead over retail that an arbitrageur without a rival has no reason to pay for ($\kappa = 2$ in our simulations). Priority fees are not used, since they miss payments made to builders outside the transaction. Let $u_d$ be the share of corrections on day $d$ that are urgent; the controller lowers $m$ quickly while urgency is visible and slowly while the pool is calm:
+where $\bar u$ is an urgency threshold; our simulations use $\kappa = 2$ and $\bar u = 0.5$, which today's pools, where nearly every correction is contested, cannot calibrate (§5.9). Late blocks with finite $z_b$ do not move $m$: lateness is charged by the penalty, and raising $m$ on it only raised payments to builders (Appendix F.7). Staleness is judged by the outcome of a block rather than by its first swap, so that an adversarial ordering (A3) cannot manufacture it (Appendix G.3).
 
-```math
-m \leftarrow 0.8\, m \ \ \text{if } u_d > \bar u, \qquad m \leftarrow 0.95\, m \ \ \text{if } u_d \le \bar u \text{ and } n^{\mathrm{s}}_d < 0.01\, n^{\mathrm{c}}_d ,
-```
+![Block-position index](figures/fig_urgency_block_space.png)
 
-where $\bar u$ is an urgency threshold (0.5 in our simulations) and $n^{\mathrm{c}}_d$, $n^{\mathrm{s}}_d$ are the day's correctable and stale blocks. Both thresholds are relative to each block's own retail flow rather than absolute indices; today nearly every correction is contested, so $\bar u$ and $\kappa$ are set once the mechanism runs (§5.9).
+*Figure 4. Distribution of the block-position index (4) among correctable blocks with a correction: boxes span the quartiles, whiskers the 10th and 90th percentiles, and the bar marks the median; shaded regions are the late, timely and urgent ranges for $\kappa = 2$, with the share of blocks in each at right. Today's corrections are split by whether they earned rent beyond fee, hedge and gas, a proxy for contested slots; the last row is simulated BRO-AMM on mainnet.*
 
-![Urgency in block space](figures/fig_urgency_block_space.png)
-
-*Figure 4. Urgency in block space, mainnet; position is the share of the block's transactions ordered before a swap. (a) Today: cumulative distributions of the positions of non-correcting swaps and of the first correcting swap of each block. (b) Simulated BRO-AMM with urgency-accelerated decay: each point is a correction in a block with protected retail, against the position of the block's earliest protected retail swap; above the solid line it is late, below the dashed line ($\kappa = 2$) urgent. Positions are jittered for legibility.*
-
-**Arrival-ordered chains.** Where transactions are ordered by arrival, position is won by latency rather than payment, and any arbitrageur able to profit may be first; competition then shows as corrections spread across senders. Let $K_d$ be the number of senders that each made at least 5% of the corrections on day $d$; the controller sets
-
-```math
-m \leftarrow 0.95\, m \qquad \text{if } K_d \ge K_{\min},
-```
-
-where $K_{\min}$ is the required number of competing senders ($K_{\min} = 4$ in our simulations), which keeps several arbitrageurs profitable and deployed.
+**Arrival-ordered chains.** Where the sequencer orders transactions by arrival, as Arbitrum does outside its express lane, a lead over retail costs latency rather than payment, and an arbitrageur without a rival leads as readily as one with. On Arbitrum today the index barely separates corrections that earned rent from those that did not (area under the ROC curve 0.56, against 0.61 on mainnet; Figure 4). There the urgency condition in (5) is replaced by sender diversity: with $K_d$ the number of senders that each made at least 5% of the day's corrections, $m \leftarrow 0.95\, m$ if $K_d \ge K_{\min}$, where $K_{\min}$ is the required number of competing senders ($K_{\min} = 4$ in our simulations), which keeps several arbitrageurs profitable and deployed. The stale tail and the penalty are unchanged.
 
 The allowance rises fast and falls slowly because a stale pool harms users at once; it starts at $m_0$ and stays within [0.02, 50] bp. Its inputs are all part of reconciliation (Appendix G.3). If every arbitrageur able to correct the pool withdraws, the pool stays stale until another deploys, an exposure an ordinary pool shares; §5.4 measures it.
 
@@ -200,7 +190,7 @@ The allowance rises fast and falls slowly because a stale pool harms users at on
 Per epoch, the pool's net income — what the LPs gained on the epoch's swaps, fees included, plus the charges recaptured — is compared with the LPs' target:
 
 ```math
-N = \sum Q_{\mathrm{LP}} \cdot \text{notional} + \sum \text{charges}, \qquad \text{minted} = \frac{(1 - \tau)\max\big(N - \theta^* \sum V,\, 0\big)}{P_{\mathrm{int}}} \tag{4}
+N = \sum Q_{\mathrm{LP}} \cdot \text{notional} + \sum \text{charges}, \qquad \text{minted} = \frac{(1 - \tau)\max\big(N - \theta^* \sum V,\, 0\big)}{P_{\mathrm{int}}} \tag{6}
 ```
 
 where the sums run over the epoch's swaps, $Q_{\mathrm{LP}} \cdot \text{notional}$ is each swap's gain to LPs by (1), fees included, charges are those recaptured under (3b), $\sum V$ is the pool's volume, $\theta^*$ the LPs' target take-rate and $\tau$ the protocol take. The surplus mints REP to the accounts whose payments exceeded the target on their own volume, pro rata to the excess, at a fixed internal rate $P_{\mathrm{int}}$; extraction beyond the allowance burns stake at the same rate, so no market price of REP enters either formula. Minting is self-funding — a wash trader's mint is prepaid by its own overpayment — and self-enforcing: over-earning mints capacity that lowers fees, under-earning halts minting. REP is minted below the surplus it claims by the protocol take $\tau$, which funds the per-pool reserve. Staked REP is a slashable trading licence, preferable to escrowed cash because it earns its holder the discount, is costly only to extractors, and appreciates with the pool's benign volume.
@@ -210,7 +200,7 @@ where the sums run over the epoch's swaps, $Q_{\mathrm{LP}} \cdot \text{notional
 Only staked REP affects fees, which precludes flash-renting the discount. A trade parks $\ell V$ of active stake until it is settled, with
 
 ```math
-\ell = \rho + k\, \Delta_{\mathrm{block}} \tag{5}
+\ell = \rho + k\, \Delta_{\mathrm{block}} \tag{7}
 ```
 
 where $k \ge 0$ is the parking speed and $\Delta_{\mathrm{block}}$ is the pool's price move so far in the block: corrections after a market jump move the pool quickly and park more. Splitting a trade cannot reduce $\Delta_{\mathrm{block}}$, whereas rules keyed to trade size can be defeated by splitting. Charges are collected first from the trade's parked stake, then from the rest of the account's stake (which cannot be withdrawn while settlements are pending), and finally from the per-pool reserve. Charges are never taken from other traders' stake.
@@ -245,9 +235,9 @@ Consider an ETH/USDC pool with illustrative parameters $f_{\min} = 1$ bp, $f_{\m
 
 *Alice*, an uninformed trader holding 5 REP, swaps in a quiet block. Her coverage ratio is $5/(0.0005 \times 10{,}000) = 1$, so by (2) she pays $1 + 29e^{-1} = 11.67$ bp, or \$11.67. Her markout before fees is zero, so her $Q_{\mathrm{LP}}$ is $+11.67$ bp. With no price move in the block she parks $\ell V = 5\,\text{bp} \times \$10{,}000$, all 5 of her REP, until settlement.
 
-*Bob*, an arbitrageur holding 15 REP (coverage ratio 3), corrects the pool after a market move, paying $1 + 29e^{-3} = 2.44$ bp. Along his trade the edge beyond the fee falls linearly from 10 bp to zero, so he extracts 5 bp on average — \$5.00 — and his $Q_{\mathrm{LP}}$ is $-5$ bp. Writing $u$ as a fraction of his notional, by (3b) he keeps $\int_0^1 \min\big(10(1 - u), 2\big)\, du = 1.80$ bp of it, and the remaining 3.20 bp, \$3.20, is charged. The block had already moved by 10 bp, so by (5) with $k = 0.5$ he parked $\ell = 5 + 5 = 10$ bp of his volume, \$10 of stake; the charge burns 3.20 REP from it, and the other 6.80 are released at settlement.
+*Bob*, an arbitrageur holding 15 REP (coverage ratio 3), corrects the pool after a market move, paying $1 + 29e^{-3} = 2.44$ bp. Along his trade the edge beyond the fee falls linearly from 10 bp to zero, so he extracts 5 bp on average — \$5.00 — and his $Q_{\mathrm{LP}}$ is $-5$ bp. Writing $u$ as a fraction of his notional, by (3b) he keeps $\int_0^1 \min\big(10(1 - u), 2\big)\, du = 1.80$ bp of it, and the remaining 3.20 bp, \$3.20, is charged. The block had already moved by 10 bp, so by (7) with $k = 0.5$ he parked $\ell = 5 + 5 = 10$ bp of his volume, \$10 of stake; the charge burns 3.20 REP from it, and the other 6.80 are released at settlement.
 
-At reconciliation, by (4), $N = 11.67 - 5.00 + 3.20 = \$9.87$ against a target of $2\,\text{bp} \times \$20{,}000 = \$4.00$, leaving a surplus of \$5.87. Only Alice paid more than the target on her own volume (Bob's net is −1.8 bp), so she receives $(1 - 0.025) \times 5.87 = 5.72$ REP. Her next \$10,000 swap, with 10.72 REP staked, pays $1 + 29e^{-2.14} = 4.40$ bp. Bob kept his allowance of \$1.80; his position did not change the benchmark he was scored against (§3.3), so the most he would rationally have bid for it is his margin over his cost. The LPs received \$6.67 in the pool's assets; Bob's charge was settled in REP, which retires claims on surplus the LPs already hold (Theorem 1).
+At reconciliation, by (6), $N = 11.67 - 5.00 + 3.20 = \$9.87$ against a target of $2\,\text{bp} \times \$20{,}000 = \$4.00$, leaving a surplus of \$5.87. Only Alice paid more than the target on her own volume (Bob's net is −1.8 bp), so she receives $(1 - 0.025) \times 5.87 = 5.72$ REP. Her next \$10,000 swap, with 10.72 REP staked, pays $1 + 29e^{-2.14} = 4.40$ bp. Bob kept his allowance of \$1.80; his position did not change the benchmark he was scored against (§3.3), so the most he would rationally have bid for it is his margin over his cost. The LPs received \$6.67 in the pool's assets; Bob's charge was settled in REP, which retires claims on surplus the LPs already hold (Theorem 1).
 
 ## 5. Evaluation
 
@@ -505,7 +495,7 @@ Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum b
 
 ## Appendix E. REP below its mint rate
 
-Index epochs by $i = 1, 2, \dots$. In epoch $i$ let $V_i$ be the pool's volume, $N_i$ its net income (4), $X_i$ the charges covered by burning REP, $B_i = X_i / P_{\mathrm{int}}$ the units burned for them, and $Y_i$ the units the reserve buys back and burns (§4.9). Write $\Delta S_i = \max(N_i - \theta^* V_i,\, 0)$ for the epoch's surplus, $D_i = \max(\theta^* V_i - N_i,\, 0)$ for its shortfall, and $S_t$, $D_t$, $X_t$, $Y_t$ for the cumulative sums up to epoch $t$. Let $Q_t$ be the outstanding REP after epoch $t$, with $Q_0 = 0$. The take $\tau\,\Delta S_i$ of each epoch's surplus goes to the reserve, so the LPs' cumulative income in the pool's assets, excluding the reserve and charges settled in REP, is $C_t = \sum_{i \le t} (N_i - X_i) - \tau S_t$.
+Index epochs by $i = 1, 2, \dots$. In epoch $i$ let $V_i$ be the pool's volume, $N_i$ its net income (6), $X_i$ the charges covered by burning REP, $B_i = X_i / P_{\mathrm{int}}$ the units burned for them, and $Y_i$ the units the reserve buys back and burns (§4.9). Write $\Delta S_i = \max(N_i - \theta^* V_i,\, 0)$ for the epoch's surplus, $D_i = \max(\theta^* V_i - N_i,\, 0)$ for its shortfall, and $S_t$, $D_t$, $X_t$, $Y_t$ for the cumulative sums up to epoch $t$. Let $Q_t$ be the outstanding REP after epoch $t$, with $Q_0 = 0$. The take $\tau\,\Delta S_i$ of each epoch's surplus goes to the reserve, so the LPs' cumulative income in the pool's assets, excluding the reserve and charges settled in REP, is $C_t = \sum_{i \le t} (N_i - X_i) - \tau S_t$.
 
 **Theorem 1 (solvency at par).** For every $t$,
 
@@ -515,7 +505,7 @@ Index epochs by $i = 1, 2, \dots$. In epoch $i$ let $V_i$ be the pool's volume, 
 
 In particular, if no epoch falls short of the target ($D_t = 0$), LPs' income in the pool's assets is at least $\theta^* \sum_{i \le t} V_i$, even if every unit of REP ever minted is burned as collateral for extraction.
 
-*Proof.* (i) By (4), epoch $i$ mints $(1 - \tau)\,\Delta S_i / P_{\mathrm{int}}$ units and burns $B_i + Y_i$; no other operation changes $Q$. Hence $Q_t = \sum_{i \le t} \big[(1 - \tau)\,\Delta S_i / P_{\mathrm{int}} - B_i - Y_i\big]$, and multiplying by $P_{\mathrm{int}}$ gives the identity. Since burns are taken only from existing units, $Q_t \ge 0$, so $X_t \le (1 - \tau)\, S_t - P_{\mathrm{int}}\, Y_t \le (1 - \tau)\, S_t$. (ii) For each epoch, $N_i - \theta^* V_i = \Delta S_i - D_i$, so $\sum_{i \le t} N_i = \theta^* \sum_{i \le t} V_i + S_t - D_t$. Hence $C_t = \theta^* \sum_{i \le t} V_i - D_t + \big[(1 - \tau)\, S_t - X_t\big] \ge \theta^* \sum_{i \le t} V_i - D_t$ by (i). $\blacksquare$
+*Proof.* (i) By (6), epoch $i$ mints $(1 - \tau)\,\Delta S_i / P_{\mathrm{int}}$ units and burns $B_i + Y_i$; no other operation changes $Q$. Hence $Q_t = \sum_{i \le t} \big[(1 - \tau)\,\Delta S_i / P_{\mathrm{int}} - B_i - Y_i\big]$, and multiplying by $P_{\mathrm{int}}$ gives the identity. Since burns are taken only from existing units, $Q_t \ge 0$, so $X_t \le (1 - \tau)\, S_t - P_{\mathrm{int}}\, Y_t \le (1 - \tau)\, S_t$. (ii) For each epoch, $N_i - \theta^* V_i = \Delta S_i - D_i$, so $\sum_{i \le t} N_i = \theta^* \sum_{i \le t} V_i + S_t - D_t$. Hence $C_t = \theta^* \sum_{i \le t} V_i - D_t + \big[(1 - \tau)\, S_t - X_t\big] \ge \theta^* \sum_{i \le t} V_i - D_t$ by (i). $\blacksquare$
 
 The bound is cumulative and pool-level, and an initial sale of REP at no less than $P_{\mathrm{int}}$ per unit (§4.8) preserves it, its proceeds entering the reserve. It does not hold for an LP cohort that entered after the surplus was collected and withdrawn, and it concerns extraction covered by REP; extraction beyond an account's stake is covered by the reserve (§4.6), which is itself funded from the LPs' surplus, so such coverage restores the target only up to the reserve's balance.
 
