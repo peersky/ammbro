@@ -387,6 +387,7 @@ def run_one(args) -> dict:
     daily = []
     d_cur = day[0]; d_stale = d_n = d_arb = d_cont = 0; d_m = m
     n_corr = n_uncorr = 0
+    n_raise = 0
     unst_n = 0; unst_vol = 0.0
     d_sr_obs = d_sr_stale = 0
     for i in range(len(o)):
@@ -808,7 +809,8 @@ def run_one(args) -> dict:
                     if w_sr_stale >= MIN_STALE_SR and w_sr_stale / w_sr_obs > S_STAR_SR:
                         if cliff_mem is not None:          # remember where correction stopped
                             cliff_m = m; cliff_until = i * _DATA["step_s"] + cliff_mem[1]
-                        m = min(m * RAISE_SR, 50e-4)
+                        if not settings.get("no_raise"):
+                            m = min(m * RAISE_SR, 50e-4); n_raise += 1
                 elif w_corr >= 20 and w_uncorr / w_corr > s_star:
                     m = min(m * 2.0, 50e-4)
                 w_n = w_corr = w_uncorr = w_sr_obs = w_sr_stale = 0
@@ -877,6 +879,7 @@ def run_one(args) -> dict:
         "arb_volume_b": round(arb_vol / 1e9, 3),
         "uncorrected_share_of_correctable": round(n_uncorr / max(n_corr, 1), 5),
         "uncorrected_hours": round(n_uncorr * _DATA["step_s"] / 3600, 2),
+        "n_raise": n_raise,
         "correctable_blocks": n_corr,
         "rebalanced_block_share": round(reb / n, 5),
         "blocks_stale_2plus": persist2,
