@@ -78,7 +78,7 @@ BRO-AMM separates the execution of a swap from its pricing. A swap executes at o
 | $f$, $u$, $p(u)$, $s$ | pool fee; volume of a swap of notional $v$ executed so far, in token 0; the pool's marginal price after $u$; direction of mispricing (3a) |
 | $\mathrm{edge}(u)$, kept, charge | marginal edge beyond the fee (3a); allowance kept and charge recaptured by a correcting swap (3b) |
 | $m$, $m_0$, $\varepsilon$, $\sigma_o$ | job allowance per unit of volume (3b), its starting value, the oracle tolerance, and the standard deviation of the oracle's random error |
-| $n^{\mathrm{c}}_H$, $n^{\mathrm{s}}_H$, $w_d$ | correctable and stale blocks in hour $H$; share of correcting swaps on day $d$ from senders other than the most frequent (§4.4) |
+| $n^{\mathrm{c}}_H$, $n^{\mathrm{s}}_H$, $K_d$, $u_d$ | correctable and stale blocks in hour $H$; senders with a material share of corrections, and share of urgent corrections, on day $d$ (§4.4) |
 | $\ell$, $k$, $\Delta_{\mathrm{block}}$ | parked share of volume (5), its speed, and the pool's price move so far in the block |
 | $N$, $\theta^*$, $\tau$ | pool's net income per epoch (4), LPs' target take-rate, and protocol take |
 | $P_{\mathrm{int}}$, $P_{\mathrm{mkt}}$, $\delta$ | internal mint and burn rate of REP, its market price, and the buyback margin (§4.9) |
@@ -166,19 +166,25 @@ m \leftarrow 2m \qquad \text{if } n^{\mathrm{s}}_H \ge 5 \ \text{ and } \ n^{\ma
 
 Any arbitrageur whose cost lies below $m$ profits from correcting a correctable block, so stale blocks indicate that $m$ is below every active arbitrageur's cost. The signal is defined by the outcome of a block rather than by its first swap, so that an adversarial ordering (A3) cannot manufacture staleness (Appendix G.3).
 
-**Competition.** Lowering $m$ requires care, because below the cheapest arbitrageur's cost no correction is profitable at any gap (Figure 4). Let $w_d$ denote the share of correcting swaps on day $d$ that were sent by addresses other than that day's most frequent sender. Where transactions are ordered by arrival, any arbitrageur able to profit may be first, so $w_d$ is high while several can profit and falls as $m$ approaches the cheapest arbitrageur's cost. At the end of each day the controller sets
+**Competition.** Lowering $m$ requires care: below the cheapest arbitrageur's cost no correction is profitable at any gap (Figure 4), and an allowance on which only one arbitrageur can live leaves the pool dependent on it. The controller therefore lowers $m$ on evidence that several arbitrageurs compete for the job, and how that evidence appears depends on how the chain orders transactions. Where transactions are ordered by arrival, any arbitrageur able to profit may be first, so competition shows as corrections spread across senders. Let $K_d$ be the number of senders that each made at least a set share of the corrections on day $d$; the controller sets
 
 ```math
-m \leftarrow 0.95\, m \qquad \text{if } w_d > 0.25,
+m \leftarrow 0.95\, m \qquad \text{if } K_d \ge k,
 ```
 
-and thereby settles $m$ between the cheapest and the second-cheapest cost. Under builder auctions the cheapest arbitrageur wins every block it can profit from, so $w_d$ carries no information about competition; the controller then lowers $m$ by the same factor whenever $n^{\mathrm{s}}_d < 0.01\, n^{\mathrm{c}}_d$ for the day's counts (blind decay).
+with $k = 4$ in our simulations, which keeps several arbitrageurs profitable and deployed. Where builders auction position, the cheapest arbitrageur wins every block it can, and sender counts carry no information. Competition then shows as *urgency*: corrections that pay for priority, through a priority fee above the norm of their block, an early position among the block's transactions, or arrival just ahead of the next ordinary swap. An arbitrageur with no rival has no reason to pay for any of these. Let $u_d$ be the share of corrections on day $d$ that are urgent, judged relative to their own block; the controller lowers $m$ quickly while urgency is visible and slowly otherwise:
+
+```math
+m \leftarrow 0.8\, m \ \ \text{if } u_d > \bar u, \qquad m \leftarrow 0.95\, m \ \ \text{if } u_d \le \bar u \text{ and } n^{\mathrm{s}}_d < 0.01\, n^{\mathrm{c}}_d .
+```
+
+The urgency threshold $\bar u$ cannot be calibrated on today's pools, where nearly every correction is contested, and is set once the mechanism runs (§5.9).
 
 ![Supply cliff](figures/fig_supply_cliff.png)
 
 *Figure 4. Number of arbitrageurs able to profit as a function of the allowance, for the cost population used in §5.4.*
 
-The allowance rises fast and falls slowly because a stale pool harms users at once; it starts at $m_0$ and stays within [0.02, 50] bp. Its inputs are all part of reconciliation (Appendix G.3), and §5.4 evaluates it.
+The allowance rises fast and falls slowly because a stale pool harms users at once; it starts at $m_0$ and stays within [0.02, 50] bp. Its inputs are all part of reconciliation (Appendix G.3). If every arbitrageur able to correct the pool withdraws, the pool stays stale until another deploys, an exposure an ordinary pool shares; §5.4 measures it.
 
 ### 4.5 The reputation asset
 
@@ -276,7 +282,9 @@ With perfect information — the benchmark known exactly and a fixed allowance �
 
 ### 5.4 Payout rule and allowance discovery
 
-A rule must keep the pool as rebalanced as today: the share of blocks within the fee plus 1 bp of the oracle may fall by at most 0.5 points, and the price users trade against may be at most 0.1 bp staler. The per-unit cap with an on-chain controller raises LPs' net position by \$5.01 M on mainnet (blind decay, as builder auctions require) and \$0.66–0.71 M on Arbitrum in the worst cost scenario; judging staleness by the first swap of a block, as an earlier version did, gives \$4.81 M on mainnet. Payments for position fall from \$6.57 M to \$1.41 M on mainnet and from \$0.94 M to \$0.12 M on Arbitrum in stable costs: they remain, as §4.3 predicts, but bounded by the allowance. An average-edge cap fails the constraint through overshoot (Appendix F.1). Blind decay stalls rebalancing whenever it crosses the cheapest cost — about every two weeks — whereas decay gated on sender diversity holds just above it (Figure 9), at 7–8% less worst-case gain. Results hold for arbitrage populations from a monopoly to ten arbitrageurs and for depth halved or doubled (Appendix C).
+A rule must keep the pool as rebalanced as today: the share of blocks within the fee plus 1 bp of the oracle may fall by at most 0.5 points, and the price users trade against may be at most 0.1 bp staler. The per-unit cap with an on-chain controller raises LPs' net position by \$5.01 M on mainnet (blind decay, as builder auctions require) and \$0.66–0.71 M on Arbitrum in the worst cost scenario; judging staleness by the first swap of a block, as an earlier version did, gives \$4.81 M on mainnet. Payments for position fall from \$6.57 M to \$1.41 M on mainnet and from \$0.94 M to \$0.12 M on Arbitrum in stable costs: they remain, as §4.3 predicts, but bounded by the allowance. An average-edge cap fails the constraint through overshoot (Appendix F.1). Decay without a competition signal stalls rebalancing whenever it crosses the cheapest cost — about every two weeks — whereas decay gated on competition holds just above it (Figure 9). On mainnet, lowering the allowance faster while corrections are urgent raises LPs' worst-case gain from \$5.01 M to \$5.49 M and halves payments for position, when urgency is observed exactly. Results hold for arbitrage populations from a monopoly to ten arbitrageurs and for depth halved or doubled (Appendix C).
+
+When the cheapest arbitrageurs drop out or withhold corrections and the others need time to redeploy, the rule $K_d \ge 4$ keeps Arbitrum's pool rebalanced at a cost of 2% of LPs' gain, and on mainnet urgency-accelerated decay does so if an arbitrageur redeploys within an hour, while halving what withholding earns; with a day-long redeploy, every controller on mainnet stalls for about a day, since arbitrageurs that never win an auction cannot be kept deployed (Appendix F.7).
 
 ![Controller paths](figures/fig_controller_paths.png)
 
@@ -334,7 +342,7 @@ Funding keepers from the gas tank requires a modest contribution per swap (Figur
 
 ### 5.9 Limitations
 
-The benchmark is a Binance touch proxy, so oracle error is modelled rather than measured. The simulation assumes linear daily depth, fixed user flow, a population of arbitrage costs, one arbitrage action per block and, in §5.5, arbitrage stake held at its level; sender diversity presumes arrival ordering, whereas Arbitrum sold a 200 ms express lane throughout our sample. Labels are heuristics. Gas was measured with mock tokens, and swaps crossing a liquidity boundary are outside the closed-form charge. Keeper costs are assumed, and the census applies the study pool's recapture rate to the other pairs. REP below its mint rate is analysed (§4.9) but not simulated.
+The benchmark is a Binance touch proxy, so oracle error is modelled rather than measured. The simulation assumes linear daily depth, fixed user flow, a population of arbitrage costs, one arbitrage action per block and, in §5.5, arbitrage stake held at its level; sender diversity presumes arrival ordering, whereas Arbitrum sold a 200 ms express lane throughout our sample. The urgency signal is modelled as observed exactly, and arbitrageurs' redeployment as a fixed delay. Labels are heuristics. Gas was measured with mock tokens, and swaps crossing a liquidity boundary are outside the closed-form charge. Keeper costs are assumed, and the census applies the study pool's recapture rate to the other pairs. REP below its mint rate is analysed (§4.9) but not simulated.
 
 **Future work.** A single REP shared by all pools would let standing earned in one pool count in another. But an LP of its own pool can mint REP at the cost of the protocol take alone, and a shared token would let REP minted against one pool's surplus be charged against another's; we have not found a design that prevents this without giving up LPs' claim to their surplus or permissionless entry.
 
@@ -537,6 +545,28 @@ An individual LP that extracts from its own pool to burn REP gains little by com
 **F.5 Allowance bonuses.** Raising the allowance beyond the arbitrageur's cost is rent, and rent is competed away for position. A flat premium of 0.5 bp tripled payments to builders in an early simulation. A bonus proportional to the market's jump within a block, paid only for corrections in that block so that waiting forfeits it, cost LPs 17–31% of their worst-case gain on mainnet and 11–17% on Arbitrum at REP's mint rate, while payments for position roughly doubled; with REP valued below its mint rate it did not prevent stalls. Keying the bonus to the standing gap instead, which rewards waiting, did no better.
 
 **F.6 Premium mint.** An arbitrageur without stake pays $f_{\max}$; minting it REP at the internal rate for the premium above $f_{\min}$, net of its charge, lets its first trades buy the stake that lowers its later fees. Valued at par, this bootstrapped a pool from zero stake at $f_{\max}$ up to 2,000 bp on both chains, matching the fully staked result. But an arbitrageur that values REP at a fraction $v$ of par bears a hurdle of about $(1 - v)(f_{\max} - f_{\min})$ per unit of volume, and the pool tolerated little discount: at $v$ = 0.99 it passed the rebalancing test only at $f_{\max}$ = 500 bp, losing 15% of LPs' gain; at $v$ = 0.98 it failed; and at $v$ = 0.95 it froze for $f_{\max} \ge$ 1,000 bp. Liveness would rest on REP trading at its mint rate, which §4.9 does not guarantee; the correction lane does not depend on it.
+
+**F.7 Controllers under dropout and withholding.** Arbitrageurs that win nothing for a week take their infrastructure down and return 24 hours after a gap they could have closed is left uncorrected. Events: the cheapest arbitrageur absent for seven days (dropout); the two cheapest absent for three days (withholding). Uncorrected hours over the three cost scenarios; LP gain is the worst case without events.
+
+| Controller | Chain | LP gain | Uncorrected hours: none / dropout / withholding | Withholders' extra income |
+|---|---|---|---|---|
+| Decay without a signal | mainnet | \$5.01 M | 1–4 / 23–24 / 23–24 | \$0.43–0.51 M |
+| Urgency-accelerated decay | mainnet | \$5.20 M | 2–3 / 24–25 / 23–24 | \$0.09–0.11 M |
+| Most frequent sender below 75% | mainnet | \$4.69 M | 1–2 / 1–2 / 22 | \$0.06–0.18 M |
+| $K_d \ge 4$ | mainnet | \$4.22 M | 0.1 / 0.1 / 0.1 | none |
+| $K_d \ge 5$ | mainnet | \$3.98 M | 0.0 / 0.0 / 0.0 | none |
+| Rotation, others earn 75% of $m$ | mainnet | \$5.27 M | 2–5 / 2–3 / 22–24 | \$0.11–0.15 M |
+| Rotation, exclusive windows | mainnet | \$3.46 M | 12 / 12 / 12 | none |
+| Decay without a signal | Arbitrum | \$0.71 M | 12–14 / 26–30 / 27–31 | \$0.05–0.14 M |
+| Most frequent sender below 75% | Arbitrum | \$0.66 M | 0–2 / 0–3 / 19 | \$0.04–0.08 M |
+| $K_d \ge 4$ | Arbitrum | \$0.65 M | 0–1 / 0–1 / 0–1 | none |
+| $K_d \ge 5$ | Arbitrum | \$0.42 M | 0 / 0 / 0 | none |
+| Rotation, others earn 75% of $m$ | Arbitrum | \$0.75 M | 0–3 / 19 / 19 | \$0.03–0.04 M |
+
+*Table 5. On mainnet the sender-count rules assume arrival ordering, which builder auctions do not provide. With a one-hour redeploy, decay without a signal and urgency-accelerated decay both keep the pool rebalanced through both events.*
+
+Rotation designates, each hour, one registered arbitrageur that earns the full allowance while others earn less; it requires registration, and unless its windows are exclusive, cheaper non-designated arbitrageurs still take the corrections and the others still leave. A rule that raises $m$ when too few corrections are contested does not help under builder auctions either: competitors that never win cannot be kept deployed. Lowering $m$ only while urgency is visible, with no default decay, leaves $m$ high whenever a single arbitrageur is deployed (\$4.63 M). On today's data, position within the block separates corrections that pay for position from those that do not only near the very top of a mainnet block (Youden's $J$ = 0.33 for the first three transactions, 0.07 for the first quarter, 0.17 for a priority fee above 2 gwei), because today nearly every correction is contested; under the mechanism, uncontested corrections have no reason to be early, and block-relative measures should separate better.
+
 
 ## Appendix G. Extended discussion
 

@@ -298,6 +298,8 @@ def run_one(args) -> dict:
     es, ee, xs, xv = _DATA["exo_start"], _DATA["exo_end"], _DATA["exo_s"], _DATA["exo_v"]
     controlled = isinstance(param, str) and param.startswith("ctl")
     band = isinstance(param, str) and param.startswith("ctl_band")
+    urg = param in ("ctl_urg", "ctl_urg2")   # hourly staleness raise + lowering driven by urgency (contested corrections)
+    urg2 = param == "ctl_urg2"               # ... with blind decay as the default: x0.8 if urgent, x0.95 if calm and not stale
     comp_only = param in ("ctl_comp", "ctl_fast") or band
     # ctl_redK: decay only if at least K distinct senders each won >= RED_SHARE of the day's corrections
     red = isinstance(param, str) and param.startswith("ctl_red")
@@ -305,8 +307,8 @@ def run_one(args) -> dict:
         param_rot = True
     k_red = int(param[7:]) if red else 0
     diverse = param == "ctl_div" or red
-    feasible = param in ("ctl_feasible", "ctl_div") or red
-    fast = param in ("ctl_fast", "ctl_feasible", "ctl_div") or red
+    feasible = param in ("ctl_feasible", "ctl_div") or red or urg
+    fast = param in ("ctl_fast", "ctl_feasible", "ctl_div") or red or urg
     rng = np.random.default_rng(7)
     sr_obs = sr_stale = w_sr_obs = w_sr_stale = 0
     w_corr = w_uncorr = w_n = 0
@@ -359,7 +361,16 @@ def run_one(args) -> dict:
             st = d_stale / max(d_n, 1); ct = d_cont / max(d_arb, 1)
             daily.append((int(d_cur), round(d_m * 1e4, 4), round(st, 4), round(ct, 4)))
             if controlled:
-                if rot is not None:
+                if urg2:
+                    d_sr = d_sr_stale / max(d_sr_obs, 1)
+                    if ct > TAU_C:
+                        m *= 0.8
+                    elif d_sr < S_LOW_SR:
+                        m *= DECAY_SR
+                elif urg:
+                    if ct > TAU_C:
+                        m *= DECAY_SR
+                elif rot is not None:
                     t_d = i * _DATA["step_s"]
                     ready = int(((t_d - pass_t <= 86400) & (t_d - fail_t > 86400)).sum())
                     if ready >= rot_k:
