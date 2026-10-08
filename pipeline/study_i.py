@@ -122,6 +122,7 @@ from .config import REPO_ROOT, RESULTS_DIR
 
 OUT = RESULTS_DIR / "study_i"
 F = 0.0005
+ARB_GAS = 250_000               # gas of an arbitrage transaction (tip conversion in the position model)
 REB = F + 1e-4
 B_JOB = F + 0.5e-4
 ARB_COSTS_BPS = [0.3, 0.6, 1.0, 1.5, 2.5]
@@ -253,6 +254,33 @@ def run_one(args) -> dict:
     cliff_mem = settings.get("cliff_memory", None)        # (margin, T_s)
     cliff_m = 0.0; cliff_until = -1.0
     calm_decay = settings.get("calm_decay", DECAY_SR)
+    # Position model (builder ordering by payment per gas): users' swaps draw tips from the measured
+    # retail distribution; an arb chooses a payment B (USD), its tip B / (ARB_GAS * ETH price), and lands
+    # ahead of users who tip less. Users ahead of it trade against the stale price, and the allowance on
+    # the correction is reduced by the share of the block's users who traded before it.
+    posm = settings.get("position_model", None)
+    early_users = set(); sep_sum = 0.0; sep_n = 0; h_sep_sum = 0.0; h_sep_n = 0
+    if posm is not None:
+        _cal = json.loads((OUT / "position_calibration.json").read_text())
+        u_tip_q = np.array(_cal["users_tip_gwei_quantiles"])
+        pay_grid = posm.get("pay_grid", [0.0, 0.05, 0.25, 1.0, 5.0, 25.0, 100.0])
+        s_hi, s_lo = posm.get("s_hi", 0.16), posm.get("s_lo", 0.02)
+        lam = posm.get("penalty", 1.0)                 # share of the allowance lost per share of users ahead
+        # protected users: only swaps tipping at or below this quantile of the retail distribution count
+        # (higher tippers chose urgency); share measured by volume if vol_weight
+        prot_tip = float(np.interp(posm.get("protect_q", 1.0), np.linspace(0, 1, len(u_tip_q)), u_tip_q))
+        vol_w = posm.get("vol_weight", False)
+        # measured urgency: a correction is urgent if its tip exceeds kappa times the tip needed to get
+        # ahead of protected retail in its block (the block's highest protected tip, else the retail p75)
+        kappa = posm.get("kappa", 2.0)
+        retail_ref_tip = float(np.interp(0.75, np.linspace(0, 1, len(u_tip_q)), u_tip_q))
+        d_urg_meas = 0
+        # block position: share of the block ahead, from a payment-per-gas CDF (retail tips stand in for
+        # the block); a share of corrections pays builders directly, invisible in the tip but not in position
+        urg_by = posm.get("urgency_by", "index")       # "index" | "gas"
+        hidden = posm.get("hidden_bribe_share", 0.45)
+        pos_of = lambda t: 1.0 - float(np.interp(t, u_tip_q, np.linspace(0, 1, len(u_tip_q))))
+        rng_pos = np.random.default_rng(11)
     # Events: arbitrageur j absent (dropout or withholding) from day offset s for n days
     absent = settings.get("absent", [])
     win_cnt = np.zeros(len(POPULATIONS.get(scenario, ARB_COSTS_BPS)), dtype=np.int64)
@@ -302,7 +330,7 @@ def run_one(args) -> dict:
     es, ee, xs, xv = _DATA["exo_start"], _DATA["exo_end"], _DATA["exo_s"], _DATA["exo_v"]
     controlled = isinstance(param, str) and param.startswith("ctl")
     band = isinstance(param, str) and param.startswith("ctl_band")
-    urg = param in ("ctl_urg", "ctl_urg2")   # hourly staleness raise + lowering driven by urgency (contested corrections)
+    urg = param in ("ctl_urg", "ctl_urg2", "ctl_sep", "ctl_urgm")   # hourly staleness raise + lowering driven by urgency (contested corrections)
     urg2 = param == "ctl_urg2"               # ... with blind decay as the default: x0.8 if urgent, x0.95 if calm and not stale
     comp_only = param in ("ctl_comp", "ctl_fast") or band
     # ctl_redK: decay only if at least K distinct senders each won >= RED_SHARE of the day's corrections
@@ -365,7 +393,22 @@ def run_one(args) -> dict:
             st = d_stale / max(d_n, 1); ct = d_cont / max(d_arb, 1)
             daily.append((int(d_cur), round(d_m * 1e4, 4), round(st, 4), round(ct, 4)))
             if controlled:
-                if urg2:
+                if param == "ctl_urgm":
+                    d_sr = d_sr_stale / max(d_sr_obs, 1)
+                    um = d_urg_meas / max(d_arb, 1)
+                    if um > TAU_C:
+                        m *= 0.8
+                    elif d_sr < S_LOW_SR:
+                        m *= DECAY_SR
+                    d_urg_meas = 0
+                elif param == "ctl_sep":
+                    sbar = sep_sum / sep_n if sep_n else 0.0
+                    if sbar > s_hi:
+                        m *= 1.25
+                    elif sbar < s_lo:
+                        m *= DECAY_SR
+                    sep_sum = 0.0; sep_n = 0
+                elif urg2:
                     d_sr = d_sr_stale / max(d_sr_obs, 1)
                     if ct > TAU_C:
                         m *= 0.8
@@ -373,7 +416,7 @@ def run_one(args) -> dict:
                         m *= calm_decay
                     if cliff_mem is not None and i * _DATA["step_s"] < cliff_until:
                         m = max(m, cliff_m * (1 + cliff_mem[0]))
-                elif urg:
+                elif urg and param not in ("ctl_sep", "ctl_urgm"):
                     if ct > TAU_C:
                         m *= DECAY_SR
                 elif rot is not None:
@@ -434,6 +477,96 @@ def run_one(args) -> dict:
                 exo_gap_w += V * abs(p - oi); exo_vol += V
                 p += s * V / D
           G = oi - p; gab = abs(G); a = gab - F
+          if posm is not None and a > 0 and rule != "today" and _pass == 0:
+              costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) + extra_cost for c in costs_base]
+              if absent:
+                  _do = day[i] - day[0]
+                  costs = [1.0 if any(aj == j and as_ <= _do < as_ + an for aj, as_, an in absent) else c for j, c in enumerate(costs)]
+              correctable = arb_choice("today", a, D, min(costs), gas[i], 0.0, gab)[0] > 0
+              nu = ee[i] - es[i]
+              utips = np.interp(rng_pos.random(nu), np.linspace(0, 1, len(u_tip_q)), u_tip_q) if nu else np.zeros(0)
+              eth = math.exp(oi)
+              tip_of = lambda B: B / (ARB_GAS * eth) * 1e9
+              best = []
+              if nu:
+                  prot = utips <= prot_tip
+                  wts = (xv[es[i]:ee[i]] if vol_w else np.ones(nu)) * prot
+                  wsum = wts.sum()
+              def share_ahead(tip):
+                  if not nu or wsum <= 0:
+                      return 0.0
+                  return float(wts[utips > tip].sum() / wsum)
+              t_now = i * _DATA["step_s"]; pdorm = []
+              for j, h in enumerate(costs):
+                  if dorm_s is not None:
+                      if t_now >= wake_at[j]:
+                          last_win[j] = wake_at[j]; wake_at[j] = np.inf
+                      if t_now - last_win[j] > dorm_s and t_now < wake_at[j]:      # dormant
+                          if arb_choice(rule, a, D, h, gas[i], m_blk, gab)[1] > 0 and wake_at[j] == np.inf:
+                              pdorm.append(j)
+                          continue
+                  pr0, V0, k0, _u = arb_choice(rule, a, D, h, gas[i], m_blk, gab)
+                  if not (V0 > 0):
+                      continue
+                  bb = None
+                  for B in pay_grid:
+                      sh = share_ahead(tip_of(B))
+                      prof = k0 * (1 - lam * sh) - h * V0 - gas[i] - B
+                      if bb is None or prof > bb[0]:
+                          bb = (prof, B, sh)
+                  if bb[0] > 0:
+                      best.append((bb[0], bb[1], j, h))
+              traded = False
+              if best:
+                  best.sort(reverse=True)
+                  wbest = best[0]; r2p = best[1][0] if len(best) > 1 else 0.0
+                  Bw = wbest[1] + max(r2p, 0.0)           # competition: pays the runner-up's value on top
+                  tw = tip_of(Bw)
+                  need = float(utips[(utips <= prot_tip)].max()) if nu and (utips <= prot_tip).any() else retail_ref_tip
+                  vis_tip = 0.0 if rng_pos.random() < hidden else tw
+                  order = np.arange(es[i], ee[i])
+                  early = order[utips > tw] if nu else order
+                  sh_w = share_ahead(tw)
+                  for k in early:                          # users ahead of the correction trade the stale price
+                      s_ = xs[k]; V_ = xv[k]
+                      pav = p + s_ * V_ / (2 * D)
+                      lp_exo += V_ * (F + s_ * (pav - oi)); exo_gap_w += V_ * abs(p - oi); exo_vol += V_
+                      p += s_ * V_ / D
+                      early_users.add(int(k))
+                  G = oi - p; gab2 = abs(G); a2 = gab2 - F
+                  if a2 > 0:
+                      pr, V, kept, _u = arb_choice(rule, a2, D, wbest[3], gas[i], m_blk, gab2)
+                      if V > 0:
+                          E = (a2 - V / (2 * D)) * V
+                          keff = kept * (1 - lam * sh_w)
+                          lp_arb -= keff; charge_tot += E - keff
+                          builder += Bw; margin += max(pr - Bw, 0.0)
+                          arb_vol += V; pass_trades[_pass] += 1; pass_vol[_pass] += V
+                          p += math.copysign(V / D, G)
+                          traded = True; d_arb += 1
+                          if r2p > 0:
+                              d_cont += 1
+                          if urg_by == "gas":
+                              is_urg = vis_tip > kappa * need
+                          else:                            # index: well ahead of the earliest protected retail swap
+                              is_urg = pos_of(tw) * kappa < pos_of(need)
+                          if is_urg:
+                              d_urg_meas += 1
+                          win_cnt[wbest[2]] += 1; arb_inc[wbest[2]] += pr - Bw
+                          last_win[wbest[2]] = t_now; wake_at[wbest[2]] = np.inf
+                          if diverse:
+                              profj = [x[2] for x in best]
+                              d_wins[profj[rng.integers(len(profj))]] += 1
+                  if nu and wsum > 0:
+                      sep_sum += sh_w; sep_n += 1
+              if pdorm and not traded:                     # a gap left uncorrected wakes dormant arbs
+                  for j in pdorm:
+                      wake_at[j] = t_now + wake_s
+              if correctable:
+                  n_corr += 1; d_n += 1; w_corr += 1
+                  if not traded:
+                      n_uncorr += 1; d_stale += 1; w_uncorr += 1
+              a = -1.0
           if relief is not None and a > 0 and rule != "today":
               costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) + extra_cost for c in costs_base]
               if absent:
@@ -685,11 +818,15 @@ def run_one(args) -> dict:
             post_gaps.append(post)
         if phase == "open":
             for k in range(es[i], ee[i]):
+                if early_users and k in early_users:
+                    continue
                 s = xs[k]; V = xv[k]
                 pav = p + s * V / (2 * D)
                 lp_exo += V * (F + s * (pav - oi))
                 exo_gap_w += V * abs(p - oi); exo_vol += V
                 p += s * V / D
+        if early_users:
+            early_users.clear()
         if relief is not None:
             eg = abs(oi - p)
             if eg > F + m + EPS_SR:
