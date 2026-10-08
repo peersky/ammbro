@@ -308,9 +308,46 @@ def stake_and_shocks() -> None:
     save(fig, "fig_stake_shocks")
 
 
+def urgency_block_space() -> None:
+    cal = j(R / "study_i" / "position_calibration.json")
+    rec = j(R / "study_i" / "position_records.json")
+    kap = rec["kappa"]
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.0, 3.9))
+    q = np.linspace(0, 1, 201)
+    eps = 1e-3
+    for arr, lab, col in ((cal["today_retail_frac_quantiles"], "normal retail swaps", C[0]),
+                          (cal["today_corrections_frac_quantiles"], "corrections (first correcting swap)", C[3])):
+        ax1.plot(np.maximum(np.array(arr), eps), q, color=col, label=lab)
+    ax1.set_xscale("log"); ax1.set_xlim(eps, 1)
+    ax1.set_xlabel("position in block (0 = top, 1 = bottom)"); ax1.set_ylabel("cumulative share")
+    ax1.set_title("(a) today: corrections race to the top")
+    ax1.legend(fontsize=6.5, loc="upper center", bbox_to_anchor=(0.5, -0.2), frameon=False)
+    r = np.array([x for x in rec["records"] if x[5]], dtype=float)
+    xr, yc = np.maximum(r[:, 1], eps), np.maximum(r[:, 0], eps)
+    late, urgent = yc > xr, yc * kap < xr
+    jit = np.random.default_rng(0)
+    xr = xr * np.exp(jit.normal(0, 0.06, len(xr)))
+    yc = yc * np.exp(jit.normal(0, 0.06, len(yc)))
+    timely = ~late & ~urgent
+    for mask, lab, col in ((late, "late: retail traded first (allowance reduced)", C[1]),
+                           (timely, "timely: ahead of retail", C[2]),
+                           (urgent, f"urgent: over {kap:g}x closer to the top", C[3])):
+        ax2.scatter(xr[mask], yc[mask], s=3, alpha=0.25, color=col, label=f"{lab} ({mask.mean():.0%})", rasterized=True)
+    xx = np.logspace(np.log10(eps), 0, 50)
+    ax2.plot(xx, xx, color=INK, lw=0.8)
+    ax2.plot(xx, xx / kap, color=INK, lw=0.8, ls="--")
+    ax2.set_xscale("log"); ax2.set_yscale("log"); ax2.set_xlim(eps, 1); ax2.set_ylim(eps, 1)
+    ax2.set_xlabel("position of the earliest normal retail swap"); ax2.set_ylabel("position of the correction")
+    ax2.set_title("(b) BRO-AMM (simulation): urgency in block space")
+    leg = ax2.legend(fontsize=6.5, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=1, markerscale=3, frameon=False)
+    for h in leg.legend_handles:
+        h.set_alpha(1)
+    save(fig, "fig_urgency_block_space")
+
+
 def main() -> None:
     for f in (coverage_curve, payout_rule, supply_cliff, latency_profile, score_distributions, extraction_by_position,
-              recapture_frontier, controller_paths, oracle_error, settlement_cost, gas_tank, stake_and_shocks):
+              recapture_frontier, controller_paths, oracle_error, settlement_cost, gas_tank, stake_and_shocks, urgency_block_space):
         f()
 
 

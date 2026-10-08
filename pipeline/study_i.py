@@ -280,6 +280,7 @@ def run_one(args) -> dict:
         urg_by = posm.get("urgency_by", "index")       # "index" | "gas"
         hidden = posm.get("hidden_bribe_share", 0.45)
         pos_of = lambda t: 1.0 - float(np.interp(t, u_tip_q, np.linspace(0, 1, len(u_tip_q))))
+        rec_every = posm.get("record_every", 0); pos_rec = []; rec_k = 0
         rng_pos = np.random.default_rng(11)
     # Events: arbitrageur j absent (dropout or withholding) from day offset s for n days
     absent = settings.get("absent", [])
@@ -552,6 +553,11 @@ def run_one(args) -> dict:
                               is_urg = pos_of(tw) * kappa < pos_of(need)
                           if is_urg:
                               d_urg_meas += 1
+                          if rec_every:
+                              rec_k += 1
+                              if rec_k % rec_every == 0:
+                                  has_r = int(bool(nu) and bool((utips <= prot_tip).any()))
+                                  pos_rec.append((round(pos_of(tw), 5), round(pos_of(need), 5), int(is_urg), round(sh_w, 4), int(r2p > 0), has_r))
                           win_cnt[wbest[2]] += 1; arb_inc[wbest[2]] += pr - Bw
                           last_win[wbest[2]] = t_now; wake_at[wbest[2]] = np.inf
                           if diverse:
@@ -861,6 +867,7 @@ def run_one(args) -> dict:
         "winner_hhi": round(float(((win_cnt / max(win_cnt.sum(), 1)) ** 2).sum()), 4),
         "absent": absent, "m_end_bps": round(m * 1e4, 3),
         "rotation": rot, "rotation_failed_windows": (rot_fails if rot is not None else None),
+        "position_records": (pos_rec if posm is not None and rec_every else None),
         "unstaked": {"setting": UNSTAKED, "trades": unst_n, "volume_b": round(unst_vol / 1e9, 3)}, "stale_rule": STALE_RULE,
         "stake": {"usd": stake_K, "fmax_bps": round(fmax_fee * 1e4), "ramp_days": ramp_days, "alloc": "pooled" if pooled else "equal", "fee_premium_to_lps_m": round(fee_prem / 1e6, 3),
                   "correctable_blocks_uncorrected_for_lack_of_stake": stalled_fee,
