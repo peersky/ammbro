@@ -78,7 +78,7 @@ BRO-AMM separates the execution of a swap from its pricing. A swap executes at o
 | $f$, $u$, $p(u)$, $s$ | pool fee; volume of a swap of notional $v$ executed so far, in token 0; the pool's marginal price after $u$; direction of mispricing (3a) |
 | $\mathrm{edge}(u)$, kept, charge | marginal edge beyond the fee (3a); allowance kept and charge recaptured by a correcting swap (3b) |
 | $m$, $m_0$, $\varepsilon$, $\sigma_o$ | job allowance per unit of volume (3b), its starting value, the oracle tolerance, and the standard deviation of the oracle's random error |
-| $n^{\mathrm{c}}_H$, $n^{\mathrm{s}}_H$, $K_d$, $u_d$, $\bar u$ | correctable and stale blocks in hour $H$; senders with a material share of corrections, share of urgent corrections, on day $d$, and its threshold (§4.4) |
+| $n^{\mathrm{c}}_H$, $n^{\mathrm{s}}_H$, $K_d$, $K_{\min}$, $u_d$, $\bar u$ | correctable and stale blocks in hour $H$; senders with at least 5% of corrections on day $d$ and its threshold; share of urgent corrections on day $d$ and its threshold (§4.4) |
 | $a$, $\lambda$, $\pi_c$, $\pi^{\mathrm{r}}_b$, $\kappa$ | protected retail volume share ahead of a correction and its penalty weight (§4.3); block positions of a correction and of the earliest protected retail swap, and the urgency separation factor (§4.4) |
 | $\ell$, $k$, $\Delta_{\mathrm{block}}$ | parked share of volume (5), its speed, and the pool's price move so far in the block |
 | $N$, $\theta^*$, $\tau$ | pool's net income per epoch (4), LPs' target take-rate, and protocol take |
@@ -167,19 +167,19 @@ m \leftarrow 2m \qquad \text{if } n^{\mathrm{s}}_H \ge 5 \ \text{ and } \ n^{\ma
 
 Any arbitrageur whose cost lies below $m$ profits from correcting a correctable block, so stale blocks indicate that $m$ is below every active arbitrageur's cost. The signal is defined by the outcome of a block rather than by its first swap, so that an adversarial ordering (A3) cannot manufacture staleness (Appendix G.3).
 
-**Competition.** Lowering $m$ requires care: below the cheapest arbitrageur's cost no correction is profitable at any gap, and an allowance on which only one arbitrageur can live leaves the pool dependent on it. The controller therefore lowers $m$ on evidence that several arbitrageurs compete for the job, and how that evidence appears depends on how the chain orders transactions. Where transactions are ordered by arrival, any arbitrageur able to profit may be first, so competition shows as corrections spread across senders. Let $K_d$ be the number of senders that each made at least a set share of the corrections on day $d$; the controller sets
+**Competition.** Lowering $m$ requires care: below the cheapest arbitrageur's cost no correction is profitable at any gap, and an allowance on which only one arbitrageur can live leaves the pool dependent on it. The controller therefore lowers $m$ on evidence that several arbitrageurs compete for the job, and how that evidence appears depends on how the chain orders transactions. Where transactions are ordered by arrival, any arbitrageur able to profit may be first, so competition shows as corrections spread across senders. Let $K_d$ be the number of senders that each made at least 5% of the corrections on day $d$; the controller sets
 
 ```math
-m \leftarrow 0.95\, m \qquad \text{if } K_d \ge k,
+m \leftarrow 0.95\, m \qquad \text{if } K_d \ge K_{\min},
 ```
 
-with $k = 4$ in our simulations, which keeps several arbitrageurs profitable and deployed. Where builders auction position, the cheapest arbitrageur wins every block it can, and sender counts carry no information. Competition then shows as *urgency*: corrections placed well ahead of the retail flow they protect, a position an arbitrageur without a rival has no reason to pay for. Reconciliation measures urgency from block position rather than from priority fees, which miss payments made to builders outside the transaction. For a correction $c$ in block $b$, identified as a swap that moves the pool toward the benchmark, let $\pi_c \in [0, 1]$ be the share of the block's transactions ordered before it, and let $\pi^{\mathrm{r}}_b$ be the same share for the earliest protected retail swap of §4.3 in $b$. The correction is *late* if $\pi_c > \pi^{\mathrm{r}}_b$, which the penalty of §4.3 already charges, and *urgent* if
+where $K_{\min}$ is the required number of competing senders ($K_{\min} = 4$ in our simulations), which keeps several arbitrageurs profitable and deployed. Where builders auction position, the cheapest arbitrageur wins every block it can, and sender counts carry no information. Competition then shows as *urgency*: corrections placed well ahead of the retail flow they protect, a position an arbitrageur without a rival has no reason to pay for. Reconciliation measures urgency from block position rather than from priority fees, which miss payments made to builders outside the transaction. For a correction $c$ in block $b$, identified as a swap that moves the pool toward the benchmark, let $\pi_c \in [0, 1]$ be the share of the block's transactions ordered before it, and let $\pi^{\mathrm{r}}_b$ be the same share for the earliest protected retail swap of §4.3 in $b$. The correction is *late* if $\pi_c > \pi^{\mathrm{r}}_b$, which the penalty of §4.3 already charges, and *urgent* if
 
 ```math
 \kappa\, \pi_c < \pi^{\mathrm{r}}_b ,
 ```
 
-where $\kappa > 1$ is a separation factor ($\kappa = 2$ in our simulations); blocks without protected retail are not judged. Both thresholds are relative to the block's own retail flow, not absolute indices (Figure 4). Let $u_d$ be the share of judged corrections on day $d$ that are urgent; the controller lowers $m$ quickly while urgency is visible and slowly otherwise:
+where $\kappa > 1$ is a separation factor ($\kappa = 2$ in our simulations). In a block without protected retail, $\pi^{\mathrm{r}}_b$ is the position a swap paying the epoch's 75th-percentile retail priority fee would take. Both thresholds are relative to the block's own retail flow, not absolute indices (Figure 4). Let $u_d$ be the share of corrections on day $d$ that are urgent; the controller lowers $m$ quickly while urgency is visible and slowly otherwise:
 
 ```math
 m \leftarrow 0.8\, m \ \ \text{if } u_d > \bar u, \qquad m \leftarrow 0.95\, m \ \ \text{if } u_d \le \bar u \text{ and } n^{\mathrm{s}}_d < 0.01\, n^{\mathrm{c}}_d ,
