@@ -1,0 +1,98 @@
+{
+ "chain": "mainnet",
+ "rows": [
+  {
+   "scenario": "stable",
+   "controller": "ctl_urgm",
+   "today": {
+    "lp_net_m": -3.15,
+    "lp_from_arbs_m": -7.388,
+    "lp_from_users_m": 4.238,
+    "lp_recapture_m": 0.0,
+    "builder_payments_m": 6.568,
+    "arb_margin_m": 0.381,
+    "arb_volume_b": 13.393,
+    "user_pretrade_staleness_bps_vw": 12.749,
+    "rebalanced_block_share": 0.99542,
+    "uncorrected_hours": 0.0,
+    "m_bps_final": 0.0
+   },
+   "bro_amm": {
+    "lp_net_m": 2.702,
+    "lp_from_arbs_m": -1.569,
+    "lp_from_users_m": 4.271,
+    "lp_recapture_m": 5.873,
+    "builder_payments_m": 0.766,
+    "arb_margin_m": 0.377,
+    "arb_volume_b": 13.367,
+    "user_pretrade_staleness_bps_vw": 12.542,
+    "rebalanced_block_share": 0.99396,
+    "uncorrected_hours": 39.3,
+    "m_bps_final": 1.3774
+   },
+   "keeps_rebalanced": true
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_urgm",
+   "today": {
+    "lp_net_m": -3.415,
+    "lp_from_arbs_m": -7.624,
+    "lp_from_users_m": 4.21,
+    "lp_recapture_m": 0.0,
+    "builder_payments_m": 6.157,
+    "arb_margin_m": 0.659,
+    "arb_volume_b": 12.884,
+    "user_pretrade_staleness_bps_vw": 12.948,
+    "rebalanced_block_share": 0.88086,
+    "uncorrected_hours": 0.0,
+    "m_bps_final": 0.0
+   },
+   "bro_amm": {
+    "lp_net_m": 2.207,
+    "lp_from_arbs_m": -2.071,
+    "lp_from_users_m": 4.278,
+    "lp_recapture_m": 5.632,
+    "builder_payments_m": 0.683,
+    "arb_margin_m": 0.591,
+    "arb_volume_b": 12.868,
+    "user_pretrade_staleness_bps_vw": 12.716,
+    "rebalanced_block_share": 0.87876,
+    "uncorrected_hours": 43.5,
+    "m_bps_final": 2.3957
+   },
+   "keeps_rebalanced": true
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_urgm",
+   "today": {
+    "lp_net_m": -3.687,
+    "lp_from_arbs_m": -7.871,
+    "lp_from_users_m": 4.184,
+    "lp_recapture_m": 0.0,
+    "builder_payments_m": 5.818,
+    "arb_margin_m": 0.856,
+    "arb_volume_b": 12.362,
+    "user_pretrade_staleness_bps_vw": 13.196,
+    "rebalanced_block_share": 0.8424,
+    "uncorrected_hours": 0.0,
+    "m_bps_final": 0.0
+   },
+   "bro_amm": {
+    "lp_net_m": 1.697,
+    "lp_from_arbs_m": -2.493,
+    "lp_from_users_m": 4.19,
+    "lp_recapture_m": 5.396,
+    "builder_payments_m": 0.625,
+    "arb_margin_m": 0.686,
+    "arb_volume_b": 12.331,
+    "user_pretrade_staleness_bps_vw": 13.021,
+    "rebalanced_block_share": 0.84006,
+    "uncorrected_hours": 44.79,
+    "m_bps_final": 3.3181
+   },
+   "keeps_rebalanced": true
+  }
+ ]
+}

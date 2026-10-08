@@ -21,6 +21,7 @@ from .config import RESULTS_DIR
 
 QS = np.round(np.linspace(0.01, 0.99, 99), 2)
 EDGES = np.logspace(-3, 0, 31)
+ZEDGES = np.linspace(-5, 7, 49)
 
 
 def auc(y: np.ndarray, s: np.ndarray) -> float:
@@ -47,7 +48,8 @@ def main() -> dict:
            "pos_bin_edges": EDGES.tolist(),
            "pos_hist_correction": np.histogram(np.clip(m.pos, EDGES[0], 1), EDGES)[0].tolist(),
            "pos_hist_retail": np.histogram(np.clip(m.pos_r, EDGES[0], 1), EDGES)[0].tolist(),
-           "pos_quantiles_correction": q(m.pos), "pos_quantiles_retail": q(m.pos_r)}
+           "pos_quantiles_correction": q(m.pos), "pos_quantiles_retail": q(m.pos_r),
+           "z_bin_edges": ZEDGES.tolist(), "z_hist": np.histogram(np.clip(z, ZEDGES[0], ZEDGES[-1]), ZEDGES)[0].tolist()}
     p = RESULTS_DIR / "study_i" / "block_index.json"
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(out, indent=1))

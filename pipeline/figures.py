@@ -136,7 +136,7 @@ def score_distributions() -> None:
 
 
 def extraction_by_position() -> None:
-    fig, ax = plt.subplots(figsize=(4.8, 2.7))
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(7.8, 2.9), gridspec_kw={"width_ratios": [1, 1.25]})
     w = 0.38
     for i, (name, base) in enumerate(CHAINS.items()):
         rows = j(base / "supp1" / "metrics.json")["by_horizon"]["h0"]["by_raw_tx_index_all"]
@@ -145,8 +145,23 @@ def extraction_by_position() -> None:
         ax.bar(x + (i - 0.5) * w, [r["extraction_usd_m"] / tot * 100 for r in rows], w * 0.92, color=C[i], label=name)
     ax.set_xticks(np.arange(len(rows)), ["0", "1", "2", "3–9", "≥ 10"])
     ax.set_xlabel("user transaction position in the block"); ax.set_ylabel("share of extraction (%)")
-    ax.set_title("Where in the block extraction occurs")
-    ax.legend(fontsize=7.5)
+    ax.set_title("(a) Extraction by position", loc="left", fontsize=9)
+    ax.legend(fontsize=7, frameon=False)
+    kap = np.log(2.0)
+    bx.axvspan(-5, 0, color=C[1], alpha=0.12, lw=0)
+    bx.axvspan(0, kap, color=C[2], alpha=0.18, lw=0)
+    bx.axvspan(kap, 7, color=C[3], alpha=0.10, lw=0)
+    top = 0
+    for i, (name, base) in enumerate(CHAINS.items()):
+        b = j(base / "study_i" / "block_index.json")
+        e = np.array(b["z_bin_edges"]); h = np.array(b["z_hist"], float); h /= h.sum()
+        bx.step((e[:-1] + e[1:]) / 2, h * 100, where="mid", color=C[i], lw=1.6, label=name)
+        top = max(top, h.max() * 100)
+    for x, t in ((-2.5, "late"), (kap / 2, "timely"), (3.8, "urgent")):
+        bx.text(x, top * 1.05, t, ha="center", fontsize=7.5, color=INK)
+    bx.set_xlim(-5, 7); bx.set_ylim(0, top * 1.18)
+    bx.set_xlabel(r"block-position index $z_b$ (4), $\kappa = 2$"); bx.set_ylabel("share of blocks (%)")
+    bx.set_title("(b) Corrections relative to retail", loc="left", fontsize=9)
     save(fig, "fig_extraction_by_position")
 
 
@@ -314,9 +329,39 @@ def urgency_block_space() -> None:
     save(fig, "fig_urgency_block_space")
 
 
+def value_split() -> None:
+    bars = []
+    for chain, base in (("Mainnet", R), ("Arbitrum", R / "arbitrum")):
+        row = next(r for r in j(base / "study_i" / "headline.json")["rows"] if r["scenario"] == "stable")
+        for key, lab in (("today", "today"), ("bro_amm", "BRO-AMM")):
+            x = row[key]
+            loss = -x["lp_from_arbs_m"]
+            parts = [x["lp_recapture_m"], x["builder_payments_m"], x["arb_margin_m"],
+                     loss - x["builder_payments_m"] - x["arb_margin_m"]]
+            bars.append((f"{chain}, {lab}", parts, x["lp_net_m"]))
+    segs = [("recaptured for LPs", C[0]), ("payments for position", C[3]),
+            ("arbitrageurs' margin", C[1]), ("arbitrageurs' costs (hedge, gas)", MUTED)]
+    fig, ax = plt.subplots(figsize=(7.4, 2.6))
+    for k, (lab, parts, net) in enumerate(bars):
+        y = len(bars) - 1 - k + (0.25 if k < 2 else 0)
+        tot = sum(parts); left = 0.0
+        for (name, col), v in zip(segs, parts):
+            ax.barh(y, v / tot * 100, left=left, height=0.62, color=col, edgecolor="white", lw=1.5,
+                    label=name if k == 1 else None)
+            left += v / tot * 100
+        sg = "\u2212" if net < 0 else "+"
+        ax.text(101.5, y, f"\\${tot:.2f} M; LPs' net {sg}\\${abs(net):.2f} M", va="center", fontsize=7.5, color=INK)
+    ax.set_yticks([len(bars) - 1 - k + (0.25 if k < 2 else 0) for k in range(len(bars))])
+    ax.set_yticklabels([b[0] for b in bars], fontsize=8)
+    ax.set_xlim(0, 100); ax.set_xlabel("share of the value taken by arbitrage (%)")
+    ax.grid(axis="y", visible=False)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=4, fontsize=7, frameon=False)
+    save(fig, "fig_value_split")
+
+
 def main() -> None:
     for f in (coverage_curve, payout_rule, latency_profile, score_distributions, extraction_by_position,
-              recapture_frontier, controller_paths, oracle_error, settlement_cost, gas_tank, stake_and_shocks, urgency_block_space):
+              recapture_frontier, controller_paths, oracle_error, settlement_cost, gas_tank, stake_and_shocks, urgency_block_space, value_split):
         f()
 
 
