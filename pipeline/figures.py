@@ -96,24 +96,6 @@ def payout_rule() -> None:
     save(fig, "fig_cap_comparison")
 
 
-def supply_cliff() -> None:
-    costs = np.array([0.3, 0.6, 1.0, 1.5, 2.5])     # assumed arbitrage cost population (bp), Study I
-    m = np.linspace(0, 3, 600)
-    n = (costs[None, :] < m[:, None]).sum(1)
-    fig, ax = plt.subplots(figsize=(4.6, 2.6))
-    ax.step(m, n, where="post", color=C[0])
-    ax.axvspan(0, costs[0], color=C[3], alpha=0.12)
-    ax.text(0.04, 4.3, "below the cheapest cost:\nno correction is profitable\nat any gap size", color=C[3], fontsize=7.5, va="top")
-    ax.axvspan(costs[0], costs[1], color=C[2], alpha=0.15)
-    ax.annotate("target band: one arbitrageur\ncan do the job", (0.45, 1.0), xytext=(0.95, 0.45), color=C[2], fontsize=7.5,
-                arrowprops=dict(arrowstyle="-", color=C[2], lw=0.7))
-    ax.set_xlabel("job allowance m (bp)"); ax.set_ylabel("arbitrageurs able to profit")
-    ax.set_title("The arbitrage supply cliff")
-    ax.set_ylim(0, 5.3)
-    save(fig, "fig_supply_cliff")
-
-
-# ---------------------------------------------------------------- evidence
 def latency_profile() -> None:
     fig, axes = plt.subplots(1, 2, figsize=(7.4, 2.7), sharey=False)
     for ax, (name, base) in zip(axes, CHAINS.items()):
@@ -346,7 +328,7 @@ def urgency_block_space() -> None:
 
 
 def main() -> None:
-    for f in (coverage_curve, payout_rule, supply_cliff, latency_profile, score_distributions, extraction_by_position,
+    for f in (coverage_curve, payout_rule, latency_profile, score_distributions, extraction_by_position,
               recapture_frontier, controller_paths, oracle_error, settlement_cost, gas_tank, stake_and_shocks, urgency_block_space):
         f()
 
