@@ -1,0 +1,813 @@
+{
+ "chain": "mainnet",
+ "rows": [
+  {
+   "scenario": "stable",
+   "controller": "ctl_feasible",
+   "event": "none",
+   "lp_gain_vs_today_m": 5.163,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.35,
+   "builder_payments_m": 0.426,
+   "winner_hhi": 1.0,
+   "income_by_arb_m": [
+    1.3602,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "m_end_bps": 2.459,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "stable",
+   "controller": "ctl_feasible",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 4.658,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 22.82,
+   "builder_payments_m": 0.517,
+   "winner_hhi": 0.9578,
+   "income_by_arb_m": [
+    1.7938,
+    0.0057,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "m_end_bps": 1.787,
+   "absent_income_vs_no_event_m": 0.4336
+  },
+  {
+   "scenario": "stable",
+   "controller": "ctl_feasible",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 4.66,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 22.6,
+   "builder_payments_m": 0.489,
+   "winner_hhi": 0.9909,
+   "income_by_arb_m": [
+    1.8274,
+    0.0,
+    0.0014,
+    0.0,
+    0.0
+   ],
+   "m_end_bps": 1.787,
+   "absent_income_vs_no_event_m": 0.4672
+  },
+  {
+   "scenario": "stable",
+   "controller": "ctl_div",
+   "event": "none",
+   "lp_gain_vs_today_m": 5.294,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.56,
+   "builder_payments_m": 1.274,
+   "winner_hhi": 0.4419,
+   "income_by_arb_m": [
+    0.5796,
+    0.4115,
+    0.1255,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 2.521,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "stable",
+   "controller": "ctl_div",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 5.16,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.55,
+   "builder_payments_m": 1.373,
+   "winner_hhi": 0.4342,
+   "income_by_arb_m": [
+    0.6184,
+    0.5012,
+    0.1255,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 2.521,
+   "absent_income_vs_no_event_m": 0.0388
+  },
+  {
+   "scenario": "stable",
+   "controller": "ctl_div",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 4.686,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 22.39,
+   "builder_payments_m": 1.912,
+   "winner_hhi": 0.33,
+   "income_by_arb_m": [
+    0.595,
+    0.4572,
+    0.3011,
+    0.2075,
+    0.1378
+   ],
+   "m_end_bps": 2.559,
+   "absent_income_vs_no_event_m": 0.0611
+  },
+  {
+   "scenario": "stable",
+   "controller": "ctl_red4",
+   "event": "none",
+   "lp_gain_vs_today_m": 4.219,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.08,
+   "builder_payments_m": 2.348,
+   "winner_hhi": 0.3289,
+   "income_by_arb_m": [
+    0.814,
+    0.6844,
+    0.5617,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 5.84,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "stable",
+   "controller": "ctl_red4",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 4.216,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.08,
+   "builder_payments_m": 2.345,
+   "winner_hhi": 0.3254,
+   "income_by_arb_m": [
+    0.7943,
+    0.6998,
+    0.5658,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 5.84,
+   "absent_income_vs_no_event_m": -0.0197
+  },
+  {
+   "scenario": "stable",
+   "controller": "ctl_red4",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 4.217,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.08,
+   "builder_payments_m": 2.337,
+   "winner_hhi": 0.3271,
+   "income_by_arb_m": [
+    0.8229,
+    0.6749,
+    0.5637,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 5.84,
+   "absent_income_vs_no_event_m": -0.0006
+  },
+  {
+   "scenario": "stable",
+   "controller": "ctl_red5",
+   "event": "none",
+   "lp_gain_vs_today_m": 4.178,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.02,
+   "builder_payments_m": 2.389,
+   "winner_hhi": 0.2778,
+   "income_by_arb_m": [
+    0.6701,
+    0.5708,
+    0.4586,
+    0.342,
+    0.0418
+   ],
+   "m_end_bps": 4.877,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "stable",
+   "controller": "ctl_red5",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 4.175,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.02,
+   "builder_payments_m": 2.385,
+   "winner_hhi": 0.2745,
+   "income_by_arb_m": [
+    0.6568,
+    0.5793,
+    0.4575,
+    0.3467,
+    0.0418
+   ],
+   "m_end_bps": 4.877,
+   "absent_income_vs_no_event_m": -0.0133
+  },
+  {
+   "scenario": "stable",
+   "controller": "ctl_red5",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 4.176,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.02,
+   "builder_payments_m": 2.386,
+   "winner_hhi": 0.276,
+   "income_by_arb_m": [
+    0.6785,
+    0.5625,
+    0.4632,
+    0.3391,
+    0.0418
+   ],
+   "m_end_bps": 4.877,
+   "absent_income_vs_no_event_m": 0.0001
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_feasible",
+   "event": "none",
+   "lp_gain_vs_today_m": 5.103,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 3.72,
+   "builder_payments_m": 0.426,
+   "winner_hhi": 1.0,
+   "income_by_arb_m": [
+    1.2881,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "m_end_bps": 2.724,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_feasible",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 4.584,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 23.54,
+   "builder_payments_m": 0.517,
+   "winner_hhi": 0.9549,
+   "income_by_arb_m": [
+    1.7371,
+    0.0057,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "m_end_bps": 3.575,
+   "absent_income_vs_no_event_m": 0.449
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_feasible",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 4.585,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 23.32,
+   "builder_payments_m": 0.489,
+   "winner_hhi": 0.9903,
+   "income_by_arb_m": [
+    1.7707,
+    0.0,
+    0.0014,
+    0.0,
+    0.0
+   ],
+   "m_end_bps": 3.575,
+   "absent_income_vs_no_event_m": 0.4826
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_div",
+   "event": "none",
+   "lp_gain_vs_today_m": 4.996,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.24,
+   "builder_payments_m": 1.112,
+   "winner_hhi": 0.5264,
+   "income_by_arb_m": [
+    0.8373,
+    0.3329,
+    0.1255,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 4.776,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_div",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 4.947,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.12,
+   "builder_payments_m": 1.12,
+   "winner_hhi": 0.4957,
+   "income_by_arb_m": [
+    0.8078,
+    0.374,
+    0.1255,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 4.776,
+   "absent_income_vs_no_event_m": -0.0295
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_div",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 4.492,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 21.9,
+   "builder_payments_m": 1.625,
+   "winner_hhi": 0.4431,
+   "income_by_arb_m": [
+    0.8339,
+    0.3943,
+    0.2545,
+    0.1604,
+    0.0985
+   ],
+   "m_end_bps": 4.73,
+   "absent_income_vs_no_event_m": 0.058
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_red4",
+   "event": "none",
+   "lp_gain_vs_today_m": 4.275,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.08,
+   "builder_payments_m": 1.882,
+   "winner_hhi": 0.3764,
+   "income_by_arb_m": [
+    0.7862,
+    0.5378,
+    0.3366,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 5.84,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_red4",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 4.272,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.08,
+   "builder_payments_m": 1.879,
+   "winner_hhi": 0.3694,
+   "income_by_arb_m": [
+    0.7612,
+    0.5461,
+    0.3507,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 5.84,
+   "absent_income_vs_no_event_m": -0.025
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_red4",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 4.273,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.08,
+   "builder_payments_m": 1.871,
+   "winner_hhi": 0.3731,
+   "income_by_arb_m": [
+    0.7793,
+    0.5375,
+    0.3429,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 5.84,
+   "absent_income_vs_no_event_m": -0.0072
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_red5",
+   "event": "none",
+   "lp_gain_vs_today_m": 4.25,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.03,
+   "builder_payments_m": 1.907,
+   "winner_hhi": 0.3523,
+   "income_by_arb_m": [
+    0.7255,
+    0.498,
+    0.2949,
+    0.1849,
+    0.0418
+   ],
+   "m_end_bps": 4.877,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_red5",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 4.247,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.03,
+   "builder_payments_m": 1.904,
+   "winner_hhi": 0.3452,
+   "income_by_arb_m": [
+    0.718,
+    0.4967,
+    0.299,
+    0.1864,
+    0.0418
+   ],
+   "m_end_bps": 4.877,
+   "absent_income_vs_no_event_m": -0.0075
+  },
+  {
+   "scenario": "costs_x4",
+   "controller": "ctl_red5",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 4.248,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.03,
+   "builder_payments_m": 1.905,
+   "winner_hhi": 0.3489,
+   "income_by_arb_m": [
+    0.7284,
+    0.4852,
+    0.3053,
+    0.1832,
+    0.0418
+   ],
+   "m_end_bps": 4.877,
+   "absent_income_vs_no_event_m": -0.0099
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_feasible",
+   "event": "none",
+   "lp_gain_vs_today_m": 5.007,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 3.71,
+   "builder_payments_m": 0.426,
+   "winner_hhi": 1.0,
+   "income_by_arb_m": [
+    1.2458,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "m_end_bps": 3.018,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_feasible",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 4.462,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 23.81,
+   "builder_payments_m": 0.517,
+   "winner_hhi": 0.9516,
+   "income_by_arb_m": [
+    1.7176,
+    0.0057,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "m_end_bps": 4.169,
+   "absent_income_vs_no_event_m": 0.4718
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_feasible",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 4.464,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 23.59,
+   "builder_payments_m": 0.489,
+   "winner_hhi": 0.9896,
+   "income_by_arb_m": [
+    1.7512,
+    0.0,
+    0.0014,
+    0.0,
+    0.0
+   ],
+   "m_end_bps": 4.169,
+   "absent_income_vs_no_event_m": 0.5054
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_div",
+   "event": "none",
+   "lp_gain_vs_today_m": 4.685,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.97,
+   "builder_payments_m": 1.166,
+   "winner_hhi": 0.4884,
+   "income_by_arb_m": [
+    0.8074,
+    0.3581,
+    0.1255,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 5.426,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_div",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 4.429,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.05,
+   "builder_payments_m": 1.384,
+   "winner_hhi": 0.4718,
+   "income_by_arb_m": [
+    0.8967,
+    0.4994,
+    0.1255,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 7.77,
+   "absent_income_vs_no_event_m": 0.0893
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_div",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 4.15,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 21.8,
+   "builder_payments_m": 1.699,
+   "winner_hhi": 0.4374,
+   "income_by_arb_m": [
+    0.8763,
+    0.4694,
+    0.2313,
+    0.1482,
+    0.0985
+   ],
+   "m_end_bps": 6.764,
+   "absent_income_vs_no_event_m": 0.1802
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_red4",
+   "event": "none",
+   "lp_gain_vs_today_m": 4.369,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.09,
+   "builder_payments_m": 1.45,
+   "winner_hhi": 0.4218,
+   "income_by_arb_m": [
+    0.844,
+    0.412,
+    0.2588,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 5.84,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_red4",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 4.366,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.09,
+   "builder_payments_m": 1.447,
+   "winner_hhi": 0.4119,
+   "income_by_arb_m": [
+    0.8213,
+    0.4205,
+    0.2718,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 5.84,
+   "absent_income_vs_no_event_m": -0.0227
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_red4",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 4.366,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.09,
+   "builder_payments_m": 1.439,
+   "winner_hhi": 0.4171,
+   "income_by_arb_m": [
+    0.8414,
+    0.409,
+    0.2654,
+    0.0834,
+    0.0418
+   ],
+   "m_end_bps": 5.84,
+   "absent_income_vs_no_event_m": -0.0056
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_red5",
+   "event": "none",
+   "lp_gain_vs_today_m": 3.984,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.05,
+   "builder_payments_m": 1.836,
+   "winner_hhi": 0.3886,
+   "income_by_arb_m": [
+    0.8505,
+    0.4767,
+    0.2831,
+    0.1849,
+    0.0418
+   ],
+   "m_end_bps": 9.753,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_red5",
+   "event": "dropout",
+   "lp_gain_vs_today_m": 3.981,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.05,
+   "builder_payments_m": 1.832,
+   "winner_hhi": 0.3793,
+   "income_by_arb_m": [
+    0.841,
+    0.4818,
+    0.2854,
+    0.1864,
+    0.0418
+   ],
+   "m_end_bps": 9.753,
+   "absent_income_vs_no_event_m": -0.0095
+  },
+  {
+   "scenario": "costs_x8",
+   "controller": "ctl_red5",
+   "event": "withhold",
+   "lp_gain_vs_today_m": 3.981,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.05,
+   "builder_payments_m": 1.833,
+   "winner_hhi": 0.3846,
+   "income_by_arb_m": [
+    0.8568,
+    0.4627,
+    0.293,
+    0.1832,
+    0.0418
+   ],
+   "m_end_bps": 9.753,
+   "absent_income_vs_no_event_m": -0.0077
+  },
+  {
+   "scenario": "pop_duo",
+   "controller": "ctl_feasible",
+   "event": "none",
+   "lp_gain_vs_today_m": 5.163,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.35,
+   "builder_payments_m": 0.426,
+   "winner_hhi": 1.0,
+   "income_by_arb_m": [
+    1.3602,
+    0.0
+   ],
+   "m_end_bps": 2.459,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "pop_duo",
+   "controller": "ctl_div",
+   "event": "none",
+   "lp_gain_vs_today_m": 5.294,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.56,
+   "builder_payments_m": 1.274,
+   "winner_hhi": 0.519,
+   "income_by_arb_m": [
+    0.8457,
+    0.6291
+   ],
+   "m_end_bps": 2.521,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "pop_duo",
+   "controller": "ctl_red4",
+   "event": "none",
+   "lp_gain_vs_today_m": 3.677,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 2.89,
+   "winner_hhi": 0.5076,
+   "income_by_arb_m": [
+    1.6279,
+    1.4534
+   ],
+   "m_end_bps": 5.0,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "pop_duo",
+   "controller": "ctl_red5",
+   "event": "none",
+   "lp_gain_vs_today_m": 3.677,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 2.89,
+   "winner_hhi": 0.5076,
+   "income_by_arb_m": [
+    1.6279,
+    1.4534
+   ],
+   "m_end_bps": 5.0,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "pop_monopoly",
+   "controller": "ctl_feasible",
+   "event": "none",
+   "lp_gain_vs_today_m": 5.163,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.35,
+   "builder_payments_m": 0.0,
+   "winner_hhi": 1.0,
+   "income_by_arb_m": [
+    1.7857
+   ],
+   "m_end_bps": 2.459,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "pop_monopoly",
+   "controller": "ctl_div",
+   "event": "none",
+   "lp_gain_vs_today_m": 3.677,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 0.0,
+   "winner_hhi": 1.0,
+   "income_by_arb_m": [
+    3.271
+   ],
+   "m_end_bps": 5.0,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "pop_monopoly",
+   "controller": "ctl_red4",
+   "event": "none",
+   "lp_gain_vs_today_m": 3.677,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 0.0,
+   "winner_hhi": 1.0,
+   "income_by_arb_m": [
+    3.271
+   ],
+   "m_end_bps": 5.0,
+   "absent_income_vs_no_event_m": null
+  },
+  {
+   "scenario": "pop_monopoly",
+   "controller": "ctl_red5",
+   "event": "none",
+   "lp_gain_vs_today_m": 3.677,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 0.0,
+   "winner_hhi": 1.0,
+   "income_by_arb_m": [
+    3.271
+   ],
+   "m_end_bps": 5.0,
+   "absent_income_vs_no_event_m": null
+  }
+ ]
+}

@@ -147,6 +147,8 @@ STALE_RULE = "outcome"
 # coverage-curve fee f = F + (FMAX - F)·exp(-r / (RHO · v_epoch)) on its UTC-day
 # volume so far (F = the pool fee as f_min). None = arbs always pay F (paper v1).
 RHO = 5e-4
+RED_SHARE = 0.05                # ctl_redK: a sender counts if it won at least this share of the day's corrections
+BAND_LO, BAND_UP = 0.25, 1.1    # ctl_band: raise slightly when fewer than BAND_LO of arb blocks show a contested slot
 DIV_TAU = 0.25                  # ctl_div: lower m only if > this share of wins went past the top winner
 REB_TOL = 0.005                 # rebalancing constraint: within-band share may drop <= 0.5pp vs today
 USER_STALE_TOL_BPS = 0.1        # ... and user pre-trade gap may rise <= 0.1bp vs today
@@ -247,6 +249,25 @@ def run_one(args) -> dict:
     shock_k = settings.get("shock_k", 0.0)
     shock_key = settings.get("shock_key", "jump")
     o_prev = None
+    # Events: arbitrageur j absent (dropout or withholding) from day offset s for n days
+    absent = settings.get("absent", [])
+    win_cnt = np.zeros(len(POPULATIONS.get(scenario, ARB_COSTS_BPS)), dtype=np.int64)
+    arb_inc = np.zeros(len(win_cnt))
+    # Readiness: an arb with no win for dorm_s seconds goes dormant and re-enters wake_s after
+    # the first block in which it could have profited (infrastructure taken down and redeployed)
+    dorm_s = settings.get("dormant_after_s", None); wake_s = settings.get("wake_s", 86400.0)
+    last_win = np.zeros(len(win_cnt)); wake_at = np.full(len(win_cnt), np.inf)
+    # Rotation (readiness): each window a pseudo-random draw designates one registered arb, who
+    # earns m; others earn m*(1 - phi). If correctable gaps stay open for grace blocks, the window
+    # falls back to full m for all and the designee fails it. The controller lowers m only if at
+    # least rot_k arbs passed a window, and failed none, in the last 24 h.
+    rot = settings.get("rotation", None)
+    if rot is not None:
+        r_win = rot.get("window_s", 3600.0); r_phi = rot.get("phi", 0.5)
+        r_grace = rot.get("grace_blocks", 10); rot_k = rot.get("k", 4)
+        cur_w = -1; desig = 0; w_fail = False; w_stale = 0; fallback = False
+        pass_t = np.full(len(win_cnt), -np.inf); fail_t = np.full(len(win_cnt), -np.inf)
+        rot_fails = 0
     # Proven-stale relief (Layer 2, no arbitrage stake): every arb either pays f_max unstaked
     # or, while relief is on, attaches a signed report and pays the relief fee; neither path
     # has stake, so nothing beyond the fee is charged. Relief switches on when a block ends
@@ -276,10 +297,16 @@ def run_one(args) -> dict:
     o, Dd, gas, day = _DATA["o"], _DATA["D"], _DATA["gas"], _DATA["day"]
     es, ee, xs, xv = _DATA["exo_start"], _DATA["exo_end"], _DATA["exo_s"], _DATA["exo_v"]
     controlled = isinstance(param, str) and param.startswith("ctl")
-    comp_only = param in ("ctl_comp", "ctl_fast")
-    diverse = param == "ctl_div"
-    feasible = param in ("ctl_feasible", "ctl_div")
-    fast = param in ("ctl_fast", "ctl_feasible", "ctl_div")
+    band = isinstance(param, str) and param.startswith("ctl_band")
+    comp_only = param in ("ctl_comp", "ctl_fast") or band
+    # ctl_redK: decay only if at least K distinct senders each won >= RED_SHARE of the day's corrections
+    red = isinstance(param, str) and param.startswith("ctl_red")
+    if param == "ctl_rot":
+        param_rot = True
+    k_red = int(param[7:]) if red else 0
+    diverse = param == "ctl_div" or red
+    feasible = param in ("ctl_feasible", "ctl_div") or red
+    fast = param in ("ctl_fast", "ctl_feasible", "ctl_div") or red
     rng = np.random.default_rng(7)
     sr_obs = sr_stale = w_sr_obs = w_sr_stale = 0
     w_corr = w_uncorr = w_n = 0
@@ -332,7 +359,16 @@ def run_one(args) -> dict:
             st = d_stale / max(d_n, 1); ct = d_cont / max(d_arb, 1)
             daily.append((int(d_cur), round(d_m * 1e4, 4), round(st, 4), round(ct, 4)))
             if controlled:
-                if diverse:
+                if rot is not None:
+                    t_d = i * _DATA["step_s"]
+                    ready = int(((t_d - pass_t <= 86400) & (t_d - fail_t > 86400)).sum())
+                    if ready >= rot_k:
+                        m *= DECAY_SR
+                elif red:
+                    tot = d_wins.sum()
+                    if tot and int((d_wins >= RED_SHARE * tot).sum()) >= k_red:
+                        m *= DECAY_SR
+                elif diverse:
                     tot = d_wins.sum()
                     if tot and 1.0 - d_wins.max() / tot > DIV_TAU:
                         m *= DECAY_SR
@@ -344,6 +380,8 @@ def run_one(args) -> dict:
                     m *= 2.0
                 elif st >= s_low:
                     pass
+                elif band and ct < BAND_LO:        # too little visible competition: keep a second arb in play
+                    m *= BAND_UP
                 elif ct > TAU_C:
                     m *= 0.8
                 elif not comp_only:
@@ -381,6 +419,9 @@ def run_one(args) -> dict:
           G = oi - p; gab = abs(G); a = gab - F
           if relief is not None and a > 0 and rule != "today":
               costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) + extra_cost for c in costs_base]
+              if absent:
+                  _do = day[i] - day[0]
+                  costs = [1.0 if any(aj == j and as_ <= _do < as_ + an for aj, as_, an in absent) else c for j, c in enumerate(costs)]
               correctable = arb_choice("today", a, D, costs[0], gas[i], 0.0, gab)[0] > 0
               # report price (lagged) -> proven decoupling g and relief fee
               step = _DATA["step_s"]
@@ -465,15 +506,56 @@ def run_one(args) -> dict:
               a = -1.0                                   # skip the staked-arb block below
           if a > 0:
               costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) + extra_cost for c in costs_base]
-              correctable = arb_choice("today", a, D, costs[0], gas[i], 0.0, gab)[0] > 0
+              if absent:
+                  _do = day[i] - day[0]
+                  costs = [1.0 if any(aj == j and as_ <= _do < as_ + an for aj, as_, an in absent) else c for j, c in enumerate(costs)]
+              correctable = arb_choice("today", a, D, min(costs), gas[i], 0.0, gab)[0] > 0
               fees = [arb_fee(j) for j in range(n_arb)]
+              if rot is not None:
+                  t_now = i * _DATA["step_s"]
+                  wid = int(t_now // r_win)
+                  if wid != cur_w:
+                      if cur_w >= 0:
+                          if w_fail:
+                              fail_t[desig] = t_now; rot_fails += 1
+                          else:
+                              pass_t[desig] = t_now
+                      cur_w = wid; w_fail = False; w_stale = 0; fallback = False
+                      desig = int(np.random.default_rng(1_000_003 + wid).integers(n_arb))
+                  m_of = lambda j: m_blk if (fallback or j == desig) else m_blk * (1.0 - r_phi)
+              else:
+                  m_of = lambda j: m_blk
               if pm_v is None:
-                  res = sorted(((*arb_choice(rule, gab - fees[j], D, h, gas[i], m_blk, gab), h, fees[j], j)
+                  res = sorted(((*arb_choice(rule, gab - fees[j], D, h, gas[i], m_of(j), gab), h, fees[j], j)
                                 for j, h in enumerate(costs)), reverse=True)
               else:
                   res = sorted(((*arb_choice(rule, gab - F, D, h + (1 - pm_v * (1 - TAU)) * (fees[j] - F), gas[i], m_blk, gab), h, fees[j], j)
                                 for j, h in enumerate(costs)), reverse=True)
+              dorm_prof = []
+              if dorm_s is not None:
+                  t_now = i * _DATA["step_s"]
+                  keep_ = []
+                  for x in res:
+                      j = x[6]
+                      if t_now >= wake_at[j]:                                    # redeployed: re-enters now
+                          last_win[j] = wake_at[j]; wake_at[j] = np.inf
+                      if t_now - last_win[j] > dorm_s and t_now < wake_at[j]:      # dormant
+                          if x[0] > 0 and x[1] > 0 and wake_at[j] == np.inf:
+                              dorm_prof.append(j)
+                          continue
+                      keep_.append(x)
+                  res = keep_ or [(0.0, 0.0, 0.0, 0, 0.0, F, 0)]
               w, r2 = res[0], (res[1] if len(res) > 1 else (0.0, 0.0, 0.0, 0, 0.0, F, 0))   # monopoly: no runner-up
+              if rot is not None and correctable:
+                  if w[0] > 0 and w[1] > 0:
+                      w_stale = 0
+                  else:
+                      w_stale += 1
+                      if w_stale >= r_grace and not fallback:
+                          fallback = True; w_fail = True
+              if dorm_prof and not (w[0] > 0 and w[1] > 0):   # a gap left uncorrected wakes dormant arbs
+                  for j in dorm_prof:
+                      wake_at[j] = t_now + wake_s
               if correctable and not (w[0] > 0 and w[1] > 0) and min(fees) > F + 1e-6:
                   stalled_fee += 1
               traded = w[0] > 0 and w[1] > 0
@@ -484,7 +566,12 @@ def run_one(args) -> dict:
               if traded:
                   if diverse:     # FCFS race: any arb that would profit can be first
                       prof = [k for k, x in enumerate(res) if x[0] > 0 and x[1] > 0]
-                      d_wins[costs.index(res[prof[rng.integers(len(prof))]][4])] += 1
+                      rw = res[prof[rng.integers(len(prof))]]
+                      d_wins[rw[6]] += 1; win_cnt[rw[6]] += 1; arb_inc[rw[6]] += rw[0]
+                      last_win[rw[6]] = i * _DATA["step_s"]; wake_at[rw[6]] = np.inf
+                  else:
+                      win_cnt[w[6]] += 1; arb_inc[w[6]] += w[0] - max(r2[0], 0.0)
+                      last_win[w[6]] = i * _DATA["step_s"]; wake_at[w[6]] = np.inf
                   V, kept = w[1], w[2]
                   if w[3]:
                       unst_n += 1; unst_vol += V
@@ -614,6 +701,10 @@ def run_one(args) -> dict:
         "lp_from_arbs_m": round(lp_arb / 1e6, 3), "lp_from_users_m": round(lp_exo / 1e6, 3),
         "lp_recapture_m": round(charge_tot / 1e6, 3),
         "builder_payments_m": round(builder / 1e6, 3), "arb_margin_m": round(margin / 1e6, 3),
+        "wins_by_arb": win_cnt.tolist(), "income_by_arb_m": [round(float(x) / 1e6, 4) for x in arb_inc],
+        "winner_hhi": round(float(((win_cnt / max(win_cnt.sum(), 1)) ** 2).sum()), 4),
+        "absent": absent, "m_end_bps": round(m * 1e4, 3),
+        "rotation": rot, "rotation_failed_windows": (rot_fails if rot is not None else None),
         "unstaked": {"setting": UNSTAKED, "trades": unst_n, "volume_b": round(unst_vol / 1e9, 3)}, "stale_rule": STALE_RULE,
         "stake": {"usd": stake_K, "fmax_bps": round(fmax_fee * 1e4), "ramp_days": ramp_days, "alloc": "pooled" if pooled else "equal", "fee_premium_to_lps_m": round(fee_prem / 1e6, 3),
                   "correctable_blocks_uncorrected_for_lack_of_stake": stalled_fee,
