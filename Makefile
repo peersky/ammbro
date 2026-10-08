@@ -85,10 +85,13 @@ clean:
 
 paper-pdf: # render paper.md (LaTeX math) to paper.pdf via pandoc + xelatex
 	uv run python tools/mermaid2png.py
-	pandoc paper.md -o paper.pdf --pdf-engine=xelatex -V mainfont="Times New Roman" -V geometry:margin=2.2cm -V fontsize=10pt --resource-path=. --lua-filter=tools/math-block.lua
+	pandoc paper.md -o paper.pdf --pdf-engine=xelatex -V mainfont="Times New Roman" -V geometry:margin=2.2cm -V fontsize=10pt --resource-path=. --lua-filter=tools/math-block.lua --citeproc --bibliography=references.bib
 
-preprint:                # preprint PDF for Zenodo: title block, page numbers, links → dist/bro-amm-preprint.pdf
+preprint:                # preprint PDF for Zenodo → dist/bro-amm-preprint.pdf (vector figures, .bib citations)
 	uv run python tools/mermaid2png.py
-	mkdir -p dist
+	AMMBRO_FIG=pdf uv run python -m pipeline.figures
 	pandoc paper.md -o dist/bro-amm-preprint.pdf --pdf-engine=xelatex --resource-path=. \
-	  --metadata-file=tools/preprint.yaml --lua-filter=tools/preprint.lua --lua-filter=tools/math-block.lua
+	  --metadata-file=tools/preprint.yaml --lua-filter=tools/math-block.lua --lua-filter=tools/preprint.lua --citeproc
+
+paper-rendered:          # paper.rendered.md: paper.md with citations and references filled in, for Forgejo
+	uv run python tools/render_md.py

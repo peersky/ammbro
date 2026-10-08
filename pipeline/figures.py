@@ -9,6 +9,7 @@ per panel; series identified by legend and direct labels, never colour alone.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import matplotlib
@@ -30,6 +31,11 @@ plt.rcParams.update({
     "xtick.color": MUTED, "ytick.color": MUTED, "axes.grid": True, "grid.color": "#e6e6e6", "grid.linewidth": 0.6,
     "legend.frameon": False, "lines.linewidth": 1.8, "font.family": "DejaVu Sans",
 })
+# AMMBRO_FIG=pdf: vector figures for the preprint in the paper's serif (STIX Two), written to dist/fig/
+VECTOR = os.environ.get("AMMBRO_FIG") == "pdf"
+if VECTOR:
+    FIG = REPO_ROOT / "dist" / "fig"
+    plt.rcParams.update({"font.family": ["STIX Two Text", "STIXGeneral"], "mathtext.fontset": "stix", "pdf.fonttype": 42})
 CHAINS = {"Ethereum mainnet": R, "Arbitrum One": R / "arbitrum"}
 
 
@@ -38,9 +44,9 @@ def j(path: Path) -> dict:
 
 
 def save(fig, name: str) -> None:
-    FIG.mkdir(exist_ok=True)
+    FIG.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
-    fig.savefig(FIG / f"{name}.png", bbox_inches="tight")
+    fig.savefig(FIG / f"{name}.{'pdf' if VECTOR else 'png'}", bbox_inches="tight")
     plt.close(fig)
     print("wrote", name)
 

@@ -2,7 +2,7 @@
 
 Forgejo renders mermaid natively; pandoc does not. This translates the flowchart subset the paper
 uses (nodes A[text], A[(text)], A{text}; edges A --> B and A -->|label| B) to dot and writes
-figures/fig_mermaid_<sha1[:8]>.png, which tools/math-block.lua substitutes for the block.
+figures/fig_mermaid_<sha1[:8]>.png (and a vector PDF in dist/fig/ for the preprint), which tools/math-block.lua substitutes for the block.
 
     uv run python tools/mermaid2png.py
 """
@@ -56,7 +56,10 @@ def main() -> None:
         h = hashlib.sha1(src.encode()).hexdigest()[:8]
         png = ROOT / "figures" / f"fig_mermaid_{h}.png"
         subprocess.run(["dot", "-Tpng", "-Gdpi=220", "-o", str(png)], input=to_dot(src).encode(), check=True)
-        print("wrote", png.name)
+        vec = ROOT / "dist" / "fig" / f"fig_mermaid_{h}.pdf"          # vector copy in the paper's serif for the preprint
+        vec.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["dot", "-Tpdf", "-o", str(vec)], input=to_dot(src).replace("Helvetica", "STIX Two Text").encode(), check=True)
+        print("wrote", png.name, "and", vec.name)
 
 
 if __name__ == "__main__":

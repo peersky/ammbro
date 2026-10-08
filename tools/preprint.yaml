@@ -1,19 +1,29 @@
-# Title block for the preprint PDF (make preprint). paper.md carries the same title and author line
-# for the Forgejo view; tools/preprint.lua drops them from the body so they are not printed twice.
+# Preprint PDF (make preprint): article class, author–year citations from references.bib via
+# citeproc (Chicago author–date, pandoc's default style), STIX Two text and math. paper.md carries the
+# same title and author line for the Forgejo view; tools/preprint.lua drops them from the body.
 title: "BRO-AMM: A Bonded Reconciliation Oracle AMM as a Low-Risk DeFi Primitive"
 author: "Tims Pecerskis — tim@peeramid.xyz"
 date: "Preprint, 8 October 2026"
-mainfont: "Times New Roman"
-monofont: "Menlo"
-monofontoptions: "Scale=0.85"
+documentclass: article
+classoption: [a4paper]
 fontsize: 10pt
-geometry: "margin=2.2cm"
+geometry: "margin=2.4cm"
+mainfont: "STIX Two Text"
+mathfont: "STIX Two Math"
+monofont: "Menlo"
+monofontoptions: "Scale=0.82"
+linestretch: 1.08
 colorlinks: true
 linkcolor: "blue"
+citecolor: "blue"
 urlcolor: "blue"
+bibliography: references.bib
 link-citations: true
+reference-section-title: ""
 header-includes:
-  - \usepackage{float}
-  - \floatplacement{figure}{H}
   - \usepackage{etoolbox}
   - \AtBeginEnvironment{longtable}{\small}
+  - \usepackage[font=small,labelfont=bf]{caption}
+  - \usepackage{microtype}
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
