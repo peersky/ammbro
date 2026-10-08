@@ -247,6 +247,26 @@ def run_one(args) -> dict:
     shock_k = settings.get("shock_k", 0.0)
     shock_key = settings.get("shock_key", "jump")
     o_prev = None
+    # Proven-stale relief (Layer 2, no arbitrage stake): every arb either pays f_max unstaked
+    # or, while relief is on, attaches a signed report and pays the relief fee; neither path
+    # has stake, so nothing beyond the fee is charged. Relief switches on when a block ends
+    # more than g_on from the oracle and off once a block ends within g_off (hysteresis).
+    # Level: "clear" = clamp(g - m - eta, f_q, f_max); "steep" = logistic discount centred on
+    # the middle of [f_q + m, f_max + m]. g is read from a report lagged by lag_s seconds.
+    relief = settings.get("relief", None)
+    relief_on = False; rl_trades = rl_vol = 0.0; rl_blocks = 0; o_hist = []
+    if relief is not None:
+        stake_K = 0.0
+        r_fmax = relief.get("fmax", 500e-4); r_fq = relief.get("fq", F); r_eta = relief.get("eta", 0.0)
+        r_mode = relief.get("mode", "clear"); r_lag = relief.get("lag_s", 0.0)
+        r_gas = relief.get("proof_gas_frac", 0.24)
+        r_hold = relief.get("hold_s", 0.0)             # stay on this long after re-coupling
+        inband_s = 0.0
+        # hysteresis in g ("hyst"): discount switches on when the proven gap reaches
+        # band + d_on and stays on while the gap closes, until it is back within the band;
+        # level while on: "full" (fee f_min), "half", or "frozen" (clearing fee at switch-on)
+        h_don = relief.get("d_on", 5e-4); h_level = relief.get("level", "full")
+        hyst_on = False; hyst_fee = F
     if stake_K is not None and UNSTAKED is None:
         UNSTAKED = (fmax_fee, 0.0)                       # fresh accounts always available
     vol_k = float(scenario.split("_x")[1]) if scenario.startswith("vol_x") else 1.0
@@ -270,7 +290,7 @@ def run_one(args) -> dict:
     shift = float(scenario.split("_x")[1]) if scenario.startswith("costs_x") else 1.0
     depth_x = float(scenario.split("_x")[1]) if scenario.startswith("depth_x") else 1.0
 
-    o0 = o[0]
+    o0 = o[0]; o_prev_blk = o0
     p = o0
     n_arb = len(costs_base)
     vol_ep = np.zeros(n_arb)
@@ -359,6 +379,90 @@ def run_one(args) -> dict:
                 exo_gap_w += V * abs(p - oi); exo_vol += V
                 p += s * V / D
           G = oi - p; gab = abs(G); a = gab - F
+          if relief is not None and a > 0 and rule != "today":
+              costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) + extra_cost for c in costs_base]
+              correctable = arb_choice("today", a, D, costs[0], gas[i], 0.0, gab)[0] > 0
+              # report price (lagged) -> proven decoupling g and relief fee
+              step = _DATA["step_s"]
+              if r_lag <= 0 or i == 0:
+                  o_rep = oi
+              elif r_lag < step:
+                  o_rep = o_prev_blk + (1 - r_lag / step) * (oi - o_prev_blk)
+              else:
+                  kk = int(round(r_lag / step)); o_rep = o0 + vol_k * (o[max(i - kk, 0)] - o0)
+              glo, ghi = r_fq + m, r_fmax + m
+              traded_any = False
+              for _rep in range(6):                     # successive swaps, each priced from the gap left
+                  G = oi - p; gab = abs(G)
+                  if gab - F <= 0:
+                      break
+                  g_rep = abs(o_rep - p)
+                  if r_mode == "hyst":
+                      if not hyst_on and g_rep >= F + EPS_SR + h_don:   # thresholds independent of m
+                          hyst_on = True
+                          hyst_fee = {"full": r_fq, "half": 0.5 * (r_fq + r_fmax),
+                                      "frozen": min(max(g_rep - m, r_fq), r_fmax)}[h_level]
+                      elif hyst_on and g_rep <= F:
+                          hyst_on = False
+                      fr = hyst_fee
+                  elif r_mode == "clear":
+                      fr = min(max(g_rep - m - r_eta, r_fq), r_fmax)
+                  elif r_mode == "full":
+                      fr = r_fq
+                  else:
+                      kx = 8.0 / max(ghi - glo, 1e-9)
+                      x = 1.0 / (1.0 + math.exp(-kx * (g_rep - 0.5 * (glo + ghi))))
+                      # steep: discount grows with the gap; reverse: discount shrinks with it
+                      fr = r_fmax - (r_fmax - r_fq) * (x if r_mode == "steep" else 1.0 - x)
+                  opts = []
+                  for j, h in enumerate(costs):
+                      if r_mode == "sync" and relief_on:
+                          # pays F; per-unit charge max(edge_rep(u) - m, 0) settled synchronously
+                          # against the report; the arb keeps at most m per unit of true edge
+                          Vx = D * (gab - F - h)
+                          L1 = min(max(D * (g_rep - F - m), 0.0), max(Vx, 0.0))
+                          if Vx > 0 and gab - g_rep + m > h:
+                              keptF = (gab - g_rep + m) * L1 + (gab - F) * (Vx - L1) - (Vx * Vx - L1 * L1) / (2 * D)
+                              prof = keptF - h * Vx - gas[i] * (1 + r_gas)
+                              if prof > 0:
+                                  opts.append((prof, Vx, keptF, "relief", j, F))
+                      for path, phi, gx in (("unstaked", r_fmax, 0.0), ("relief", fr, r_gas)):
+                          if path == "relief" and (r_mode == "sync" or (r_mode == "hyst" and not hyst_on)
+                                                   or (r_mode != "hyst" and not relief_on)):
+                              continue
+                          Vx = D * (gab - phi - h)
+                          if Vx <= 0:
+                              continue
+                          Ex = (gab - F - Vx / (2 * D)) * Vx
+                          keptF = Ex - (phi - F) * Vx
+                          prof = keptF - h * Vx - gas[i] * (1 + gx)
+                          if prof > 0:
+                              opts.append((prof, Vx, keptF, path, j, phi))
+                  if not opts:
+                      break
+                  opts.sort(reverse=True)
+                  wb = opts[0]; rb = next((o_ for o_ in opts[1:] if o_[4] != wb[4]), None)
+                  Vx, keptF = wb[1], wb[2]
+                  lp_arb -= keptF; fee_prem += (wb[5] - F) * Vx
+                  builder += max(rb[0], 0.0) if rb else 0.0
+                  margin += wb[0] - (max(rb[0], 0.0) if rb else 0.0)
+                  arb_vol += Vx; pass_trades[_pass] += 1; pass_vol[_pass] += Vx
+                  if diverse:                            # FCFS race: any profitable arb can be first
+                      profj = sorted({o_[4] for o_ in opts})
+                      d_wins[profj[rng.integers(len(profj))]] += 1
+                  if wb[3] == "relief":
+                      rl_trades += 1; rl_vol += Vx
+                  else:
+                      unst_n += 1; unst_vol += Vx
+                  p += math.copysign(Vx / D, G)
+                  d_arb += 1; traded_any = True
+                  if rb:
+                      d_cont += 1
+              if correctable:
+                  n_corr += 1; d_n += 1; w_corr += 1
+                  if not traded_any:
+                      n_uncorr += 1; d_stale += 1; w_uncorr += 1
+              a = -1.0                                   # skip the staked-arb block below
           if a > 0:
               costs = [c * (shift if day[i] >= SHIFT_DAY else 1.0) + extra_cost for c in costs_base]
               correctable = arb_choice("today", a, D, costs[0], gas[i], 0.0, gab)[0] > 0
@@ -480,6 +584,16 @@ def run_one(args) -> dict:
                 lp_exo += V * (F + s * (pav - oi))
                 exo_gap_w += V * abs(p - oi); exo_vol += V
                 p += s * V / D
+        if relief is not None:
+            eg = abs(oi - p)
+            if eg > F + m + EPS_SR:
+                relief_on = True; inband_s = 0.0
+            elif eg <= F + m:
+                inband_s += _DATA["step_s"]
+                if inband_s >= r_hold:
+                    relief_on = False
+            rl_blocks += relief_on
+        o_prev_blk = oi
         eob_n += 1
         if abs(oi - p) <= REB:
             eob_reb += 1
@@ -503,7 +617,8 @@ def run_one(args) -> dict:
         "unstaked": {"setting": UNSTAKED, "trades": unst_n, "volume_b": round(unst_vol / 1e9, 3)}, "stale_rule": STALE_RULE,
         "stake": {"usd": stake_K, "fmax_bps": round(fmax_fee * 1e4), "ramp_days": ramp_days, "alloc": "pooled" if pooled else "equal", "fee_premium_to_lps_m": round(fee_prem / 1e6, 3),
                   "correctable_blocks_uncorrected_for_lack_of_stake": stalled_fee,
-                  "premium_mint_v": pm_v, "shock_k": shock_k, "shock_key": shock_key, "rep_minted_to_arbs_m": round(pm_minted / 1e6, 3), "uncovered_charges_m": round(pm_leak / 1e6, 3),
+                  "premium_mint_v": pm_v, "shock_k": shock_k, "shock_key": shock_key,
+                  "relief": relief, "relief_trades": rl_trades, "relief_volume_b": round(rl_vol / 1e9, 3), "relief_on_blocks": rl_blocks, "rep_minted_to_arbs_m": round(pm_minted / 1e6, 3), "uncovered_charges_m": round(pm_leak / 1e6, 3),
                   "arb_stake_end_m": None if pm_v is None else round(float(r_arb.sum()) / 1e6, 3)}, "vol_x": vol_k,
         "arb_volume_b": round(arb_vol / 1e9, 3),
         "uncorrected_share_of_correctable": round(n_uncorr / max(n_corr, 1), 5),
