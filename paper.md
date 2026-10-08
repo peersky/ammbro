@@ -52,7 +52,7 @@ where $t^*$ is the decision instant defined in §3.3 and $P_{\mathrm{dir}}(t^*)$
 
 ### 3.3 Reference latency factor
 
-The score (1) compares a swap with the external price at the moment its sender decided to trade, which is neither when the transaction was submitted nor when the block was stamped. On Ethereum a block's timestamp labels the start of its slot, and arbitrageurs keep re-pricing their bundles until the proposer takes the winning bid, so their last decision falls after the timestamp; on Arbitrum the sequencer orders transactions by arrival, so a decision lies close to its inclusion (Appendix G.1). Rather than assume a latency, we measure it. A swap that corrects the pool trades until the pool price net of the fee meets the external price at which it can hedge, at the instant it decides; the offset from the block timestamp that minimises this residual identifies the decision latency $L$, and we score at $t^* = \text{block timestamp} + L$ (Figure 4). $L$ is 1.5 s on mainnet and 0.75 s on Arbitrum, and is a parameter of each pool, re-estimated periodically (Appendix G.1).
+The score (1) compares a swap with the external price at the moment its sender decided to trade, which is neither when the transaction was submitted nor when the block was stamped. On Ethereum a block's timestamp labels the start of its slot, and arbitrageurs keep re-pricing their bundles until the proposer takes the winning bid, so their last decision falls after the timestamp; on Arbitrum the sequencer orders transactions by arrival, so a decision lies close to its inclusion (Appendix G.1). Rather than assume a latency, we measure it. A swap that corrects the pool trades until the pool price net of the fee meets the external price at which it can hedge, at the instant it decides; the offset from the block timestamp that minimises this residual identifies the decision latency $L$, and we score at $t^* = \text{block timestamp} + L$ (Figure 5 in Appendix B). $L$ is 1.5 s on mainnet and 0.75 s on Arbitrum, and is a parameter of each pool, re-estimated periodically (Appendix G.1).
 
 Every swap in a block is scored at the same instant and over a one-second window around it. A per-block anchor is position-invariant: no position maps to a more lenient benchmark, whereas a clock derived from a transaction's index within the block would be set by whoever orders the block, and could be sold (Appendix B). On chains whose blocks are shorter than their timestamps, the $N$ blocks carrying timestamp $S$ (in whole seconds) are spread over that second, the block of rank $j = 0, \dots, N - 1$ in block-number order being placed at $S + (j + \tfrac{1}{2})/N$; the error of at most $\pm 1/(2N)$ s is absorbed by the scoring window.
 
@@ -237,27 +237,7 @@ We study the Uniswap v3 ETH/USDC 5 bp pool on Ethereum mainnet and the correspon
 
 ### 5.2 Decision latency and scoring validity
 
-The decision latency $L$ is 1.5 s on mainnet and 0.75 s on Arbitrum (Figure 4), bracketed by estimates biased early and late (§3.3). Scoring at the block timestamp instead would evaluate arbitrageurs against prices that precede their trades and turn mainnet's measured LP loss of \$1.58 M into an apparent gain of \$5.26 M.
-
-![Decision latency](figures/fig_decision_latency.png)
-
-*Figure 4. Median fee-adjusted residual between the pool's post-swap price and the hedgeable external quote, by offset from the block timestamp.*
-
-We validate $Q_{\mathrm{LP}}$ against labels that use no prices: swaps routed through retail aggregators as benign, and repeat searchers at the top of the block as toxic. The score separates the two with an area under the ROC curve (AUC) of 0.889 on mainnet and 0.814 on Arbitrum, and 0.983 and 0.897 for the largest swaps (Figure 5). Because the toxic label uses block position, we also use a position-free one, any non-router sender with at least 100 swaps, against which the AUC is 0.704 and 0.828 (0.971 and 0.883 for the largest swaps). It is lower on mainnet because the label admits benign repeat senders, and higher on Arbitrum because extraction there occurs deep in the block, beyond the positional label's reach.
-
-Extraction follows the ordering regime. On mainnet, where builders sell position, 61% of it occurs in the first three positions of a block; on Arbitrum's first-come-first-served sequencer, 69% occurs at position ten or later (Figure 6a). In terms of the index (4), most mainnet corrections today lead retail by more than a factor of two, while on Arbitrum corrections are level with or behind it (Figure 6b). The underlying positions show why (Figure 7): on mainnet the first correcting swap of a block sits at a median position of 0.015 and the earliest retail swap at 0.13, whereas on Arbitrum, where position follows arrival, they sit at 0.30 and 0.21.
-
-![Score distributions](figures/fig_score_distributions.png)
-
-*Figure 5. Distribution of $Q_{\mathrm{LP}}$ by label.*
-
-![Extraction by position](figures/fig_extraction_by_position.png)
-
-*Figure 6. (a) Share of extraction by transaction position in the block. (b) Distribution of the block-position index (4) of today's first correcting swap against the earliest non-correcting swap, among blocks containing both, with the late, timely and urgent ranges for $\kappa = 2$.*
-
-![Block-position index](figures/fig_urgency_block_space.png)
-
-*Figure 7. Positions in the block of the first correcting swap and of the earliest retail (non-correcting) swap, among blocks containing both, March–August 2026; position is the share of the block's transactions ordered before the swap. Bars below each panel span the quartiles, with a tick at the median.*
+The decision latency $L$ is 1.5 s on mainnet and 0.75 s on Arbitrum (Figure 5 in Appendix B); scoring at the block timestamp instead would turn mainnet's measured LP loss of \$1.58 M into an apparent gain of \$5.26 M. Against labels that use no prices, retail aggregators as benign and repeat top-of-block searchers as toxic, $Q_{\mathrm{LP}}$ separates the classes with an area under the ROC curve (AUC) of 0.889 on mainnet and 0.814 on Arbitrum, and 0.983 and 0.897 for the largest swaps; against a position-free label, any non-router sender with at least 100 swaps, the AUC is 0.704 and 0.828 (Figure 6 in Appendix B). Extraction follows the ordering regime: on mainnet 61% of it occurs in the first three positions of a block, and on Arbitrum 69% at position ten or later; most mainnet corrections lead retail by more than a factor of two, while Arbitrum's are level with or behind it (Figures 7–8 in Appendix B).
 
 ### 5.3 Losses today and under BRO-AMM
 
@@ -276,41 +256,29 @@ Table 3 compares each pool today with BRO-AMM in its final design, with urgency 
 
 *Table 3. Today's pools against BRO-AMM. LPs' net is fees from users less what is lost to arbitrage after recapture.*
 
-Arbitrage takes about the same value from the pool under both designs; BRO-AMM changes who receives it (Figure 8). Today most of it is spent competing for position, \$6.57 M of \$7.39 M on mainnet and \$0.94 M of \$1.23 M on Arbitrum, while arbitrageurs keep a small margin over their costs. Under BRO-AMM the allowance bounds what a correction can spend on position (§4.3), and the excess is recaptured for LPs. Arbitrageurs' margin is unchanged, so the recapture comes out of payments for position rather than out of arbitrageurs' income.
+Arbitrage takes about the same value from the pool under both designs; BRO-AMM changes who receives it (Figure 4). Today most of it is spent competing for position, \$6.57 M of \$7.39 M on mainnet and \$0.94 M of \$1.23 M on Arbitrum, while arbitrageurs keep a small margin over their costs. Under BRO-AMM the allowance bounds what a correction can spend on position (§4.3), and the excess is recaptured for LPs. Arbitrageurs' margin is unchanged, so the recapture comes out of payments for position rather than out of arbitrageurs' income.
 
 ![Value split](figures/fig_value_split.png)
 
-*Figure 8. Division of the value taken by arbitrage, stable costs. Totals and LPs' net position at right.*
+*Figure 4. Division of the value taken by arbitrage, stable costs. Totals and LPs' net position at right.*
 
 Across the cost scenarios, LPs' losses to arbitrage fall by 68–79% on mainnet and by 49–55% on Arbitrum, and payments for position by 71–89%. Mainnet LPs' net turns from a loss into a gain; the worst-case gain is \$5.38 M on mainnet and \$0.65 M on Arbitrum. Users pay the same fees and trade against prices 0.18–0.23 bp fresher on mainnet and within 0.02 bp of today on Arbitrum, and both pools satisfy the rebalancing constraint in every scenario.
 
-As a reference measured on the data rather than simulated, a fixed schedule applied with the benchmark known exactly, charging extraction beyond 2 bp up to $f_{\max}$, recaptures 73% of extraction on mainnet and 70% on Arbitrum while preserving 97–99% of profitable arbitrage and overcharging benign flow by less than 0.1 bp (Figure 9). The schedule was fixed in advance; selected on March–May, it remains the best schedule on June–August.
-
-![Recapture frontier](figures/fig_recapture_frontier.png)
-
-*Figure 9. Recapture against profitable arbitrage preserved, for all schedules evaluated.*
+As a reference measured on the data rather than simulated, a fixed schedule applied with the benchmark known exactly, charging extraction beyond 2 bp up to $f_{\max}$, recaptures 73% of extraction on mainnet and 70% on Arbitrum while preserving 97–99% of profitable arbitrage and overcharging benign flow by less than 0.1 bp (Figure 10 in Appendix C). The schedule was fixed in advance; selected on March–May, it remains the best schedule on June–August.
 
 ### 5.4 Allowance discovery and robustness
 
-The per-unit cap keeps the pool rebalanced under every controller below, whereas capping the average edge fails through overshoot (Appendix F.1). The controller determines how close the allowance stays to arbitrageurs' cost (Figure 10). Without a competition signal, decay crosses the cheapest arbitrageur's cost about every two weeks and stalls rebalancing until a staleness raise restores it. On Arbitrum the sender rule settles at 1.46 bp and absorbs the cost shock without a raise. On mainnet the simulation orders transactions by payment, with 45% of arbitrageurs paying builders outside the transaction (Appendix F.7); measuring urgency by block position classifies 32% of corrected blocks as late, 23% as timely and 45% as urgent, and gives LPs a worst-case gain of \$5.38 M, against \$4.82 M without a signal and \$5.45 M with urgency observed exactly.
+The per-unit cap keeps the pool rebalanced under every controller below, whereas capping the average edge fails through overshoot (Appendix F.1). The controller determines how close the allowance stays to arbitrageurs' cost (Figure 11 in Appendix C). Without a competition signal, decay crosses the cheapest arbitrageur's cost about every two weeks and stalls rebalancing until a staleness raise restores it. On Arbitrum the sender rule settles at 1.46 bp and absorbs the cost shock without a raise. On mainnet the simulation orders transactions by payment, with 45% of arbitrageurs paying builders outside the transaction (Appendix F.7); measuring urgency by block position classifies 32% of corrected blocks as late, 23% as timely and 45% as urgent, and gives LPs a worst-case gain of \$5.38 M, against \$4.82 M without a signal and \$5.45 M with urgency observed exactly.
 
 Both rules withstand the loss of their cheapest arbitrageurs. When the cheapest leaves for a week, or the two cheapest withhold corrections for three days, and idle arbitrageurs take an hour or a day to redeploy, both pools stay rebalanced: the sender rule costs 2% of LPs' gain on Arbitrum, and on mainnet LPs' gain stays within \$5.35–5.86 M while withholding moves the withholders' income by at most \$0.03 M (Appendix F.7). The gains persist for arbitrage populations from a monopoly to ten arbitrageurs and for depth halved or doubled (Appendix C).
-
-![Controller paths](figures/fig_controller_paths.png)
-
-*Figure 10. Allowance over time with arbitrage costs quadrupled from June (dashed line). (a) Mainnet under the position model, decay without a signal against urgency measured by block position. (b) Arbitrum, decay without a signal against the sender rule $K_d \ge 4$. Each upward step is a staleness raise.*
 
 ### 5.5 Arbitrage without stake
 
 The results above assume that arbitrageurs hold enough stake. We relax this in three steps. The position model does not yet combine with finite stake, so on mainnet this section uses decay without a signal, which bounds the final design from below; its worst-case gain with full stake is \$5.01 M.
 
-**Fresh accounts.** If any arbitrageur may instead trade from an unstaked account at $f_{\max}$ and keep its whole edge, LPs' worst-case gain falls on mainnet from \$5.01 M to \$3.53 M at $f_{\max}$ = 30 bp and recovers to \$4.93 M at 500 bp; on Arbitrum it is unaffected at 500 bp. With the market's shocks scaled by two and by four, fresh accounts take at most 1.5% of LPs' gain at 500 bp and none at 1,000 bp (Figure 11b).
+**Fresh accounts.** If any arbitrageur may instead trade from an unstaked account at $f_{\max}$ and keep its whole edge, LPs' worst-case gain falls on mainnet from \$5.01 M to \$3.53 M at $f_{\max}$ = 30 bp and recovers to \$4.93 M at 500 bp; on Arbitrum it is unaffected at 500 bp. With the market's shocks scaled by two and by four, fresh accounts take at most 1.5% of LPs' gain at 500 bp and none at 1,000 bp (Figure 12b in Appendix C).
 
-**Arbitrage stake.** If arbitrageurs pay the coverage-curve fee on a finite stake, the pool freezes without any. It remains rebalanced in every scenario once the stake reaches about 25 times $\rho$ times the mean daily arbitrage volume if one staker covers all arbitrageurs (\$0.91 M on mainnet, \$0.34 M on Arbitrum), and about 50 times if each holds its own; stake accumulated from zero over the first month leaves the pool stale for 50–86 hours (Figure 11a). This is the stake that appointed arbitrageurs bring at launch (§4.8).
-
-![Stake and shocks](figures/fig_stake_shocks.png)
-
-*Figure 11. (a) Uncorrected hours against arbitrageurs' stake, held by one staker or separately; dotted: arbitrageurs fully covered; zero is drawn at 0.1. (b) LPs' gain lost to fresh unstaked accounts against $f_{\max}$, for the market's shocks scaled by one, two and four.*
+**Arbitrage stake.** If arbitrageurs pay the coverage-curve fee on a finite stake, the pool freezes without any. It remains rebalanced in every scenario once the stake reaches about 25 times $\rho$ times the mean daily arbitrage volume if one staker covers all arbitrageurs (\$0.91 M on mainnet, \$0.34 M on Arbitrum), and about 50 times if each holds its own; stake accumulated from zero over the first month leaves the pool stale for 50–86 hours (Figure 12a in Appendix C). This is the stake that appointed arbitrageurs bring at launch (§4.8).
 
 **Correction lane.** Without arbitrage stake, and with $f_{\max}$ high enough to defeat fresh accounts, the pool never rebalances. The correction lane of §4.8 restores the fully staked result on both chains (Table 4); the freshness of the signed report is the binding requirement. Appendix F.4 reports the alternatives that failed.
 
@@ -330,25 +298,11 @@ The charge per trade is small at the median (0.17 bp) but heavy-tailed (99.9th p
 
 ### 5.7 Oracle error
 
-Scoring with a degraded oracle leaves benign flow essentially unaffected (overcharge below 0.3 bp) but makes part of the charges on arbitrage unjustified (Figure 12). The tolerance $\varepsilon$ is the remedy: $\varepsilon$ equal to the bias removes a bias exactly, $\varepsilon$ of about twice the noise removes most random error, and each basis point of $\varepsilon$ forgoes about 8% of recapture — hence $\varepsilon \approx \max(\lvert \text{bias} \rvert, 2\sigma_o)$, where $\sigma_o$ is the standard deviation of the oracle's random error. Staleness is the binding error on fast chains: a one-second-old feed halves recapture on Arbitrum, so rollups require a sub-second pull oracle.
-
-![Oracle error](figures/fig_oracle_error.png)
-
-*Figure 12. Mainnet: (a) unjustified share of charges and (b) recapture, as functions of the tolerance $\varepsilon$, for four oracle errors.*
+A degraded oracle leaves benign flow essentially unaffected (overcharge below 0.3 bp) but makes part of the charges on arbitrage unjustified (Figure 9 in Appendix B). A tolerance $\varepsilon \approx \max(\lvert \text{bias} \rvert, 2\sigma_o)$, where $\sigma_o$ is the standard deviation of the oracle's random error, removes most unjustified charges at about 8% of recapture per basis point. Staleness binds on fast chains: a one-second-old feed halves recapture on Arbitrum, so rollups require a sub-second pull oracle.
 
 ### 5.8 Settlement cost and keeper economics
 
-We measured every component on-chain or in Foundry (Appendix D). The hook adds 17,112 gas to a v4 swap; a keeper's epoch costs 26,000 gas plus 14,300 per account; self-settlement costs 46,000 gas plus 6,000 per swap; a Groth16 proof verifies for 227,226 gas. With prices signed once per batch and settled hourly, settlement costs 0.18× the execution gas of the settled swaps on mainnet and 0.19× on Arbitrum (Figure 13). A succinct proof lowers this only to 0.14–0.15×, because the hook and the per-account writes remain; viability does not depend on proofs.
-
-![Settlement cost](figures/fig_settlement_cost.png)
-
-*Figure 13. Settlement gas relative to the execution gas of the settled swaps.*
-
-Funding keepers from the gas tank requires a modest contribution per swap (Figure 14). A tank shared by seven mainnet pools stays solvent with 2.3 k gas per swap at daily epochs (1.2% of a swap's gas) and 1.4 k when keepers choose the block; Arbitrum needs 0.64 k. Alone, the smallest pool would need 80 k gas per swap at hourly epochs; within the shared tank it pays the common rate. In simulation, 2–8% of accounts preferred to settle themselves, carrying up to half of the volume and cutting their stake by 15–24%; an open keeper race settled on-chain epochs within 1.3 minutes, and a designated leader removed the duplicated proving that a race of similar keepers incurs.
-
-![Gas tank](figures/fig_gas_tank.png)
-
-*Figure 14. Smallest per-swap gas contribution that keeps the gas tank solvent.*
+The hook adds 17,112 gas to a v4 swap; a keeper's epoch costs 26,000 gas plus 14,300 per account, and self-settlement 46,000 gas plus 6,000 per swap (Appendix D). Settled hourly against batch-signed prices, settlement costs 0.18× the execution gas of the settled swaps on mainnet and 0.19× on Arbitrum; a succinct proof lowers this only to 0.14–0.15×, so viability does not depend on proofs (Figure 13 in Appendix D). A gas tank shared by seven mainnet pools stays solvent with 2.3 k gas per swap at daily epochs, 1.2% of a swap's gas, and Arbitrum needs 0.64 k (Figure 14 in Appendix D). In simulation, 2–8% of accounts preferred to settle themselves, and an open keeper race settled on-chain epochs within 1.3 minutes.
 
 ### 5.9 Limitations
 
@@ -456,6 +410,26 @@ Uniswap Labs. Uniswap v4 core. https://github.com/Uniswap/v4-core
 
 **Labels.** Benign: transactions sent to a curated set of retail routers (on Arbitrum, the curated routers present there plus contracts used by at least 300 senders with at most 20 swaps each). Toxic: the first swap in a direction among a block's first four user transactions by a non-router sender with at least 100 swaps; position-free variant: any swap by a non-router sender with at least 100 swaps. Sandwich legs were labelled toxic in an earlier version; they number 50 swaps on mainnet and 2 on Arbitrum and do not affect the AUC, and a front-running leg pays above the market by construction (median $Q_{\mathrm{LP}}$ +9.3 bp on mainnet), so it would score as an overpayer. Arbitrum blocks open with a system transaction, so positions count user transactions. The "largest swaps" slice is the top 4.55% by notional on each chain (\$100 k on mainnet, \$7 k on Arbitrum).
 
+![Decision latency](figures/fig_decision_latency.png)
+
+*Figure 5. Median fee-adjusted residual between the pool's post-swap price and the hedgeable external quote, by offset from the block timestamp.*
+
+![Score distributions](figures/fig_score_distributions.png)
+
+*Figure 6. Distribution of $Q_{\mathrm{LP}}$ by label.*
+
+![Extraction by position](figures/fig_extraction_by_position.png)
+
+*Figure 7. (a) Share of extraction by transaction position in the block. (b) Distribution of the block-position index (4) of today's first correcting swap against the earliest non-correcting swap, among blocks containing both, with the late, timely and urgent ranges for $\kappa = 2$.*
+
+![Block-position index](figures/fig_urgency_block_space.png)
+
+*Figure 8. Positions in the block of the first correcting swap and of the earliest retail (non-correcting) swap, among blocks containing both, March–August 2026; position is the share of the block's transactions ordered before the swap. Bars below each panel span the quartiles, with a tick at the median: on mainnet the first correcting swap sits at a median position of 0.015 and the earliest retail swap at 0.13; on Arbitrum, where position follows arrival, at 0.30 and 0.21.*
+
+![Oracle error](figures/fig_oracle_error.png)
+
+*Figure 9. Mainnet: (a) unjustified share of charges and (b) recapture, as functions of the tolerance $\varepsilon$, for four oracle errors.*
+
 ## Appendix C. Simulation design
 
 Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum blocks at their reconstructed sub-second times, with the oracle read at each block's own time plus $L$. Pool depth is linear within a day, estimated from real swaps. In each block, arbitrageurs with hedging costs {0.3, 0.6, 1.0, 1.5, 2.5} bp choose the trade that maximises profit under the payout rule; the winner pays the runner-up's profit for position (second-price). The block's real non-arbitrage swaps are then replayed at observed size and direction. Costs are multiplied by four or eight from 1 June.
@@ -475,6 +449,18 @@ Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum b
 **Controller.** The rule of §4.4, with $\varepsilon$ = 0.5 bp. Under blind decay, rebalancing stalled for 0.6–3.1 h in total on mainnet and 4.7–7.1 h on Arbitrum over six months; gated decay removed the stalls when costs were stable.
 
 **Sensitivity.** With a monopolist, two or ten arbitrageurs, all costs halved or doubled, and depth halved or doubled, every controller variant kept the pool rebalanced on both chains. A monopolist never reveals competition, so gated decay holds the allowance at its starting value $m_0$, which then bounds the rent.
+
+![Recapture frontier](figures/fig_recapture_frontier.png)
+
+*Figure 10. Recapture against profitable arbitrage preserved, for all schedules evaluated.*
+
+![Controller paths](figures/fig_controller_paths.png)
+
+*Figure 11. Allowance over time with arbitrage costs quadrupled from June (dashed line). (a) Mainnet under the position model, decay without a signal against urgency measured by block position. (b) Arbitrum, decay without a signal against the sender rule $K_d \ge 4$. Each upward step is a staleness raise.*
+
+![Stake and shocks](figures/fig_stake_shocks.png)
+
+*Figure 12. (a) Uncorrected hours against arbitrageurs' stake, held by one staker or separately; dotted: arbitrageurs fully covered; zero is drawn at 0.1. (b) LPs' gain lost to fresh unstaked accounts against $f_{\max}$, for the market's shocks scaled by one, two and four.*
 
 ## Appendix D. Settlement measurements
 
@@ -503,6 +489,14 @@ Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum b
 **Keeper market.** Five keepers with differing costs and availability, over every hourly epoch. With on-chain settlement, an open race paid \$12.0 k on mainnet (no wasted work) against \$12.5 k for a designated leader. With proven settlement and similar keepers, a race wasted \$829 of duplicated proving — more than Arbitrum's settlement gas — whereas a leader wasted \$28 at a higher payment. A colluding leader can delay the LPs' credit by at most one epoch, worth under \$0.01.
 
 **Small pools** (protocol take needed to fund keepers, hourly, at a recapture rate of 3.6 bp of volume): \$19.6 B pool 0.10–0.16%; \$0.24–0.67 B pools 0.5–1.2%; \$13 M pool 11–16%, falling to 1.5–2.5% at daily epochs. Funded jointly, all seven pools need 0.11–0.19%.
+
+![Settlement cost](figures/fig_settlement_cost.png)
+
+*Figure 13. Settlement gas relative to the execution gas of the settled swaps.*
+
+![Gas tank](figures/fig_gas_tank.png)
+
+*Figure 14. Smallest per-swap gas contribution that keeps the gas tank solvent.*
 
 ## Appendix E. REP below its mint rate
 
@@ -598,7 +592,7 @@ Lowering $m$ only while urgency is visible, with no default decay, leaves $m$ hi
 
 By contrast, L2s such as Arbitrum have no public mempool. Arbitrum's sequencer orders transactions by arrival into blocks of about 250 ms whose timestamps have a resolution of one second. Since April 2025, a sealed-bid second-price auction held every minute sells an express lane, and all other transactions are delayed by 200 ms (Timeboost; Mamageishvili et al., 2023). Three entities won almost all of these auctions (Messias and Torres, 2025). An arbitrageur reacting to an external move is sequenced within its network latency plus at most that delay, so its decision lies close to its inclusion, wherever in the block that happens to be.
 
-Rather than assume a latency, we measure it. A swap that corrects the pool trades until the pool price net of the fee meets the external price at which it can hedge, at the instant it decides; the offset from the block timestamp that minimises this residual over correcting swaps therefore identifies the decision latency $L$, and we score at $t^* = \text{block timestamp} + L$ (Figure 4). The estimate is 1.5 s on mainnet (bracketed by 1.25–1.75 s), consistent with bids taken one to two seconds into the slot, and 0.75 s on Arbitrum (0–1.5 s), where the staleness of our price proxy dominates the bracket and its earliest estimate places the match at block time itself, as arrival ordering implies. Benign flow shows no relation to the offset: it is uninformed, so its decision instant does not affect its score. The anchor matters for informed flow: anchoring at the timestamp scores arbitrageurs against prices from before they traded (§5.2). $L$ is a parameter of each pool, re-estimated periodically from reconciled correcting swaps and changed only within its bracket; scores are insensitive to $L$ inside the bracket (Appendix B), and an arbitrageur can shift the estimate only by stopping its trades away from the hedgeable price, at a loss to itself.
+Rather than assume a latency, we measure it. A swap that corrects the pool trades until the pool price net of the fee meets the external price at which it can hedge, at the instant it decides; the offset from the block timestamp that minimises this residual over correcting swaps therefore identifies the decision latency $L$, and we score at $t^* = \text{block timestamp} + L$ (Figure 5). The estimate is 1.5 s on mainnet (bracketed by 1.25–1.75 s), consistent with bids taken one to two seconds into the slot, and 0.75 s on Arbitrum (0–1.5 s), where the staleness of our price proxy dominates the bracket and its earliest estimate places the match at block time itself, as arrival ordering implies. Benign flow shows no relation to the offset: it is uninformed, so its decision instant does not affect its score. The anchor matters for informed flow: anchoring at the timestamp scores arbitrageurs against prices from before they traded (§5.2). $L$ is a parameter of each pool, re-estimated periodically from reconciled correcting swaps and changed only within its bracket; scores are insensitive to $L$ inside the bracket (Appendix B), and an arbitrageur can shift the estimate only by stopping its trades away from the hedgeable price, at a loss to itself.
 
 **G.2 Fresh accounts and $f_{\max}$.** An account that holds no stake has $r = 0$, so $\min\{C(m), r\} = 0$ whatever it owes, and the fee it pays at execution is all the pool ever receives from it. Consider two arbitrageurs facing the same gap $g$ between the pool and the benchmark. One holds enough stake to pay a fee near $f_{\min}$: it corrects the gap, keeps at most $m$ per unit of volume, and pays the rest as $C(m)$ after the block. The other trades from a fresh account: it pays $f_{\max}$, and with $r = 0$ none of the $C(m)$ it owes can be collected, but it profits only while the remaining gap exceeds $f_{\max}$ plus its own cost rate $h$. In a pool of depth $D$ per unit of log price, each unit it trades moves the pool by $1/D$ toward the benchmark, so after volume $u$ its margin on the next unit is $g - u/D - f_{\max} - h$: the full excess $g - f_{\max} - h$ on the first unit, falling linearly to zero, where it stops after a volume of $D\,(g - f_{\max} - h)$. A margin that falls linearly to zero averages half its starting value, so the account's take is $D\,(g - f_{\max} - h)^2/2$, assuming depth is roughly constant over the range the trade moves the pool.
 
