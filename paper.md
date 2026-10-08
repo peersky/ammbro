@@ -78,6 +78,7 @@ BRO-AMM separates the execution of a swap from its pricing. A swap executes at o
 | $f$, $u$, $p(u)$, $s$ | pool fee; volume of a swap of notional $v$ executed so far, in token 0; the pool's marginal price after $u$; direction of mispricing (3a) |
 | $\mathrm{edge}(u)$, kept, charge | marginal edge beyond the fee (3a); allowance kept and charge recaptured by a correcting swap (3b) |
 | $m$, $m_0$, $\varepsilon$, $\sigma_o$ | job allowance per unit of volume (3b), its starting value, the oracle tolerance, and the standard deviation of the oracle's random error |
+| $n^{\mathrm{c}}_H$, $n^{\mathrm{s}}_H$, $w_d$ | correctable and stale blocks in hour $H$; share of day $d$'s correcting swaps from senders other than the most frequent (§4.4) |
 | $\ell$, $k$, $\Delta_{\mathrm{block}}$ | parked share of volume (5), its speed, and the pool's price move so far in the block |
 | $N$, $\theta^*$, $\tau$ | pool's net income per epoch (4), LPs' target take-rate, and protocol take |
 | $P_{\mathrm{int}}$, $P_{\mathrm{mkt}}$, $\delta$ | internal mint and burn rate of REP, its market price, and the buyback margin (§4.9) |
@@ -157,9 +158,21 @@ and the charge is recaptured for LPs (Figure 3). Each unit keeps at most $m$ of 
 
 The allowance should equal the competitive cost of correcting the pool, which is private to arbitrageurs and changes over time: set too low, no one corrects the pool; set too high, the excess is rent. BRO-AMM discovers $m$ by feedback from what reconciliation observes, much as EIP-1559 sets Ethereum's base fee from observed demand for block space (Roughgarden, 2020).
 
-**Staleness.** A block is *correctable* if it starts with the pool's price further than $f + m + \varepsilon$ from the benchmark, and *left stale* if no point of it brings the pool within that band; only blocks with a swap in the pool are counted. Each hour, if at least five correctable blocks were left stale and they exceed 2% of the hour's correctable blocks, the controller doubles $m$. Judging by outcome rather than by a block's first swap prevents a builder from faking staleness with a dust swap (Appendix G.3).
+**Staleness.** For a block $b$ containing a swap in the pool, let $p_b$ be the pool's price at the start of the block and $\hat P_b$ the benchmark. The block is *correctable* if $\lvert \ln(\hat P_b / p_b) \rvert > f + m + \varepsilon$, and it is *left stale* if, in addition, none of its swaps leaves the pool within $f + m + \varepsilon$ of $\hat P_b$. Let $n^{\mathrm{c}}_H$ and $n^{\mathrm{s}}_H$ denote the numbers of correctable and stale blocks in hour $H$. At the end of each hour the controller sets
 
-**Competition.** Lowering $m$ requires care, since below the cheapest arbitrageur's cost no correction is profitable at any gap (Figure 4). On chains that order transactions by arrival, the controller lowers $m$ by 5% at the end of a day only if more than a quarter of the day's correcting swaps came from senders other than the most frequent one — evidence that several arbitrageurs can still profit — and so settles between the cheapest and the second-cheapest cost. Under builder auctions the cheapest arbitrageur wins every block it can, so wins concentrate regardless of competition, and $m$ instead falls by 5% on any day with fewer than 1% of correctable blocks left stale.
+```math
+m \leftarrow 2m \qquad \text{if } n^{\mathrm{s}}_H \ge 5 \ \text{ and } \ n^{\mathrm{s}}_H > 0.02\, n^{\mathrm{c}}_H .
+```
+
+Any arbitrageur whose cost lies below $m$ profits from correcting a correctable block, so stale blocks indicate that $m$ is below every active arbitrageur's cost. The signal is defined by the outcome of a block rather than by its first swap, so that an adversarial ordering (A3) cannot manufacture staleness (Appendix G.3).
+
+**Competition.** Lowering $m$ requires care, because below the cheapest arbitrageur's cost no correction is profitable at any gap (Figure 4). Let $w_d$ denote the share of day $d$'s correcting swaps sent by addresses other than the day's most frequent sender. Where transactions are ordered by arrival, any arbitrageur able to profit may be first, so $w_d$ is high while several can profit and falls as $m$ approaches the cheapest arbitrageur's cost. At the end of each day the controller sets
+
+```math
+m \leftarrow 0.95\, m \qquad \text{if } w_d > 0.25,
+```
+
+and thereby settles $m$ between the cheapest and the second-cheapest cost. Under builder auctions the cheapest arbitrageur wins every block it can profit from, so $w_d$ carries no information about competition; the controller then lowers $m$ by the same factor whenever $n^{\mathrm{s}}_d < 0.01\, n^{\mathrm{c}}_d$ for the day's counts (blind decay).
 
 ![Supply cliff](figures/fig_supply_cliff.png)
 
