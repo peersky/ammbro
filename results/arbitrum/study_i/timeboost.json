@@ -1,0 +1,15 @@
+{
+ "rpc": "public arb1",
+ "sample_blocks": 3000,
+ "window": [
+  "2026-03-01 00:25:26",
+  "2026-08-31 22:46:54"
+ ],
+ "n_corrections": 3000,
+ "n_retail": 8295,
+ "timeboosted_corrections": 0.652,
+ "timeboosted_contested": 0.6811,
+ "timeboosted_uncontested": 0.6476,
+ "timeboosted_retail": 0.6769,
+ "n_contested": 392
+}
