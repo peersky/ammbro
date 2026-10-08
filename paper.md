@@ -12,7 +12,7 @@ This matters beyond the returns of LPs. Buterin (2025) argues that low-risk DeFi
 
 We pursue two goals: to return as much of the arbitrage surplus as possible to LPs while charging uninformed flow as little as possible, and to replace the hard-coded fee by a variable the system sets itself. The contributions are:
 
-1. a per-swap quality score $q_{\mathrm{LP}}$, measured against signed bid/ask prices at an empirically measured decision instant (§3);
+1. a per-swap quality score $Q_{\mathrm{LP}}$, measured against signed bid/ask prices at an empirically measured decision instant (§3);
 2. a payout rule for arbitrage — a per-unit cap with an allowance discovered on-chain — under which what an arbitrageur can bid for position is bounded by an allowance the pool discovers, with an optional lane that settles corrections at execution and removes the dependence on arbitrage stake (§4.2–4.4, §4.10);
 3. a per-pair reputation asset and a collateral design that make the charge collectable after the fact (§4.5–4.6);
 4. a settlement layer that is pair-native and costs a fraction of the swaps it settles (§4.7);
@@ -45,7 +45,7 @@ Reconciliation is to prices what finality is to blocks. Consensus protocols sepa
 Let a pool trade token 0 against token 1. For a swap, let $\Delta_0$ and $\Delta_1$ be the amounts of the two tokens the pool receives (negative when it pays out), fees included, and let the notional be the swap's size in units of token 0. Then
 
 ```math
-q_{\mathrm{LP}} = \frac{\Delta_0 + P_{\mathrm{dir}}(t^*)\,\Delta_1}{\text{notional}} \tag{1}
+Q_{\mathrm{LP}} = \frac{\Delta_0 + P_{\mathrm{dir}}(t^*)\,\Delta_1}{\text{notional}} \tag{1}
 ```
 
 where $t^*$ is the decision instant defined in §3.3 and $P_{\mathrm{dir}}(t^*)$ is the directional benchmark at that instant, the price of token 1 in units of token 0 — the liquidity-weighted bid when the pool sells the risky asset and the ask when it buys it — so that swaps executed inside the bid–ask band are never scored as extractive (Chainlink Data Streams supplies both sides). The score is invariant to the choice of numeraire, needs no sign convention by trade direction, and is evaluated at horizon zero, where extraction occurs, rather than against later prices that mix extraction with drift. Negative values are losses to LPs.
@@ -80,7 +80,7 @@ BRO-AMM separates the execution of a swap from its pricing. A swap executes at o
 
 | Symbol | Meaning |
 |---|---|
-| $q_{\mathrm{LP}}$, $t^*$, $L$ | quality score (1); decision instant $t^* = \text{block timestamp} + L$; measured decision latency |
+| $Q_{\mathrm{LP}}$, $t^*$, $L$ | quality score (1); decision instant $t^* = \text{block timestamp} + L$; measured decision latency |
 | $r$, $V$ | an account's staked REP and its volume in the epoch |
 | $f_{\min}$, $f_{\max}$, $\rho$ | fee band and capacity scale of the coverage curve (2); $\rho$ is also the base parking rate |
 | $f$, $u$, $p(u)$, $s$ | pool fee; volume of a swap of notional $v$ executed so far, in token 0; the pool's marginal price after $u$; direction of mispricing (3a) |
@@ -176,10 +176,10 @@ The asymmetry is deliberate: a stale pool harms users at once, so $m$ rises with
 Per epoch, the pool's net income — what the LPs gained on the epoch's swaps, fees included, plus the charges recaptured — is compared with the LPs' target:
 
 ```math
-N = \sum q_{\mathrm{LP}} \cdot \text{notional} + \sum \text{charges}, \qquad \text{minted} = \frac{(1 - \tau)\max\big(N - \theta^* \sum V,\, 0\big)}{P_{\mathrm{int}}} \tag{4}
+N = \sum Q_{\mathrm{LP}} \cdot \text{notional} + \sum \text{charges}, \qquad \text{minted} = \frac{(1 - \tau)\max\big(N - \theta^* \sum V,\, 0\big)}{P_{\mathrm{int}}} \tag{4}
 ```
 
-where the sums run over the epoch's swaps, $q_{\mathrm{LP}} \cdot \text{notional}$ is each swap's gain to LPs by (1), fees included, charges are those recaptured under (3b), $\sum V$ is the pool's volume, $\theta^*$ the LPs' target take-rate and $\tau$ the protocol take. The surplus mints REP to the accounts whose payments exceeded the target on their own volume, pro rata to the excess, at a fixed internal rate $P_{\mathrm{int}}$; extraction beyond the allowance burns stake at the same rate, so no market price of REP enters either formula. Minting is self-funding — a wash trader's mint is prepaid by its own overpayment — and self-enforcing: over-earning mints capacity that lowers fees, under-earning halts minting. REP is minted below the surplus it claims by the protocol take $\tau$, which funds the per-pool reserve. Staked REP is a slashable trading licence, preferable to escrowed cash because it earns its holder the discount, is costly only to extractors, and appreciates with the pool's benign volume.
+where the sums run over the epoch's swaps, $Q_{\mathrm{LP}} \cdot \text{notional}$ is each swap's gain to LPs by (1), fees included, charges are those recaptured under (3b), $\sum V$ is the pool's volume, $\theta^*$ the LPs' target take-rate and $\tau$ the protocol take. The surplus mints REP to the accounts whose payments exceeded the target on their own volume, pro rata to the excess, at a fixed internal rate $P_{\mathrm{int}}$; extraction beyond the allowance burns stake at the same rate, so no market price of REP enters either formula. Minting is self-funding — a wash trader's mint is prepaid by its own overpayment — and self-enforcing: over-earning mints capacity that lowers fees, under-earning halts minting. REP is minted below the surplus it claims by the protocol take $\tau$, which funds the per-pool reserve. Staked REP is a slashable trading licence, preferable to escrowed cash because it earns its holder the discount, is costly only to extractors, and appreciates with the pool's benign volume.
 
 ### 4.6 Stake, parking and collection
 
@@ -229,9 +229,9 @@ Two design choices follow from simulation (§5.5). First, the lane is open at al
 
 Consider an ETH/USDC pool with illustrative parameters $f_{\min} = 1$ bp, $f_{\max} = 30$ bp, $\rho = 5$ bp, $\theta^* = 2$ bp, $m = 2$ bp, $\varepsilon = 0$, $\tau = 2.5\%$, and an internal rate of 1 USDC per REP; both swaps below are \$10,000 and fall in one epoch.
 
-*Alice*, an uninformed trader holding 5 REP, swaps in a quiet block. Her coverage ratio is $5/(0.0005 \times 10{,}000) = 1$, so by (2) she pays $1 + 29e^{-1} = 11.67$ bp, or \$11.67. Her markout before fees is zero, so her $q_{\mathrm{LP}}$ is $+11.67$ bp. With no price move in the block she parks $\ell V = 5\,\text{bp} \times \$10{,}000$, all 5 of her REP, until settlement.
+*Alice*, an uninformed trader holding 5 REP, swaps in a quiet block. Her coverage ratio is $5/(0.0005 \times 10{,}000) = 1$, so by (2) she pays $1 + 29e^{-1} = 11.67$ bp, or \$11.67. Her markout before fees is zero, so her $Q_{\mathrm{LP}}$ is $+11.67$ bp. With no price move in the block she parks $\ell V = 5\,\text{bp} \times \$10{,}000$, all 5 of her REP, until settlement.
 
-*Bob*, an arbitrageur holding 15 REP (coverage ratio 3), corrects the pool after a market move, paying $1 + 29e^{-3} = 2.44$ bp. Along his trade the edge beyond the fee falls linearly from 10 bp to zero, so he extracts 5 bp on average — \$5.00 — and his $q_{\mathrm{LP}}$ is $-5$ bp. Writing $u$ as a fraction of his notional, by (3b) he keeps $\int_0^1 \min\big(10(1 - u), 2\big)\, du = 1.80$ bp of it, and the remaining 3.20 bp, \$3.20, is charged. The block had already moved by 10 bp, so by (5) with $k = 0.5$ he parked $\ell = 5 + 5 = 10$ bp of his volume, \$10 of stake; the charge burns 3.20 REP from it, and the other 6.80 are released at settlement.
+*Bob*, an arbitrageur holding 15 REP (coverage ratio 3), corrects the pool after a market move, paying $1 + 29e^{-3} = 2.44$ bp. Along his trade the edge beyond the fee falls linearly from 10 bp to zero, so he extracts 5 bp on average — \$5.00 — and his $Q_{\mathrm{LP}}$ is $-5$ bp. Writing $u$ as a fraction of his notional, by (3b) he keeps $\int_0^1 \min\big(10(1 - u), 2\big)\, du = 1.80$ bp of it, and the remaining 3.20 bp, \$3.20, is charged. The block had already moved by 10 bp, so by (5) with $k = 0.5$ he parked $\ell = 5 + 5 = 10$ bp of his volume, \$10 of stake; the charge burns 3.20 REP from it, and the other 6.80 are released at settlement.
 
 At reconciliation, by (4), $N = 11.67 - 5.00 + 3.20 = \$9.87$ against a target of $2\,\text{bp} \times \$20{,}000 = \$4.00$, leaving a surplus of \$5.87. Only Alice paid more than the target on her own volume (Bob's net is −1.8 bp), so she receives $(1 - 0.025) \times 5.87 = 5.72$ REP. Her next \$10,000 swap, with 10.72 REP staked, pays $1 + 29e^{-2.14} = 4.40$ bp. Bob kept his allowance of \$1.80; his position did not change the benchmark he was scored against (§3.3), so the most he would rationally have bid for it is his margin over his cost. The LPs received \$6.67 in the pool's assets; Bob's charge was settled in REP, which retires claims on surplus the LPs already hold (Theorem 1).
 
@@ -239,7 +239,7 @@ At reconciliation, by (4), $N = 11.67 - 5.00 + 3.20 = \$9.87$ against a target o
 
 ### 5.1 Data and method
 
-We study the Uniswap v3 ETH/USDC 5 bp pool on Ethereum mainnet and the corresponding WETH/USDC pool on Arbitrum from 1 March to 31 August 2026 (Table 2). The benchmark is Binance ETHUSDT corrected by USDCUSDT, with a touch-level bid/ask proxy built from aggressor-flagged trades. A stable–stable control pool on each chain, where no extraction is expected, scored a median absolute $q_{\mathrm{LP}}$ of 0.9–1.1 bp (95th percentile 2.3 bp), inside the band within which the USDC/USDT peg itself moves (99th percentile 12.8 bp on mainnet). Payout rules are compared in a block-level simulation that replays the real oracle path and non-arbitrage flow, with optimising arbitrageurs whose costs range from 0.3 to 2.5 bp and are multiplied by four or eight from June (Appendix C).
+We study the Uniswap v3 ETH/USDC 5 bp pool on Ethereum mainnet and the corresponding WETH/USDC pool on Arbitrum from 1 March to 31 August 2026 (Table 2). The benchmark is Binance ETHUSDT corrected by USDCUSDT, with a touch-level bid/ask proxy built from aggressor-flagged trades. A stable–stable control pool on each chain, where no extraction is expected, scored a median absolute $Q_{\mathrm{LP}}$ of 0.9–1.1 bp (95th percentile 2.3 bp), inside the band within which the USDC/USDT peg itself moves (99th percentile 12.8 bp on mainnet). Payout rules are compared in a block-level simulation that replays the real oracle path and non-arbitrage flow, with optimising arbitrageurs whose costs range from 0.3 to 2.5 bp and are multiplied by four or eight from June (Appendix C).
 
 | | Ethereum mainnet | Arbitrum One |
 |---|---|---|
@@ -261,7 +261,7 @@ Against price-independent labels — retail routers as benign, top-of-block repe
 
 ![Score distributions](figures/fig_score_distributions.png)
 
-*Figure 6. Distribution of $q_{\mathrm{LP}}$ by label.*
+*Figure 6. Distribution of $Q_{\mathrm{LP}}$ by label.*
 
 ![Extraction by position](figures/fig_extraction_by_position.png)
 
@@ -440,7 +440,7 @@ Uniswap Labs. Uniswap v4 core. https://github.com/Uniswap/v4-core
 
 **Index-based clocks.** Normalising transaction index into intra-block time is unsafe where position is sold: ordering by arrival gives the best-informed top-of-block traders the oldest price and forgives about 72% of top-of-block extraction; reversing the orientation moves the purchase to the cheap bottom of the block; clocks counting only the pool's own swaps can be bought with dust swaps (\$0.03 of gas bought \$11 of forgiveness per arbitrage in our data). Such clocks are safe only where ordering is enforced by time.
 
-**Labels.** Benign: transactions sent to a curated set of retail routers (on Arbitrum, the curated routers present there plus contracts used by at least 300 senders with at most 20 swaps each). Toxic: the first swap in a direction among a block's first four user transactions by a non-router sender with at least 100 swaps; position-free variant: any swap by a non-router sender with at least 100 swaps. Sandwich legs were labelled toxic in an earlier version; they number 50 swaps on mainnet and 2 on Arbitrum and do not affect the AUC, and a front-running leg pays above the market by construction (median $q_{\mathrm{LP}}$ +9.3 bp on mainnet), so it would score as an overpayer. Arbitrum blocks open with a system transaction, so positions count user transactions. The "largest swaps" slice is the top 4.55% by notional on each chain (\$100 k on mainnet, \$7 k on Arbitrum).
+**Labels.** Benign: transactions sent to a curated set of retail routers (on Arbitrum, the curated routers present there plus contracts used by at least 300 senders with at most 20 swaps each). Toxic: the first swap in a direction among a block's first four user transactions by a non-router sender with at least 100 swaps; position-free variant: any swap by a non-router sender with at least 100 swaps. Sandwich legs were labelled toxic in an earlier version; they number 50 swaps on mainnet and 2 on Arbitrum and do not affect the AUC, and a front-running leg pays above the market by construction (median $Q_{\mathrm{LP}}$ +9.3 bp on mainnet), so it would score as an overpayer. Arbitrum blocks open with a system transaction, so positions count user transactions. The "largest swaps" slice is the top 4.55% by notional on each chain (\$100 k on mainnet, \$7 k on Arbitrum).
 
 ## Appendix C. Simulation design
 
