@@ -1,6 +1,6 @@
-# REP-AMM backtest — data pipeline
+# BRO-AMM backtest — data pipeline
 
-Data layer for REP-AMM backtest (spec §17). Layer 2/3 benchmark: Binance
+Data layer for BRO-AMM backtest (spec §17). Layer 2/3 benchmark: Binance
 public archive (free, reproducible-but-unsigned). Layer 1 signed-oracle
 month ingested separately when dump arrives.
 
