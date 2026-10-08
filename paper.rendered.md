@@ -322,6 +322,10 @@ BRO-AMM is offered as a low-risk DeFi primitive for exchange. It shows that loss
 
 On six months of Ethereum and Arbitrum data, a fixed schedule applied with perfect information recaptured 70–73% of extraction while overcharging benign flow by less than 0.1 bp. With the allowance discovered on-chain, simulation shows the value that arbitrage takes moving from payments for position to LPs: LPs' losses to arbitrage fall by 68–79% on mainnet and 49–55% on Arbitrum, mainnet LPs' net turns from a loss into a gain, payments for position fall by 71–89%, arbitrageurs keep their margin and the pools stay as well rebalanced as today. An optional correction lane removes the dependence on arbitrage stake, and settlement costs 0.18–0.19 of the swaps' execution gas, paid from a tank that every swap prefunds. Its binding requirements are a sub-second oracle on fast chains and a tolerance matched to the feed's error. Its residual risks are the signed oracle, the contracts themselves and the market for REP; the last is bounded by solvency at par but not yet observed. Oracle error measured on the signed feed itself, the behaviour of REP in a live market, and a reputation shared across pools remain open.
 
+## Code and data availability
+
+The hook contracts, the measurement and simulation pipeline, and the results behind every table and figure are available at <https://github.com/peersky/ammbro>. Raw chain and exchange data are not redistributed; the repository records their checksums and the pipeline that rebuilds them.
+
 ## Acknowledgements
 
 We thank Chainstack for RPC infrastructure support, and the Chainlink team for consultations on the Data Streams report format and its capabilities.

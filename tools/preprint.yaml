@@ -3,7 +3,7 @@
 # same title and author line for the Forgejo view; tools/preprint.lua drops them from the body.
 title: "BRO-AMM: A Bonded Reconciliation Oracle AMM as a Low-Risk DeFi Primitive"
 author: "Tims Pecerskis — tim@peeramid.xyz"
-date: "Preprint, 8 October 2026"
+date: "Preprint, 8 October 2026 · <https://github.com/peersky/ammbro>"
 documentclass: article
 classoption: [a4paper]
 fontsize: 10pt
