@@ -78,7 +78,7 @@ BRO-AMM separates the execution of a swap from its pricing. A swap executes at o
 | $f$, $u$, $p(u)$, $s$ | pool fee; volume of a swap of notional $v$ executed so far, in token 0; the pool's marginal price after $u$; direction of mispricing (3a) |
 | $\mathrm{edge}(u)$, kept, charge | marginal edge beyond the fee (3a); allowance kept and charge recaptured by a correcting swap (3b) |
 | $m$, $m_0$, $\varepsilon$, $\sigma_o$ | job allowance per unit of volume (3b), its starting value, the oracle tolerance, and the standard deviation of the oracle's random error |
-| $n^{\mathrm{c}}_H$, $n^{\mathrm{s}}_H$, $w_d$ | correctable and stale blocks in hour $H$; share of day $d$'s correcting swaps from senders other than the most frequent (§4.4) |
+| $n^{\mathrm{c}}_H$, $n^{\mathrm{s}}_H$, $w_d$ | correctable and stale blocks in hour $H$; share of correcting swaps on day $d$ from senders other than the most frequent (§4.4) |
 | $\ell$, $k$, $\Delta_{\mathrm{block}}$ | parked share of volume (5), its speed, and the pool's price move so far in the block |
 | $N$, $\theta^*$, $\tau$ | pool's net income per epoch (4), LPs' target take-rate, and protocol take |
 | $P_{\mathrm{int}}$, $P_{\mathrm{mkt}}$, $\delta$ | internal mint and burn rate of REP, its market price, and the buyback margin (§4.9) |
@@ -166,7 +166,7 @@ m \leftarrow 2m \qquad \text{if } n^{\mathrm{s}}_H \ge 5 \ \text{ and } \ n^{\ma
 
 Any arbitrageur whose cost lies below $m$ profits from correcting a correctable block, so stale blocks indicate that $m$ is below every active arbitrageur's cost. The signal is defined by the outcome of a block rather than by its first swap, so that an adversarial ordering (A3) cannot manufacture staleness (Appendix G.3).
 
-**Competition.** Lowering $m$ requires care, because below the cheapest arbitrageur's cost no correction is profitable at any gap (Figure 4). Let $w_d$ denote the share of day $d$'s correcting swaps sent by addresses other than the day's most frequent sender. Where transactions are ordered by arrival, any arbitrageur able to profit may be first, so $w_d$ is high while several can profit and falls as $m$ approaches the cheapest arbitrageur's cost. At the end of each day the controller sets
+**Competition.** Lowering $m$ requires care, because below the cheapest arbitrageur's cost no correction is profitable at any gap (Figure 4). Let $w_d$ denote the share of correcting swaps on day $d$ that were sent by addresses other than that day's most frequent sender. Where transactions are ordered by arrival, any arbitrageur able to profit may be first, so $w_d$ is high while several can profit and falls as $m$ approaches the cheapest arbitrageur's cost. At the end of each day the controller sets
 
 ```math
 m \leftarrow 0.95\, m \qquad \text{if } w_d > 0.25,
