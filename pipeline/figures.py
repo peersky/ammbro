@@ -62,7 +62,7 @@ def coverage_curve() -> None:
 def payout_rule() -> None:
     """Edge along the price path for a correction of a gap a; per-unit cap vs average-edge cap."""
     a, m, D = 6.0, 2.0, 1.0                          # bp gap beyond fee, allowance, depth (bp per unit)
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.4, 2.9))
+    fig, ax1 = plt.subplots(figsize=(4.6, 2.9))
     u = np.linspace(0, a + 3, 400)
     edge = a - u / D
     ax1.plot(u, edge, color=INK, lw=1.2, label="marginal edge  a − u/D")
@@ -75,9 +75,11 @@ def payout_rule() -> None:
     ax1.text(a * D + 0.1, 0.4, "pool reaches\nthe band", color=MUTED, fontsize=7.5)
     ax1.set_ylim(-0.2, a + 0.5)
     ax1.set_xlabel("corrected volume u"); ax1.set_ylabel("edge (bp)")
-    ax1.set_title("(a) per-unit cap: rent bounded along the path")
+    ax1.set_title("Per-unit cap: rent bounded along the path")
     ax1.legend(loc="upper right", fontsize=7, bbox_to_anchor=(1.0, 1.0))
     ax1.set_xlim(0, a + 5)
+    save(fig, "fig_payout_rule")
+    fig, ax2 = plt.subplots(figsize=(4.6, 2.9))
     V = np.linspace(0.01, 2 * a * D, 400)
     per_unit = np.where(V <= (a - m) * D, m * V, m * (a - m) * D + (a * (V - (a - m) * D) - (V**2 - ((a - m) * D) ** 2) / (2 * D)))
     per_unit = np.minimum.accumulate(per_unit[::-1])[::-1] * 0 + np.maximum.accumulate(per_unit)   # kept is flat past the stop
@@ -89,9 +91,9 @@ def payout_rule() -> None:
     ax2.axvline(stop, color=MUTED, lw=0.8)
     ax2.text(stop + 0.15, ax2.get_ylim()[1] * 0.95 if False else 15.5, "oracle reached", color=MUTED, fontsize=7.5, va="top")
     ax2.set_xlabel("trade size v"); ax2.set_ylabel("arbitrageur's kept rent")
-    ax2.set_title("(b) why the average-edge cap invites overshoot")
+    ax2.set_title("Why the average-edge cap invites overshoot")
     ax2.legend(loc="lower left", fontsize=7, bbox_to_anchor=(0.0, -0.02))
-    save(fig, "fig_payout_rule")
+    save(fig, "fig_cap_comparison")
 
 
 def supply_cliff() -> None:
