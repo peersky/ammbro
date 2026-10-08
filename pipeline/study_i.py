@@ -249,6 +249,10 @@ def run_one(args) -> dict:
     shock_k = settings.get("shock_k", 0.0)
     shock_key = settings.get("shock_key", "jump")
     o_prev = None
+    # Cliff memory: after a staleness raise, do not decay below cliff_m * (1 + margin) for T seconds
+    cliff_mem = settings.get("cliff_memory", None)        # (margin, T_s)
+    cliff_m = 0.0; cliff_until = -1.0
+    calm_decay = settings.get("calm_decay", DECAY_SR)
     # Events: arbitrageur j absent (dropout or withholding) from day offset s for n days
     absent = settings.get("absent", [])
     win_cnt = np.zeros(len(POPULATIONS.get(scenario, ARB_COSTS_BPS)), dtype=np.int64)
@@ -366,7 +370,9 @@ def run_one(args) -> dict:
                     if ct > TAU_C:
                         m *= 0.8
                     elif d_sr < S_LOW_SR:
-                        m *= DECAY_SR
+                        m *= calm_decay
+                    if cliff_mem is not None and i * _DATA["step_s"] < cliff_until:
+                        m = max(m, cliff_m * (1 + cliff_mem[0]))
                 elif urg:
                     if ct > TAU_C:
                         m *= DECAY_SR
@@ -661,6 +667,8 @@ def run_one(args) -> dict:
             if w_n >= _DATA["raise_steps"]:
                 if feasible:
                     if w_sr_stale >= MIN_STALE_SR and w_sr_stale / w_sr_obs > S_STAR_SR:
+                        if cliff_mem is not None:          # remember where correction stopped
+                            cliff_m = m; cliff_until = i * _DATA["step_s"] + cliff_mem[1]
                         m = min(m * RAISE_SR, 50e-4)
                 elif w_corr >= 20 and w_uncorr / w_corr > s_star:
                     m = min(m * 2.0, 50e-4)
