@@ -140,7 +140,7 @@ def score_distributions() -> None:
         lab = pd.concat(pd.read_parquet(p, columns=["tx_hash", "log_index", "label"]) for p in sorted((on / "labels" / "eth_usdc_005").glob("*")))
         d = qc.merge(lab, on=["tx_hash", "log_index"])
         bins = np.linspace(-20, 20, 161)
-        for i, (lbl, txt) in enumerate((("benign", "benign (routers)"), ("toxic", "toxic (searchers, sandwiches)"))):
+        for i, (lbl, txt) in enumerate((("benign", "benign (routers)"), ("toxic", "toxic (top-of-block searchers)"))):
             q = d.loc[d.label == lbl, "q_c_h0"].dropna().to_numpy() * 1e4
             ax.hist(q, bins=bins, density=True, histtype="step", color=C[i], lw=1.6, label=txt)
         auc = j((R if not sub else R / "arbitrum") / "study_a" / "metrics.json")["auc_h0"]
@@ -287,7 +287,7 @@ def stake_and_shocks() -> None:
     ax.set_xlabel("arbitrageurs' stake (multiples of ρ × mean daily arbitrage volume)")
     ax.set_ylabel("uncorrected hours in six months")
     ax.set_title("(a) stake needed to keep the pool corrected")
-    ax.legend(fontsize=6.5)
+    ax.legend(fontsize=6, loc="upper right")
     ax = axes[1]
     vols = [("stable", "shocks ×1"), ("vol_x2", "shocks ×2"), ("vol_x4", "shocks ×4")]
     for ci, (name, path) in enumerate(chains):
