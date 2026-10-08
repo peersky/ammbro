@@ -14,6 +14,7 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
 
@@ -170,26 +171,25 @@ def recapture_frontier() -> None:
 
 
 def controller_paths() -> None:
-    runs = j(R / "arbitrum" / "study_i" / "metrics.json")["runs"]
-    pick = {"ctl_feasible": ("blind decay", C[3]), "ctl_div": ("decay gated on sender diversity", C[0]),
-            "ctl_fast": ("observes competition (not on-chain)", MUTED)}
-    fig, ax = plt.subplots(figsize=(7.4, 2.7))
-    for r in runs:
-        if r["rule"] == "marginal_cap" and r["scenario"] == "costs_x4" and r["phase"] == "open" and r["param"] in pick:
-            d = np.array(r["daily"], dtype=float)
-            t = pd.to_datetime(d[:, 0] * 86400, unit="s")
-            lab, col = pick[r["param"]]
-            ax.plot(t, d[:, 1], color=col, lw=1.4 if r["param"] != "ctl_fast" else 1.0, label=lab,
-                    ls="-" if r["param"] != "ctl_fast" else ":")
-    ax.axvline(pd.Timestamp("2026-06-01"), color=INK, lw=0.8, ls="--")
-    ax.text(pd.Timestamp("2026-06-03"), ax.get_ylim()[1] * 0.92, "arbitrage costs ×4", fontsize=7.5)
-    ax.set_yscale("log"); ax.set_ylabel("job allowance m (bp, log)")
     from matplotlib.ticker import FixedLocator, FuncFormatter, NullLocator
-    ax.yaxis.set_major_locator(FixedLocator([0.3, 0.5, 1, 2, 5]))
-    ax.yaxis.set_minor_locator(NullLocator())
-    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
-    ax.set_title("Allowance discovered by the controller — Arbitrum, cost shock ×4")
-    ax.legend(loc="upper left", fontsize=7.5)
+    fig, axes = plt.subplots(1, 2, figsize=(7.6, 3.1), sharey=True)
+    styles = [("no signal", "decay without a signal", C[3]), ("urgency by position", "urgency by position", C[0]),
+              ("blind decay", "decay without a signal", C[3]), ("K_d >= 4", r"$K_d \geq 4$", C[0])]
+    for ax, (title, base) in zip(axes, (("(a) Ethereum mainnet", R), ("(b) Arbitrum One", R / "arbitrum"))):
+        paths = j(base / "study_i" / "paths.json")["paths"]
+        for key, lab, col in styles:
+            if key in paths:
+                d = np.array(paths[key], dtype=float)
+                ax.plot(pd.to_datetime(d[:, 0] * 86400, unit="s"), d[:, 1], color=col, lw=1.4, label=lab)
+        ax.axvline(pd.Timestamp("2026-06-01"), color=INK, lw=0.8, ls="--")
+        ax.set_title(title, loc="left", fontsize=9)
+        ax.set_yscale("log")
+        ax.yaxis.set_major_locator(FixedLocator([0.3, 0.5, 1, 2, 5]))
+        ax.yaxis.set_minor_locator(NullLocator())
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%b"))
+        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2, fontsize=7, frameon=False)
+    axes[0].set_ylabel("job allowance m (bp, log)")
     save(fig, "fig_controller_paths")
 
 
