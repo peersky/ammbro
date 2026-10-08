@@ -167,29 +167,31 @@ m \leftarrow 2m \qquad \text{if } n^{\mathrm{s}}_H \ge 5 \ \text{ and } \ n^{\ma
 
 Any arbitrageur whose cost lies below $m$ profits from correcting a correctable block, so stale blocks indicate that $m$ is below every active arbitrageur's cost. The signal is defined by the outcome of a block rather than by its first swap, so that an adversarial ordering (A3) cannot manufacture staleness (Appendix G.3).
 
-**Competition.** Lowering $m$ requires care: below the cheapest arbitrageur's cost no correction is profitable at any gap, and an allowance on which only one arbitrageur can live leaves the pool dependent on it. The controller therefore lowers $m$ on evidence that several arbitrageurs compete for the job, and how that evidence appears depends on how the chain orders transactions. Where transactions are ordered by arrival, any arbitrageur able to profit may be first, so competition shows as corrections spread across senders. Let $K_d$ be the number of senders that each made at least 5% of the corrections on day $d$; the controller sets
-
-```math
-m \leftarrow 0.95\, m \qquad \text{if } K_d \ge K_{\min},
-```
-
-where $K_{\min}$ is the required number of competing senders ($K_{\min} = 4$ in our simulations), which keeps several arbitrageurs profitable and deployed. Where builders auction position, the cheapest arbitrageur wins every block it can, and sender counts carry no information. Competition then shows as *urgency*: corrections placed well ahead of the retail flow they protect, a position an arbitrageur without a rival has no reason to pay for. Reconciliation measures urgency from block position rather than from priority fees, which miss payments made to builders outside the transaction. For a correction $c$ in block $b$, identified as a swap that moves the pool toward the benchmark, let $\pi_c \in [0, 1]$ be the share of the block's transactions ordered before it, and let $\pi^{\mathrm{r}}_b$ be the same share for the earliest protected retail swap of §4.3 in $b$. The correction is *late* if $\pi_c > \pi^{\mathrm{r}}_b$, which the penalty of §4.3 already charges, and *urgent* if
+**Competition.** Lowering $m$ requires care: below the cheapest arbitrageur's cost no correction is profitable at any gap, and an allowance on which only one arbitrageur can live leaves the pool dependent on it. The controller therefore lowers $m$ only while arbitrageurs visibly compete for the job, that is, while the allowance leaves a margin that rivals bid away. Where builders auction position, that margin is spent on position, and reconciliation reads it from where corrections land relative to the retail flow they protect. For a correction $c$ in block $b$, identified as a swap that moves the pool toward the benchmark, let $\pi_c \in [0, 1]$ be the share of the block's transactions ordered before it, and let $\pi^{\mathrm{r}}_b$ be the same share for the earliest protected retail swap of §4.3 in $b$, or, in a block without one, the position a swap paying the epoch's 75th-percentile retail priority fee would take. Block space then splits into three regions (Figure 4). A correction is *late* if $\pi_c > \pi^{\mathrm{r}}_b$: protected retail traded at the stale price, which the penalty of §4.3 charges. It is *timely* if it lies ahead of that retail but within a factor $\kappa > 1$ of it, which is all the pool needs. It is *urgent* if
 
 ```math
 \kappa\, \pi_c < \pi^{\mathrm{r}}_b ,
 ```
 
-where $\kappa > 1$ is a separation factor ($\kappa = 2$ in our simulations). In a block without protected retail, $\pi^{\mathrm{r}}_b$ is the position a swap paying the epoch's 75th-percentile retail priority fee would take. Both thresholds are relative to the block's own retail flow, not absolute indices (Figure 4). Let $u_d$ be the share of corrections on day $d$ that are urgent; the controller lowers $m$ quickly while urgency is visible and slowly otherwise:
+a lead over retail that an arbitrageur without a rival has no reason to pay for ($\kappa = 2$ in our simulations). Priority fees are not used, since they miss payments made to builders outside the transaction. Let $u_d$ be the share of corrections on day $d$ that are urgent; the controller lowers $m$ quickly while urgency is visible and slowly while the pool is calm:
 
 ```math
 m \leftarrow 0.8\, m \ \ \text{if } u_d > \bar u, \qquad m \leftarrow 0.95\, m \ \ \text{if } u_d \le \bar u \text{ and } n^{\mathrm{s}}_d < 0.01\, n^{\mathrm{c}}_d ,
 ```
 
-where $\bar u$ is an urgency threshold (0.5 in our simulations) and $n^{\mathrm{c}}_d$, $n^{\mathrm{s}}_d$ are the day's correctable and stale blocks. Today nearly every correction is contested, so $\bar u$ and $\kappa$ are set once the mechanism runs (§5.9).
+where $\bar u$ is an urgency threshold (0.5 in our simulations) and $n^{\mathrm{c}}_d$, $n^{\mathrm{s}}_d$ are the day's correctable and stale blocks. Both thresholds are relative to each block's own retail flow rather than absolute indices; today nearly every correction is contested, so $\bar u$ and $\kappa$ are set once the mechanism runs (§5.9).
 
 ![Urgency in block space](figures/fig_urgency_block_space.png)
 
 *Figure 4. Urgency in block space, mainnet; position is the share of the block's transactions ordered before a swap. (a) Today: cumulative distributions of the positions of non-correcting swaps and of the first correcting swap of each block. (b) Simulated BRO-AMM with urgency-accelerated decay: each point is a correction in a block with protected retail, against the position of the block's earliest protected retail swap; above the solid line it is late, below the dashed line ($\kappa = 2$) urgent. Positions are jittered for legibility.*
+
+**Arrival-ordered chains.** Where transactions are ordered by arrival, position is won by latency rather than payment, and any arbitrageur able to profit may be first; competition then shows as corrections spread across senders. Let $K_d$ be the number of senders that each made at least 5% of the corrections on day $d$; the controller sets
+
+```math
+m \leftarrow 0.95\, m \qquad \text{if } K_d \ge K_{\min},
+```
+
+where $K_{\min}$ is the required number of competing senders ($K_{\min} = 4$ in our simulations), which keeps several arbitrageurs profitable and deployed.
 
 The allowance rises fast and falls slowly because a stale pool harms users at once; it starts at $m_0$ and stays within [0.02, 50] bp. Its inputs are all part of reconciliation (Appendix G.3). If every arbitrageur able to correct the pool withdraws, the pool stays stale until another deploys, an exposure an ordinary pool shares; §5.4 measures it.
 
