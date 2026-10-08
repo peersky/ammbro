@@ -291,42 +291,26 @@ def stake_and_shocks() -> None:
 
 
 def urgency_block_space() -> None:
-    rec = j(R / "study_i" / "position_records.json")
-    kap = rec["kappa"]
-    r = np.array([x for x in rec["records"] if x[5]], dtype=float)
-    eps = 1e-3
-    zsim = np.log(np.maximum(r[:, 1], eps) / np.maximum(r[:, 0], eps))
-    rows = []
-    for chain, base in (("Mainnet", R), ("Arbitrum", R / "arbitrum")):
-        b = j(base / "study_i" / "block_index.json")
-        lv = np.array(b["quantile_levels"])
-        for key, lab in (("contested", "rent earned"), ("uncontested", "no rent")):
-            rows.append((f"{chain} today, {lab}", lv, np.array(b[f"z_quantiles_{key}"])))
     lv = np.round(np.linspace(0.01, 0.99, 99), 2)
-    rows.append(("Mainnet BRO-AMM, simulated", lv, np.quantile(zsim, lv)))
-    lo, hi = -4.0, 6.0
-    fig, ax = plt.subplots(figsize=(7.6, 3.2))
-    ax.axvspan(lo, 0, color=C[1], alpha=0.12, lw=0)
-    ax.axvspan(0, np.log(kap), color=C[2], alpha=0.15, lw=0)
-    ax.axvspan(np.log(kap), hi, color=C[3], alpha=0.10, lw=0)
-    for x, t in ((lo / 2, "late"), (np.log(kap) / 2, "timely"), ((np.log(kap) + hi) / 2, "urgent")):
-        ax.text(x, len(rows) - 0.35, t, ha="center", va="bottom", fontsize=8, color=INK)
-    for k, (lab, lv_, zq) in enumerate(rows):
-        y = len(rows) - 1 - k
-        qv = lambda p: float(np.interp(p, lv_, zq))
-        q10, q25, q50, q75, q90 = (qv(p) for p in (0.10, 0.25, 0.50, 0.75, 0.90))
-        col = C[0] if "simulated" not in lab else C[4]
-        ax.plot([max(q10, lo), q25], [y, y], color=col, lw=1.2)
-        ax.plot([q75, min(q90, hi)], [y, y], color=col, lw=1.2)
-        ax.add_patch(plt.Rectangle((q25, y - 0.28), q75 - q25, 0.56, facecolor="white", edgecolor=col, lw=1.5))
-        ax.plot([q50, q50], [y - 0.28, y + 0.28], color=col, lw=2.2)
-        late = float(np.interp(0.0, zq, lv_)); urg = 1 - float(np.interp(np.log(kap), zq, lv_))
-        ax.text(hi + 0.15, y, f"{late:.0%} / {1 - late - urg:.0%} / {urg:.0%}", va="center", fontsize=7.5, color=INK)
-    ax.text(hi + 0.15, len(rows) - 0.35, "late / timely / urgent", va="bottom", fontsize=7.5, color=INK)
-    ax.set_yticks(range(len(rows))); ax.set_yticklabels([r_[0] for r_ in rows][::-1], fontsize=8)
-    ax.set_xlim(lo, hi); ax.set_ylim(-0.6, len(rows) + 0.1)
-    ax.set_xlabel(r"block-position index $z = \ln(\pi^{\mathrm{r}}_b / \pi_c)$")
-    ax.grid(axis="y", visible=False)
+    fig, axes = plt.subplots(2, 1, figsize=(7.2, 4.6), sharex=True)
+    for ax, (title, base) in zip(axes, (("(a) Ethereum mainnet", R), ("(b) Arbitrum One", R / "arbitrum"))):
+        b = j(base / "study_i" / "block_index.json")
+        edges = np.array(b["pos_bin_edges"]); mid = np.sqrt(edges[:-1] * edges[1:])
+        series = ((b["pos_hist_retail"], b["pos_quantiles_retail"], C[0], "earliest retail (non-correcting) swap", -0.10),
+                  (b["pos_hist_correction"], b["pos_quantiles_correction"], C[3], "first correcting swap", -0.20))
+        top = max(max(np.array(h) / sum(h)) for h, *_ in series)
+        for h, qq, col, lab, yb in series:
+            d = np.array(h) / sum(h)
+            ax.fill_between(mid, d, step="mid", color=col, alpha=0.18, lw=0)
+            ax.step(mid, d, where="mid", color=col, lw=1.6, label=lab)
+            q25, q50, q75 = (float(np.interp(p_, lv, qq)) for p_ in (0.25, 0.5, 0.75))
+            ax.plot([q25, q75], [yb * top] * 2, color=col, lw=4, solid_capstyle="butt")
+            ax.plot([q50], [yb * top], marker="|", ms=12, mew=2, color=INK)
+        ax.set_xscale("log"); ax.set_xlim(edges[0], 1); ax.set_ylim(-0.27 * top, 1.12 * top)
+        ax.axhline(0, color=INK, lw=0.6)
+        ax.set_title(title, loc="left", fontsize=9); ax.set_ylabel("share of blocks")
+    axes[0].legend(fontsize=7.5, loc="upper left", frameon=False)
+    axes[-1].set_xlabel("position in block: share of the block's transactions ordered before the swap (log)")
     save(fig, "fig_urgency_block_space")
 
 

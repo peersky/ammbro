@@ -20,6 +20,7 @@ from .chains import ACTIVE
 from .config import RESULTS_DIR
 
 QS = np.round(np.linspace(0.01, 0.99, 99), 2)
+EDGES = np.logspace(-3, 0, 31)
 
 
 def auc(y: np.ndarray, s: np.ndarray) -> float:
@@ -42,7 +43,11 @@ def main() -> dict:
            "z_quantiles_contested": q(z[y]), "z_quantiles_uncontested": q(z[~y]),
            "late_share": round(float((z < 0).mean()), 4),
            "urgent_share": {str(k): round(float((z > np.log(k)).mean()), 4) for k in (2, 4)},
-           "auc_z_contested": round(auc(y, z), 4)}
+           "auc_z_contested": round(auc(y, z), 4),
+           "pos_bin_edges": EDGES.tolist(),
+           "pos_hist_correction": np.histogram(np.clip(m.pos, EDGES[0], 1), EDGES)[0].tolist(),
+           "pos_hist_retail": np.histogram(np.clip(m.pos_r, EDGES[0], 1), EDGES)[0].tolist(),
+           "pos_quantiles_correction": q(m.pos), "pos_quantiles_retail": q(m.pos_r)}
     p = RESULTS_DIR / "study_i" / "block_index.json"
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(out, indent=1))
