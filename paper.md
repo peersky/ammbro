@@ -282,17 +282,17 @@ The results above assume that arbitrageurs hold enough stake. We relax this in t
 
 **Fresh accounts.** If any arbitrageur may instead trade from an unstaked account at $f_{\max}$ and keep its whole edge, LPs' worst-case gain falls on mainnet from \$5.01 M to \$3.53 M at $f_{\max}$ = 30 bp and recovers to \$4.93 M at 500 bp; on Arbitrum it is unaffected at 500 bp. With the market's shocks scaled by two and by four, fresh accounts take at most 1.5% of LPs' gain at 500 bp and none at 1,000 bp (Figure 12b in Appendix C).
 
-**Arbitrage stake.** If arbitrageurs pay the coverage-curve fee on a finite stake, the pool freezes without any. It remains rebalanced in every scenario once the stake reaches about 25 times $\rho$ times the mean daily arbitrage volume if one staker covers all arbitrageurs (\$0.91 M on mainnet, \$0.34 M on Arbitrum), and about 50 times if each holds its own; stake accumulated from zero over the first month leaves the pool stale for 50–86 hours (Figure 12a in Appendix C). This is the stake that appointed arbitrageurs bring at launch (§4.8).
+**Arbitrage stake.** If arbitrageurs pay the coverage-curve fee on a finite stake, the pool freezes without any. It remains rebalanced in every scenario once the stake reaches about 25 times $\rho$ times the mean daily arbitrage volume if one staker covers all arbitrageurs (\$0.91 M on mainnet, \$0.34 M on Arbitrum), and about 50 times if each holds its own; stake accumulated from zero over the first month leaves the pool stale for 50–88 hours (Figure 12a in Appendix C). This is the stake that appointed arbitrageurs bring at launch (§4.8).
 
 **Correction lane.** Without arbitrage stake, and with $f_{\max}$ high enough to defeat fresh accounts, the pool never rebalances. The correction lane of §4.8 restores the fully staked result on both chains (Table 4); the freshness of the signed report is the binding requirement. Appendix F.4 reports the alternatives that failed.
 
 | No arbitrage stake, $f_{\max}$ = 500 bp | Mainnet | Arbitrum | Rebalanced |
 |---|---|---|---|
-| Arbitrageurs fully staked (reference) | \$5.01 M | \$0.66 M | yes |
+| Arbitrageurs fully staked (reference) | \$5.01 M | \$0.65 M | yes |
 | No lane | frozen | frozen | no |
-| Lane, per-unit charge (3b), report gas 0–24% of a swap | \$4.90–4.93 M | \$0.65–0.75 M | yes |
-| Same, $f_{\max}$ = 2,000 bp | \$4.98–5.01 M | \$0.65–0.75 M | yes |
-| Same, report one second old | \$4.23 M | \$0.26 M | mainnet no |
+| Lane, per-unit charge (3b), report gas 0–24% of a swap | \$4.90–4.93 M | \$0.65 M | yes |
+| Same, $f_{\max}$ = 2,000 bp | \$4.98–5.01 M | \$0.65 M | yes |
+| Same, report one second old | \$4.23 M | \$0.23 M | mainnet no |
 
 *Table 4. LPs' worst-case gain over today across the three cost scenarios.*
 
@@ -487,17 +487,17 @@ An individual LP that extracts from its own pool to burn REP gains little by com
 
 **F.3 Controller variants.** Measuring staleness as the share of time a gap is open, over every block, mistook mainnet's 12 s of fresh drift for staleness and drove $m$ to 21–31 bp. An allowance growing with the standing gap silenced the signal that raises $m$ and lengthened stalls (20–61 h on Arbitrum).
 
-**F.4 Flat fees and switching in the correction lane.** With no arbitrage stake, the lane of §4.8 was tested with reduced flat fees in place of the per-unit charge, and with the lane switched on and off. A flat fee $\varphi$ charged on the whole swap lets the arbitrageur trade only until the gap equals $\varphi$ plus its cost. Discounting to the plain pool fee therefore keeps the pool rebalanced but recaptures nothing: the pool behaves as it does today. A clearing fee $g - m$ fixed at the gap where the swap starts corrects only about $m$ of it. Discounts that grow with the gap leave small gaps facing fees near $f_{\max}$ and freeze the pool; discounts that shrink with the gap leave a residual fee at small gaps that the pool cannot cross. A hysteresis switch on the gap — the discount turned on once the gap exceeds a threshold and kept on until the pool returns to the band — behaves like the plain pool fee when its threshold is small and leaves the pool stale when it is larger. Opening the lane only for an hour after staleness is detected leaves the gaps that open while it is closed uncorrected.
+**F.4 Flat fees and switching in the correction lane.** With no arbitrage stake, the lane of §4.8 was tested with reduced flat fees in place of the per-unit charge, and with the lane switched on and off. A flat fee $\varphi$ charged on the whole swap lets the arbitrageur trade only until the gap equals $\varphi$ plus its cost. Discounting to the plain pool fee therefore keeps the pool rebalanced but recaptures nothing: the pool behaves as it does today. A clearing fee $g - m$ fixed at the gap where the swap starts corrects only about $m$ of it. Discounts that grow with the gap leave small gaps facing fees near $f_{\max}$ and freeze the pool; discounts that shrink with the gap leave a residual fee at small gaps that the pool cannot cross. A hysteresis switch on the gap — the discount turned on once the gap exceeds a threshold and kept on until the pool returns to the band — behaves like the plain pool fee when its threshold is small and leaves the pool stale when it is larger. Opening the lane only for an hour after staleness is detected leaves the gaps that open while it is closed uncorrected on mainnet, though it passes on Arbitrum.
 
 | No arbitrage stake, $f_{\max}$ = 500 bp | Mainnet | Arbitrum | Rebalanced |
 |---|---|---|---|
 | Flat fee discounted to $f_{\min}$ | \$0.00 M | \$0.00 M | yes |
-| Flat clearing fee $g - m$ | \$3.26 M | \$0.42 M | no |
+| Flat clearing fee $g - m$ | \$3.26 M | \$0.39 M | no |
 | Discount growing with the gap | frozen | frozen | no |
 | Discount shrinking with the gap | frozen | −\$1.25 M | no |
 | Hysteresis on the gap, threshold 2 bp | \$0.00 M | \$0.00 M | yes |
 | Hysteresis on the gap, threshold 5 bp, clearing fee | \$0.87 M | −\$0.53 M | no |
-| Per-unit charge, lane open only within an hour of staleness | \$3.91 M | \$0.64 M | no |
+| Per-unit charge, lane open only within an hour of staleness | \$3.91 M | \$0.64 M | mainnet no |
 
 *Table 5. LPs' worst-case gain over today across the three cost scenarios, for rejected variants of the correction lane; Table 4 gives the adopted design.*
 

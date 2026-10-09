@@ -28,7 +28,7 @@ INF = 1e18
 
 
 def ctl() -> str:
-    return "ctl_div" if ACTIVE.ordering == "fcfs" else "ctl_feasible"
+    return "ctl_red4" if ACTIVE.ordering == "fcfs" else "ctl_feasible"
 
 
 def variants() -> list:

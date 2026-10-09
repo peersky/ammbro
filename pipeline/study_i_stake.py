@@ -26,7 +26,7 @@ VOLS = ["stable", "vol_x2", "vol_x4"]
 
 
 def ctl() -> str:
-    return "ctl_div" if ACTIVE.ordering == "fcfs" else "ctl_feasible"
+    return "ctl_red4" if ACTIVE.ordering == "fcfs" else "ctl_feasible"
 
 
 def base(sc):
