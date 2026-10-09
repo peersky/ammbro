@@ -1,7 +1,7 @@
 [project]
-name = "repamm-backtest"
+name = "bro-amm"
 version = "0.1.0"
-description = "REP-AMM backtest data pipeline (Layer 2/3: Binance public archive benchmark)"
+description = "BRO-AMM: measurement pipeline, block-level simulation and figures for the paper"
 requires-python = ">=3.11"
 dependencies = [
     "pandas>=2.2",

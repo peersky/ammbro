@@ -1,19 +1,15 @@
-# Cargo build
-**/target
+# Compiler files
+cache/
+out/
 
-# Cargo config
-.cargo
+# Ignores development broadcast logs
+/broadcast
+/broadcast/*/11155111/
+/broadcast/*/31337/
+/broadcast/**/dry-run/
 
-# Profile-guided optimization
-/tmp
-pgo-data.profdata
+# Docs
+docs/
 
-# MacOS nuisances
-.DS_Store
-
-# Proofs
-**/proof-with-pis.json
-**/proof-with-io.json
-
-# Env
+# Dotenv file
 .env

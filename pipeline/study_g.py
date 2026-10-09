@@ -27,7 +27,7 @@ Every input is measured on the chain itself, nothing is assumed:
                  plus selfSettle / applyEpoch, docs/settlement-keepers.md):
                  swap gas vs a hookless pool; steady-state self-settlement and
                  keeper-epoch gas (accounts settled before), fixed + slope.
-  G-zk           zk/contracts: one real SP1 v6.0.0 Groth16 proof verified on-chain.
+  G-zk           zk/: one real SP1 v6.0.0 Groth16 proof verified on-chain.
   Settlement     budget of four settlement designs over the window, all with the
                  measured per-swap hook (parking + record), priced at real base fees.
   Budget         reconciliation gas vs execution gas over the real window,
@@ -143,7 +143,7 @@ def foundry() -> dict:
             "reconcile_fixed_gas_per_tx": int(round(fixed)), "reconcile_gas_per_swap": int(round(slope))}
 
 
-ZK_CONTRACTS = REPO_ROOT / "zk" / "contracts"
+ZK_CONTRACTS = REPO_ROOT / "zk"
 
 
 def _forge_at(root, match: str) -> dict:

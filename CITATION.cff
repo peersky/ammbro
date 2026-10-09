@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite the paper."
+title: "BRO-AMM: A Bonded Reconciliation Oracle AMM as a Low-Risk DeFi Primitive"
+authors:
+  - family-names: Pecerskis
+    given-names: Tims
+    email: tim@peeramid.xyz
+repository-code: "https://github.com/peersky/ammbro"
+date-released: 2026-10-08
+keywords:
+  - automated market maker
+  - loss-versus-rebalancing
+  - MEV
+  - Uniswap v4
+  - oracle
+  - DeFi
+preferred-citation:
+  type: article
+  title: "BRO-AMM: A Bonded Reconciliation Oracle AMM as a Low-Risk DeFi Primitive"
+  authors:
+    - family-names: Pecerskis
+      given-names: Tims
+      email: tim@peeramid.xyz
+  year: 2026
+  status: preprint
+  url: "https://github.com/peersky/ammbro"

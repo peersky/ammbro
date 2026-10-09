@@ -1,6 +1,6 @@
 # Settlement and keeper layer — design draft (2026-10-05)
 
-Status: **design proposal**, not yet simulated or built. Measured inputs are
+Status: **design note** behind Studies K1–K4 (`pipeline/study_k*.py`), which simulate it; results in paper §5.8 and Appendix D. Measured inputs are
 marked (M) with their source; everything else is a proposal or an estimate (E).
 Builds on paper §4.3–§4.6, spec Study G (gas) and Study I (payout rule).
 

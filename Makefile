@@ -2,7 +2,8 @@ PY := uv run python
 
 .PHONY: all setup data onchain studies \
         download parse bars extract txs score gate labels \
-        study-a study-b study-d study-e study-g study-h study-j sim-inputs study-i supp1 figures test clean
+        study-a study-b study-d study-e study-g study-h study-j sim-inputs study-i supp1 figures test clean \
+        paper-results settlement paper-pdf preprint paper-rendered
 
 # Full §17.9 chain: benchmark data -> on-chain swaps -> prepare -> labels
 # -> Study E (measures L, writes canonical q for both pools) -> control
@@ -73,6 +74,18 @@ sim-inputs: gate
 
 study-i: sim-inputs
 	$(PY) -m pipeline.study_i
+
+# Study I runs behind paper §5 and Appendix F, on both chains (needs sim-inputs for each chain)
+PAPER_RUNS := study_i_headline study_i_index study_i_paths study_i_redundancy study_i_stake study_i_relief \
+              study_i_review study_i_bonus study_i_rotation study_i_final
+paper-results:
+	for c in mainnet arbitrum; do for m in $(PAPER_RUNS); do AMMBRO_CHAIN=$$c $(PY) -m pipeline.$$m || exit 1; done; done
+	AMMBRO_CHAIN=mainnet $(PY) -m pipeline.study_i_position
+	AMMBRO_CHAIN=arbitrum $(PY) -m pipeline.study_i_timeboost
+
+settlement:              # Study C (collateral) and K1–K4 (keepers, gas tank)
+	$(PY) -m pipeline.study_c_collateral
+	for m in study_k study_k2 study_k3 study_k4; do $(PY) -m pipeline.$$m || exit 1; done
 
 figures:                 # paper figures from committed results
 	$(PY) -m pipeline.figures
