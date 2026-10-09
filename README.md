@@ -81,7 +81,7 @@ must pass before any study runs against a pool.
 | §5.8 keepers and gas tank | `study_k.py`–`study_k4.py`, `census.py` | `results/study_k/` |
 | Figures | `pipeline/figures.py` | `figures/` |
 
-`study_k5.py`, `klines.py` and `k5_liquidity.py` study a single REP shared across pools, which the
+`study_k5.py` and `klines.py` study a single REP shared across pools, which the
 paper leaves to future work.
 
 ## Layout
