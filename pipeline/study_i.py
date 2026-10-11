@@ -228,6 +228,8 @@ def run_one(args) -> dict:
     extra_cost = (args[6] if len(args) > 6 else 0.0) / 1e4   # added to every arb's cost (e.g. capital cost of stake)
     global UNSTAKED, STALE_RULE
     settings = args[7] if len(args) > 7 else {}
+    global F                                           # pool fee (f_min); the band REB stays at today's 5 + 1 bp
+    F = float(settings.get("pool_fee", 0.0005))
     UNSTAKED = settings.get("unstaked", None)
     STALE_RULE = settings.get("stale_rule", "outcome")
     stake_K = settings.get("stake", None)              # USD of REP held by the arbitrage market
@@ -329,6 +331,8 @@ def run_one(args) -> dict:
         _init()
     o, Dd, gas, day = _DATA["o"], _DATA["D"], _DATA["gas"], _DATA["day"]
     es, ee, xs, xv = _DATA["exo_start"], _DATA["exo_end"], _DATA["exo_s"], _DATA["exo_v"]
+    if settings.get("user_scale", 1.0) != 1.0:     # retail retention: every non-arbitrage swap scaled by k
+        xv = xv * float(settings["user_scale"])
     controlled = isinstance(param, str) and param.startswith("ctl")
     band = isinstance(param, str) and param.startswith("ctl_band")
     urg = param in ("ctl_urg", "ctl_urg2", "ctl_sep", "ctl_urgm")   # hourly staleness raise + lowering driven by urgency (contested corrections)
@@ -889,6 +893,7 @@ def run_one(args) -> dict:
         "post_arb_gap_bps": {"p50": round(float(np.median(pg)), 2), "p90": round(float(np.percentile(pg, 90)), 2),
                              "p99": round(float(np.percentile(pg, 99)), 2)},
         "user_pretrade_staleness_bps_vw": round(exo_gap_w / max(exo_vol, 1) * 1e4, 3),
+        "user_volume_b": round(exo_vol / 1e9, 3),
         "m_bps_final": round(m * 1e4, 4),
         "daily": daily if controlled else None,
         "_trades": np.array(trades) if record else None,
