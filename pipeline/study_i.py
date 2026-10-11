@@ -389,6 +389,7 @@ def run_one(args) -> dict:
     stale_run = persist2 = 0
     post_gaps = []
     daily = []
+    lp_cum = []
     d_cur = day[0]; d_stale = d_n = d_arb = d_cont = 0; d_m = m
     n_corr = n_uncorr = 0
     n_raise = 0
@@ -398,6 +399,7 @@ def run_one(args) -> dict:
         if day[i] != d_cur:
             st = d_stale / max(d_n, 1); ct = d_cont / max(d_arb, 1)
             daily.append((int(d_cur), round(d_m * 1e4, 4), round(st, 4), round(ct, 4)))
+            lp_cum.append((int(d_cur), lp_arb + lp_exo))         # LPs' cumulative net at each day's end
             if controlled:
                 if param == "ctl_urgm":
                     d_sr = d_sr_stale / max(d_sr_obs, 1)
@@ -866,6 +868,7 @@ def run_one(args) -> dict:
         "end_of_block_gap_bps": {"p50": round(float(np.median(eg)), 2), "p90": round(float(np.percentile(eg, 90)), 2),
                                  "p99": round(float(np.percentile(eg, 99)), 2)},
         "lp_net_m": round((lp_arb + lp_exo) / 1e6, 3),
+        "daily_lp_net_m": [[d_, round((c_ - (lp_cum[k_ - 1][1] if k_ else 0.0)) / 1e6, 5)] for k_, (d_, c_) in enumerate(lp_cum + [(int(d_cur), lp_arb + lp_exo)])],
         "lp_from_arbs_m": round(lp_arb / 1e6, 3), "lp_from_users_m": round(lp_exo / 1e6, 3),
         "lp_recapture_m": round(charge_tot / 1e6, 3),
         "builder_payments_m": round(builder / 1e6, 3), "arb_margin_m": round(margin / 1e6, 3),

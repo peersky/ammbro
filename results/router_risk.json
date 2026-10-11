@@ -1,0 +1,95 @@
+{
+ "chain": "mainnet",
+ "fee_bps": 5.0,
+ "eps_bps": 0.5,
+ "benchmark": "mid at block_ts + L",
+ "by_label": {
+  "benign": {
+   "m_1bp": {
+    "volume_b": 0.388,
+    "share_of_volume_charged": 0.0873,
+    "charge_bps_of_volume": 0.1387,
+    "daily_charge_bps_median": 0.0399,
+    "daily_charge_bps_p99": 1.1215,
+    "daily_charge_bps_max": 1.5878,
+    "charge_usd_m": 0.0054
+   },
+   "m_2bp": {
+    "volume_b": 0.388,
+    "share_of_volume_charged": 0.0468,
+    "charge_bps_of_volume": 0.1098,
+    "daily_charge_bps_median": 0.0162,
+    "daily_charge_bps_p99": 1.0622,
+    "daily_charge_bps_max": 1.5673,
+    "charge_usd_m": 0.0043
+   },
+   "m_3bp": {
+    "volume_b": 0.388,
+    "share_of_volume_charged": 0.033,
+    "charge_bps_of_volume": 0.0918,
+    "daily_charge_bps_median": 0.003,
+    "daily_charge_bps_p99": 1.0088,
+    "daily_charge_bps_max": 1.5568,
+    "charge_usd_m": 0.0036
+   }
+  },
+  "toxic": {
+   "m_1bp": {
+    "volume_b": 11.748,
+    "share_of_volume_charged": 0.866,
+    "charge_bps_of_volume": 4.2693,
+    "daily_charge_bps_median": 2.7593,
+    "daily_charge_bps_p99": 24.3529,
+    "daily_charge_bps_max": 97.6035,
+    "charge_usd_m": 5.0155
+   },
+   "m_2bp": {
+    "volume_b": 11.748,
+    "share_of_volume_charged": 0.7681,
+    "charge_bps_of_volume": 3.7356,
+    "daily_charge_bps_median": 2.2838,
+    "daily_charge_bps_p99": 23.6842,
+    "daily_charge_bps_max": 96.9876,
+    "charge_usd_m": 4.3886
+   },
+   "m_3bp": {
+    "volume_b": 11.748,
+    "share_of_volume_charged": 0.667,
+    "charge_bps_of_volume": 3.3187,
+    "daily_charge_bps_median": 1.8862,
+    "daily_charge_bps_p99": 23.1286,
+    "daily_charge_bps_max": 96.4602,
+    "charge_usd_m": 3.8987
+   }
+  },
+  "other": {
+   "m_1bp": {
+    "volume_b": 4.892,
+    "share_of_volume_charged": 0.565,
+    "charge_bps_of_volume": 7.815,
+    "daily_charge_bps_median": 2.1636,
+    "daily_charge_bps_p99": 30.4251,
+    "daily_charge_bps_max": 193.6738,
+    "charge_usd_m": 3.8233
+   },
+   "m_2bp": {
+    "volume_b": 4.892,
+    "share_of_volume_charged": 0.4708,
+    "charge_bps_of_volume": 7.4496,
+    "daily_charge_bps_median": 1.853,
+    "daily_charge_bps_p99": 29.9518,
+    "daily_charge_bps_max": 193.0893,
+    "charge_usd_m": 3.6445
+   },
+   "m_3bp": {
+    "volume_b": 4.892,
+    "share_of_volume_charged": 0.4019,
+    "charge_bps_of_volume": 7.1541,
+    "daily_charge_bps_median": 1.5946,
+    "daily_charge_bps_p99": 29.5203,
+    "daily_charge_bps_max": 192.5672,
+    "charge_usd_m": 3.4999
+   }
+  }
+ }
+}

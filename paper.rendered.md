@@ -272,6 +272,10 @@ Arbitrage takes about the same value from the pool under both designs; BRO-AMM c
 
 Across the cost scenarios, LPs' losses to arbitrage fall by 68–79% on mainnet and by 49–55% on Arbitrum, and payments for position by 71–89%. Mainnet LPs' net turns from a loss into a gain; the worst-case gain is \$5.38 M on mainnet and \$0.65 M on Arbitrum. Relative to the pools' volume (Table 2), LPs' net take rises from between −1.9 and −1.6 bp today to between 0.9 and 1.4 bp on mainnet, and from between 0.9 and 1.2 bp to between 1.4 and 1.8 bp on Arbitrum. Users pay the same fees and trade against prices 0.18–0.23 bp fresher on mainnet and within 0.02 bp of today on Arbitrum, and both pools satisfy the rebalancing constraint in every scenario. These results hold user flow fixed. If users route away, the pool keeps a share of it: on mainnet LPs beat today even with no user flow at all, by \$1.24 M in the worst case, whereas on Arbitrum, where user flow does part of the rebalancing, they need to keep about 85% of it (Appendix C).
 
+**Competing for order flow.** Because LPs keep most of what arbitrage took, the pool can quote users less than today's 5 bp. On mainnet LPs beat today at every fee down to 0.5 bp, by \$1.11 M in the worst case, and stay positive in every scenario down to 3 bp. Users' all-in cost, the fee plus the markout of trading at a stale price, falls from 8.7–8.8 bp today to 7.2–7.5 bp at 3 bp and 5.8–6.0 bp at 1 bp. If the cheaper quote draws other venues' flow and LPs follow with liquidity, LPs' net per unit of liquidity at 3 bp rises from \$1.41 M to \$1.95 M at three times today's flow; at 1 bp it breaks even only at two to three times today's flow (Appendix C). On Arbitrum the fee has little headroom: users there already profit from stale prices, so a lower fee mostly removes that edge while arbitrage takes more, and LPs beat today only down to about 3.7–3.9 bp, where users save about 0.3 bp. There the pool competes on protecting LPs at today's price.
+
+**Risks of competing.** LPs' daily result under BRO-AMM varies more than today (standard deviation \$66 k against \$32 k on mainnet), because recapture arrives on volatile days, but its downside is smaller: at 5 bp the worst day loses \$71 k and the worst week \$162 k, against \$211 k and \$722 k today, and at 1 bp \$154 k and \$587 k. A lower fee also leaves more correctable blocks uncorrected, 62–77 hours over six months at 1 bp against 39–45 at 5 bp, within the rebalancing constraint. For a router, holding REP costs at most 0.12 bp of its volume, and retail-aggregator flow incurs 0.09–0.20 bp of charges, up to 1.6 bp on mainnet's worst day and 4.9 bp on Arbitrum's; unscreened flow incurs 2–8 bp, so a router's risk is the toxicity of the flow it accepts (Appendix G.5).
+
 As a reference measured on the data rather than simulated, a fixed schedule applied with the benchmark known exactly, charging extraction beyond 2 bp up to $f_{\max}$, recaptures 73% of extraction on mainnet and 70% on Arbitrum while preserving 97–99% of profitable arbitrage and overcharging benign flow by less than 0.1 bp (Figure 10 in Appendix C). The schedule was fixed in advance; selected on March–May, it remains the best schedule on June–August.
 
 ### 5.4 Allowance discovery and robustness
@@ -481,6 +485,42 @@ Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum b
 
 *Table 5. LPs' worst-case gain over today's pool at full flow, across the three cost scenarios, when BRO-AMM keeps a share of user flow. On Arbitrum, removing user flow raises arbitrage volume from \$5.0 B to \$7.9 B, because users' own trades do part of the rebalancing.*
 
+**Fee headroom.** The pool fee $f_{\min}$ is lowered for users, who reach the pool fully covered, and for staked arbitrageurs, under the final design; the within-band test keeps today's 6 bp band. Users' all-in cost is what LPs earn from users per unit of user volume: the fee plus the markout of trading at a stale price, which on Arbitrum favours users today. Ranges span the three cost scenarios; gains over today are worst cases. Today's pool costs users 8.7–8.8 bp on mainnet and 2.9–3.3 bp on Arbitrum.
+
+| Fee | Mainnet: LPs' gain over today | Mainnet: LPs' net | Mainnet: users' all-in | Arbitrum: LPs' gain over today | Arbitrum: users' all-in |
+|---|---|---|---|---|---|
+| 5 bp | \$5.38 M | \$1.70 M to \$2.70 M | 8.7–8.9 bp | \$0.65 M | 2.9–3.3 bp |
+| 3 bp | \$3.88 M | \$0.19 M to \$1.41 M | 7.2–7.4 bp | −\$0.50 M | 2.3–2.8 bp |
+| 2 bp | \$2.99 M | −\$0.70 M to \$0.53 M | 6.4–6.6 bp | −\$1.22 M | 2.0–2.5 bp |
+| 1 bp | \$1.81 M | −\$1.88 M to −\$0.57 M | 5.8–6.0 bp | −\$2.26 M | 1.7–2.2 bp |
+| 0.5 bp | \$1.11 M | −\$2.57 M to −\$1.14 M | 5.5–5.8 bp | −\$2.98 M | 1.5–1.9 bp |
+
+*Table 6. LPs' result and users' all-in cost at lower pool fees.*
+
+**Capture and risk.** If the lower fee wins routing, the pool draws flow from other venues and LPs follow with liquidity: user flow and depth are both scaled (stable costs, mainnet). LPs' net per unit of liquidity divides by the scale.
+
+| Fee | Flow and depth | LPs' net | Per unit of liquidity | Users' all-in | Worst week |
+|---|---|---|---|---|---|
+| 3 bp | ×1 | \$1.41 M | \$1.41 M | 7.4 bp | −\$324 k |
+| 3 bp | ×1.5 | \$2.54 M | \$1.69 M | 7.5 bp | −\$486 k |
+| 3 bp | ×2 | \$3.43 M | \$1.72 M | 7.4 bp | −\$668 k |
+| 3 bp | ×3 | \$5.84 M | \$1.95 M | 7.5 bp | −\$1003 k |
+| 1 bp | ×1 | −\$0.57 M | −\$0.57 M | 6.0 bp | −\$587 k |
+| 1 bp | ×1.5 | −\$0.37 M | −\$0.24 M | 5.9 bp | −\$876 k |
+| 1 bp | ×2 | \$0.00 M | \$0.00 M | 6.0 bp | −\$1202 k |
+| 1 bp | ×3 | \$0.41 M | \$0.14 M | 5.6 bp | −\$1759 k |
+
+*Table 7. Mainnet LPs' result when the pool takes a multiple of today's flow and liquidity.*
+
+| Design | Daily mean | Daily s.d. | 1st percentile | Worst day | Worst week | Losing days |
+|---|---|---|---|---|---|---|
+| Today, 5 bp | −\$17 k | \$32 k | −\$146 k | −\$211 k | −\$722 k | 80% |
+| BRO-AMM, 5 bp | \$15 k | \$66 k | −\$41 k | −\$71 k | −\$162 k | 10% |
+| BRO-AMM, 3 bp | \$8 k | \$65 k | −\$76 k | −\$103 k | −\$324 k | 45% |
+| BRO-AMM, 1 bp | −\$3 k | \$66 k | −\$129 k | −\$154 k | −\$587 k | 84% |
+
+*Table 8. Mainnet LPs' daily net result over six months, stable costs. The worst day and week fall before the cost shift, so they are the same in all three cost scenarios.*
+
 ![Recapture frontier](figures/fig_recapture_frontier.png)
 
 *Figure 10. Recapture against profitable arbitrage preserved, for all schedules evaluated.*
@@ -577,7 +617,7 @@ An individual LP that extracts from its own pool to burn REP gains little by com
 | Hysteresis on the gap, threshold 5 bp, clearing fee | \$0.87 M | −\$0.53 M | no |
 | Per-unit charge, lane open only within an hour of staleness | \$3.91 M | \$0.64 M | mainnet no |
 
-*Table 6. LPs' worst-case gain over today across the three cost scenarios, for rejected variants of the correction lane; Table 4 gives the adopted design.*
+*Table 9. LPs' worst-case gain over today across the three cost scenarios, for rejected variants of the correction lane; Table 4 gives the adopted design.*
 
 **F.5 Allowance bonuses.** Raising the allowance beyond the arbitrageur's cost is rent, and rent is competed away for position. A flat premium of 0.5 bp tripled payments to builders in an early simulation. A bonus proportional to the market's jump within a block, paid only for corrections in that block so that waiting forfeits it, cost LPs 17–31% of their worst-case gain on mainnet and 11–17% on Arbitrum at REP's mint rate, while payments for position roughly doubled; with REP valued below its mint rate it did not prevent stalls. Keying the bonus to the standing gap instead, which rewards waiting, did no better.
 
@@ -600,7 +640,7 @@ An individual LP that extracts from its own pool to burn REP gains little by com
 | $K_d \ge 5$ | Arbitrum | \$0.42 M | 0 / 0 / 0 | none |
 | Rotation, others earn 75% of $m$ | Arbitrum | \$0.75 M | 0–3 / 19 / 19 | \$0.03–0.04 M |
 
-*Table 7. On mainnet the sender-count rules assume arrival ordering, which builder auctions do not provide. With a one-hour redeploy, decay without a signal and urgency-accelerated decay both keep the pool rebalanced through both events.*
+*Table 10. On mainnet the sender-count rules assume arrival ordering, which builder auctions do not provide. With a one-hour redeploy, decay without a signal and urgency-accelerated decay both keep the pool rebalanced through both events.*
 
 Rotation designates, each hour, one registered arbitrageur that earns the full allowance while others earn less; it requires registration, and unless its windows are exclusive, cheaper non-designated arbitrageurs still take the corrections and the others still leave. A rule that raises $m$ when too few corrections are contested does not help under builder auctions either: competitors that never win cannot be kept deployed.
 
@@ -612,7 +652,7 @@ Rotation designates, each hour, one registered arbitrageur that earns the full a
 | Urgency by position, $\kappa = 2$ | \$5.35–5.86 M | \$0.57–0.80 M | 0.14–0.23 bp fresher | 0.50 pp | yes |
 | Urgency observed exactly | \$5.41–5.98 M | \$0.53–0.74 M | 0.01 bp staler to 0.12 bp fresher | 0.51 pp | no (withholding) |
 
-*Table 8. Mainnet controllers under the position model.*
+*Table 11. Mainnet controllers under the position model.*
 
 With the position model every controller leaves 35–47 hours of correctable blocks uncorrected over the six months, against 1–4 without it, because a correction must pay for position and keeps less allowance when late; the events add none. Urgency judged by priority fee alone, with no position, misses the 45% of payments made outside the transaction and was dropped. Targeting a fixed separation between corrections and retail through $m$ itself drove $m$ to its 50 bp ceiling and paid the excess to builders: timeliness belongs in the penalty, not in the allowance.
 
@@ -644,9 +684,22 @@ Two conclusions follow. For any gap smaller than $f_{\max} + h$, the fresh accou
 | daily | 0% a year | 13.5 | 0.72% | \$72 k | 0.021 bp |
 | daily | 50% a year | 11.7 | 0.64% | \$64 k | 0.113 bp |
 
-*Table 9. Cost to a router of quoting near $f_{\min}$, at its cost-minimising stake. With $f_{\max}$ = 500 or 2,000 bp the total cost changes by at most 0.006 bp, since it grows only with $\ln f_{\max}$.*
+*Table 12. Cost to a router of quoting near $f_{\min}$, at its cost-minimising stake. With $f_{\max}$ = 500 or 2,000 bp the total cost changes by at most 0.006 bp, since it grows only with $\ln f_{\max}$.*
 
-The cost assumes the router's flow is benign; extraction it carries beyond the allowance is charged to its stake, so a router prices the toxicity of its flow as order-flow buyers do today.
+The cost assumes the router's flow is benign. Every price-correcting swap is charged on its edge beyond fee, $\varepsilon$ and $m$, whoever sends it, so a router's stake also pays for those of its users' trades that land on a stale pool. On today's swaps, with each swap's edge falling linearly from its pre-trade to its post-trade gap and $m$ = 2 bp, $\varepsilon$ = 0.5 bp:
+
+| Flow | Chain | Volume charged | Charge | Median day | 99th-percentile day | Worst day |
+|---|---|---|---|---|---|---|
+| retail aggregators | Mainnet | 5% | 0.11 bp | 0.02 bp | 1.1 bp | 1.6 bp |
+| retail aggregators | Arbitrum | 4% | 0.17 bp | 0.00 bp | 1.2 bp | 4.7 bp |
+| unlabelled | Mainnet | 47% | 7.45 bp | 1.85 bp | 30.0 bp | 193.1 bp |
+| unlabelled | Arbitrum | 25% | 1.99 bp | 0.79 bp | 5.5 bp | 108.1 bp |
+| top-of-block searchers | Mainnet | 77% | 3.74 bp | 2.28 bp | 23.7 bp | 97.0 bp |
+| top-of-block searchers | Arbitrum | 13% | 0.51 bp | 0.25 bp | 2.9 bp | 34.2 bp |
+
+*Table 13. Charges that flow by label would incur under (3b), per unit of its volume, March–August 2026. Measured against the mid price rather than the directional bid/ask, these are upper bounds; with $m$ of 1 or 3 bp retail-aggregator charges are 0.09–0.20 bp.*
+
+Retail-aggregator flow is cheap to carry; mixed flow is not, so a router prices the toxicity of its flow as order-flow buyers do today.
 
 ## Appendix H. A worked example
 
