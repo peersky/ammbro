@@ -345,7 +345,7 @@ def value_split() -> None:
             parts = [x["lp_recapture_m"], x["builder_payments_m"], x["arb_margin_m"],
                      loss - x["builder_payments_m"] - x["arb_margin_m"]]
             bars.append((f"{chain}, {lab}", parts, x["lp_net_m"]))
-    segs = [("recaptured for LPs", C[0]), ("payments for position", C[3]),
+    segs = [("recaptured for LPs", C[0]), ("arbitrageurs' payments for position", C[3]),
             ("arbitrageurs' margin", C[1]), ("arbitrageurs' costs (hedge, gas)", MUTED)]
     fig, ax = plt.subplots(figsize=(7.4, 2.6))
     for k, (lab, parts, net) in enumerate(bars):

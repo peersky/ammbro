@@ -23,7 +23,7 @@ charging 3 bp (paper §5.3, Table 3; stable costs):
 |---|---|---|
 | LPs' net | −\$3.15 M | \$3.37 M |
 | Retail's price, all-in | 5.00 bp | 3.31 bp |
-| Payments for position | \$6.57 M | \$1.09 M |
+| Arbitrageurs' payments to block builders | \$6.57 M | \$1.09 M |
 | Arbitrageurs' margin | \$0.38 M | \$0.51 M |
 
 Across the three cost scenarios LPs end ahead of today by \$5.8–6.5 M, users trade at fresher prices,
