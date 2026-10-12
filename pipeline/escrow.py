@@ -35,6 +35,7 @@ def inputs() -> dict:
 TAU = 0.025
 THETAS_BPS = [0.5, 1.0, 1.5, 2.0]
 LAUNCH_STOCK_M = 0.91      # REP sold at launch to arbitrageurs, at par (§5.5), in \$M
+WINDOW = 30                # high-water mark over the last WINDOW epochs (6); None = all-time
 
 
 def attack_threshold(f_bps: float, theta_bps: float, v: float) -> float:
@@ -54,13 +55,16 @@ def simulate(series: list, depth: dict, theta_bps: float, scenario: str, high_wa
     reserve += 0.0 if scenario != "none" else LAUNCH_STOCK_M
     if scenario == "none":
         E = 0.0
-    cum = hw = 0.0
+    cum = 0.0
+    hist = []
     ratio_min, share_max, prev_p = 1.0, 0.0, None
     for day, N, V, C, lnp in series:
         A = N - C                                            # LPs' gain in assets; charges are paid in REP
         if high_water:
+            hist.append(cum)                                  # G before this epoch
             cum += N - th * V
-            S = max(cum - hw, 0.0); hw = max(hw, cum)
+            ref = max(hist[-WINDOW:]) if WINDOW else max(hist)
+            S = max(cum - ref, 0.0)
         else:
             S = max(N - th * V, 0.0)
         M = (1 - TAU) * S
@@ -116,10 +120,25 @@ def analyse() -> dict:
             for hw in (False, True):
                 for scen in ("none", "escrow", "pol_retain", "pol_donate"):
                     rows.append({"cost_scenario": sc, **simulate(ser, depth, th, scen, hw)})
+    windows = []
+    for sc in ("stable", "costs_x8"):
+        ser = inp["series"][sc]
+        for th in (1.0, 2.0):
+            x = [r[1] - th / 1e4 * r[2] for r in ser]
+            row = {"cost_scenario": sc, "theta_bps": th}
+            for L in (1, 7, 30):
+                row[f"epoch_{L}d"] = round((1 - TAU) * sum(max(sum(x[k:k + L]), 0.0) for k in range(0, len(x), L)), 3)
+            for W in (7, 30, None):
+                cum, hist, reb = 0.0, [], 0.0
+                for v in x:
+                    hist.append(cum); cum += v
+                    reb += max(cum - (max(hist[-W:]) if W else max(hist)), 0.0)
+                row[f"daily_hwm_{W or 'all'}"] = round((1 - TAU) * reb, 3)
+            windows.append(row)
     attack = [{"wash_fee_bps": f, "rep_value": v, "share_threshold": round(attack_threshold(f, 2.0, v), 4)}
               for f in (5.0, 1000.0) for v in (1.0, 0.8, 0.5)]
     out = {"design": inp["design"], "lp_net_simulated_m": inp["lp_net_m"], "tau": TAU, "launch_stock_m": LAUNCH_STOCK_M, "attack_without_escrow": attack,
-           "attack_with_escrow": "profit = -tau (f - theta*) V - (1 - s) theta* V < 0 for every share s", "rows": rows}
+           "rebate_by_netting": windows, "window_epochs": WINDOW, "attack_with_escrow": "profit = -tau (f - theta*) V - (1 - s) theta* V < 0 for every share s", "rows": rows}
     (RESULTS_DIR / "escrow.json").write_text(json.dumps(out, indent=1))
     return out
 
