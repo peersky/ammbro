@@ -176,6 +176,16 @@ def _init():
     _DATA["step_s"] = float(step_s)   # 300 on mainnet (12s), ~14k on Arbitrum (~0.25s)
 
 
+def _daily_series(cum: list) -> list:
+    """Day-by-day differences of cumulative (LPs' net, volume, charges), with the day's closing ln oracle."""
+    out, prev = [], (None, 0.0, 0.0, 0.0, None)
+    for c in cum:
+        out.append([c[0], round((c[1] - prev[1]) / 1e6, 5), round((c[2] - prev[2]) / 1e6, 4),
+                    round((c[3] - prev[3]) / 1e6, 5), None if c[4] is None else round(float(c[4]), 6)])
+        prev = c
+    return out
+
+
 def user_charge(p: float, s: int, V: float, D: float, oi: float, c: float) -> float:
     """Charge (3b) on a user swap that corrects the pool: its edge toward the benchmark falls linearly
     from x0 to x1 along the trade; each unit pays its edge beyond c = f + ε + m (closed form)."""
@@ -415,6 +425,7 @@ def run_one(args) -> dict:
     post_gaps = []
     daily = []
     lp_cum = []
+    day_cum = []
     d_cur = day[0]; d_stale = d_n = d_arb = d_cont = 0; d_m = m
     n_corr = n_uncorr = 0
     n_raise = 0
@@ -425,6 +436,7 @@ def run_one(args) -> dict:
             st = d_stale / max(d_n, 1); ct = d_cont / max(d_arb, 1)
             daily.append((int(d_cur), round(d_m * 1e4, 4), round(st, 4), round(ct, 4)))
             lp_cum.append((int(d_cur), lp_arb + lp_exo))         # LPs' cumulative net at each day's end
+            day_cum.append((int(d_cur), lp_arb + lp_exo, arb_vol + exo_vol, charge_tot + user_ch, o_prev))   # for escrow analysis
             if controlled:
                 if param == "ctl_urgm":
                     d_sr = d_sr_stale / max(d_sr_obs, 1)
@@ -916,6 +928,8 @@ def run_one(args) -> dict:
         "end_of_block_gap_bps": {"p50": round(float(np.median(eg)), 2), "p90": round(float(np.percentile(eg, 90)), 2),
                                  "p99": round(float(np.percentile(eg, 99)), 2)},
         "lp_net_m": round((lp_arb + lp_exo) / 1e6, 3),
+        "daily_series": _daily_series(day_cum + [(int(d_cur), lp_arb + lp_exo, arb_vol + exo_vol, charge_tot + user_ch, o_prev)]),
+        "daily_series_fields": ["day", "lp_net_m", "volume_m", "charges_m", "ln_oracle_close"],
         "daily_lp_net_m": [[d_, round((c_ - (lp_cum[k_ - 1][1] if k_ else 0.0)) / 1e6, 5)] for k_, (d_, c_) in enumerate(lp_cum + [(int(d_cur), lp_arb + lp_exo)])],
         "lp_from_arbs_m": round(lp_arb / 1e6, 3), "lp_from_users_m": round(lp_exo / 1e6, 3),
         "lp_recapture_m": round(charge_tot / 1e6, 3),
