@@ -25,7 +25,8 @@ from . import study_h as H
 from .chains import ACTIVE
 from .config import RESULTS_DIR
 
-FEE_BPS, EPS_BPS = 5.0, 0.5
+EPS_BPS = 0.5
+FEE_BPS = 5.0                      # pool fee; `python -m pipeline.router_risk 3` writes router_risk_fee3.json
 M_BPS = [1.0, 2.0, 3.0]
 
 
@@ -72,10 +73,13 @@ def main() -> dict:
                 "daily_charge_bps_p99": round(float(np.quantile(daily, 0.99)), 4),
                 "daily_charge_bps_max": round(float(daily.max()), 4),
                 "charge_usd_m": round(float(ch[sel].sum()) / 1e6, 4)}
-    p = RESULTS_DIR / "router_risk.json"
+    p = RESULTS_DIR / ("router_risk.json" if FEE_BPS == 5.0 else f"router_risk_fee{FEE_BPS:g}.json")
     p.write_text(json.dumps(out, indent=1))
     return out
 
 
 if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1:
+        FEE_BPS = float(sys.argv[1])
     print(json.dumps(main()["by_label"], indent=1))

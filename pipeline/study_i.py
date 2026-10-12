@@ -176,6 +176,18 @@ def _init():
     _DATA["step_s"] = float(step_s)   # 300 on mainnet (12s), ~14k on Arbitrum (~0.25s)
 
 
+def user_charge(p: float, s: int, V: float, D: float, oi: float, c: float) -> float:
+    """Charge (3b) on a user swap that corrects the pool: its edge toward the benchmark falls linearly
+    from x0 to x1 along the trade; each unit pays its edge beyond c = f + ε + m (closed form)."""
+    x0 = s * (oi - p); x1 = s * (oi - (p + s * V / D))
+    if x1 >= x0:
+        return 0.0
+    a_, b_ = x0 - c, x1 - c
+    if a_ <= 0:
+        return 0.0
+    return V * ((a_ + b_) / 2 if b_ > 0 else a_ * a_ / (2 * (a_ - b_)))
+
+
 def arb_choice(rule: str, a: float, D: float, h: float, g: float, m: float, gap_abs: float):
     """(profit, V, kept, unstaked) for one arb; V = 0 means no trade. kept is the
     arb's take beyond the pool fee F (for an unstaked trade: its edge net of the
@@ -343,7 +355,7 @@ def run_one(args) -> dict:
     if param == "ctl_rot":
         param_rot = True
     k_red = int(param[7:]) if red else 0
-    diverse = param == "ctl_div" or red
+    diverse = param == "ctl_div" or red or bool(settings.get("fcfs", False))   # FCFS race among profitable arbs
     feasible = param in ("ctl_feasible", "ctl_div") or red or urg
     fast = param in ("ctl_fast", "ctl_feasible", "ctl_div") or red or urg
     rng = np.random.default_rng(7)
@@ -351,6 +363,19 @@ def run_one(args) -> dict:
     w_corr = w_uncorr = w_n = 0
     s_star, s_low = (0.005, 0.001) if param == "ctl_tight" else (S_STAR, S_LOW)
     m = 5e-4 if controlled else (param / 1e4 if param is not None else 0.0)
+    # Per-gap reverse auction ("ramp"): the allowance of a standing gap starts at m0 and rises with the gap's
+    # age — time since it opened beyond f + ε or was last corrected — to a cap; the first profitable corrector
+    # takes it at the current level. wait=True models a lone arbitrageur that acts only at the cap.
+    ramp = settings.get("ramp")
+    if ramp is not None:
+        r_m0, r_slope, r_cap = ramp["m0_bps"] / 1e4, ramp["slope_bps_per_s"] / 1e4, ramp["cap_bps"] / 1e4
+        r_wait = bool(ramp.get("wait", False))
+    r_age = 0
+    tb = settings.get("timeboost")       # {"holders": arb indices that win express-lane rounds, "round_s": 60}
+    if tb is not None:
+        tb_holders, tb_round = list(tb["holders"]), float(tb.get("round_s", 60.0))
+    charge_users = bool(settings.get("charge_users", False)) and rule != "today"   # users' correcting swaps pay (3b) too
+    user_ch = 0.0
     costs_base = [c / 1e4 for c in POPULATIONS.get(scenario, ARB_COSTS_BPS)]
     d_wins = np.zeros(len(costs_base), dtype=np.int64)
     shift = float(scenario.split("_x")[1]) if scenario.startswith("costs_x") else 1.0
@@ -466,6 +491,10 @@ def run_one(args) -> dict:
         _trades_before = pass_trades[0] + pass_trades[1]
         G = oi - p; gab = abs(G)
         m_blk = m + shock_k * (_jump if shock_key == "jump" else gab)
+        if ramp is not None:
+            m_blk = min(r_m0 + r_slope * r_age * _DATA["step_s"], r_cap)
+            if r_wait and m_blk < r_cap:
+                m_blk = 0.0
         _pre_gap = gab; _pre_sign = 1.0 if G > 0 else -1.0     # +1: pool below oracle, a buy corrects
         if es[i] < ee[i] and i % 10 == 0:
             pre_gaps.append(gab)
@@ -474,6 +503,8 @@ def run_one(args) -> dict:
                 s = xs[k]; V = xv[k]
                 pav = p + s * V / (2 * D)
                 lp_exo += V * (F + s * (pav - oi))
+                if charge_users:
+                    _uc = user_charge(p, s, V, D, oi, F + EPS_SR + m_blk); lp_exo += _uc; user_ch += _uc
                 exo_gap_w += V * abs(p - oi); exo_vol += V
                 p += s * V / D
         for _pass in ((0,) if phase != "both" else (0, 1)):
@@ -482,6 +513,8 @@ def run_one(args) -> dict:
                 s = xs[k]; V = xv[k]
                 pav = p + s * V / (2 * D)
                 lp_exo += V * (F + s * (pav - oi))
+                if charge_users:
+                    _uc = user_charge(p, s, V, D, oi, F + EPS_SR + m_blk); lp_exo += _uc; user_ch += _uc
                 exo_gap_w += V * abs(p - oi); exo_vol += V
                 p += s * V / D
           G = oi - p; gab = abs(G); a = gab - F
@@ -539,6 +572,8 @@ def run_one(args) -> dict:
                       s_ = xs[k]; V_ = xv[k]
                       pav = p + s_ * V_ / (2 * D)
                       lp_exo += V_ * (F + s_ * (pav - oi)); exo_gap_w += V_ * abs(p - oi); exo_vol += V_
+                      if charge_users:
+                          _uc = user_charge(p, s_, V_, D, oi, F + EPS_SR + m_blk); lp_exo += _uc; user_ch += _uc
                       p += s_ * V_ / D
                       early_users.add(int(k))
                   G = oi - p; gab2 = abs(G); a2 = gab2 - F
@@ -730,6 +765,12 @@ def run_one(args) -> dict:
                   if diverse:     # FCFS race: any arb that would profit can be first
                       prof = [k for k, x in enumerate(res) if x[0] > 0 and x[1] > 0]
                       rw = res[prof[rng.integers(len(prof))]]
+                      if tb is not None:  # Timeboost: this round's express-lane holder wins any correction it profits from
+                          _rd = int(i * _DATA["step_s"] // tb_round)
+                          _holder = tb_holders[int(np.random.default_rng(7_000_003 + _rd).integers(len(tb_holders)))]
+                          _hk = [k for k in prof if res[k][6] == _holder]
+                          if _hk:
+                              rw = res[_hk[0]]
                       d_wins[rw[6]] += 1; win_cnt[rw[6]] += 1; arb_inc[rw[6]] += rw[0]
                       last_win[rw[6]] = i * _DATA["step_s"]; wake_at[rw[6]] = np.inf
                   else:
@@ -821,6 +862,11 @@ def run_one(args) -> dict:
                     m = min(m * 2.0, 50e-4)
                 w_n = w_corr = w_uncorr = w_sr_obs = w_sr_stale = 0
         post = abs(oi - p)                      # after the arb phase (open) / after everything (close, both)
+        if ramp is not None:                    # a correction or a gap back inside f + ε resets the gap's age
+            if ramp.get("strict_reset", False):   # only a block that ends near the market resets the clock
+                r_age = 0 if post <= F + EPS_SR + m_blk + 1e-12 else r_age + 1
+            else:
+                r_age = 0 if (pass_trades[0] + pass_trades[1] > _trades_before or post <= F + EPS_SR) else r_age + 1
         n += 1
         if post <= REB:
             reb += 1; stale_run = 0
@@ -837,6 +883,8 @@ def run_one(args) -> dict:
                 s = xs[k]; V = xv[k]
                 pav = p + s * V / (2 * D)
                 lp_exo += V * (F + s * (pav - oi))
+                if charge_users:
+                    _uc = user_charge(p, s, V, D, oi, F + EPS_SR + m_blk); lp_exo += _uc; user_ch += _uc
                 exo_gap_w += V * abs(p - oi); exo_vol += V
                 p += s * V / D
         if early_users:
@@ -897,6 +945,7 @@ def run_one(args) -> dict:
                              "p99": round(float(np.percentile(pg, 99)), 2)},
         "user_pretrade_staleness_bps_vw": round(exo_gap_w / max(exo_vol, 1) * 1e4, 3),
         "user_volume_b": round(exo_vol / 1e9, 3),
+        "user_charges_m": round(user_ch / 1e6, 4),
         "m_bps_final": round(m * 1e4, 4),
         "daily": daily if controlled else None,
         "_trades": np.array(trades) if record else None,
