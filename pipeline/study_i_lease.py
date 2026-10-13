@@ -10,7 +10,7 @@ unpaid by walking away once.
 
 Mainnet, decay without a signal (§5.4 convention), f_max = 500 bp, users' corrections uncharged.
 
-    AMMBRO_CHAIN=mainnet uv run python -m pipeline.study_i_lease → results/study_i/lease.json
+    AMMBRO_CHAIN=mainnet uv run python -m pipeline.study_i_lease [series] → results/study_i/lease[_series].json
 """
 from __future__ import annotations
 
@@ -29,6 +29,18 @@ CONFIGS = {
     "lease + BRO, hourly, s_max = 8": (HOUR, {"bro": {**BRO, "s_max": 8.0}}),
     "lease + BRO, hourly, s_max = 4, B0 = $100 M": (HOUR, {"bro": {**BRO, "s_max": 4.0, "b0_usd": 1e8}}),
 }
+
+
+def series() -> dict:
+    """Per-epoch leased capital, hourly epochs, s = 1, for the lease-fee analysis (pipeline.lease_fees)."""
+    runs = [("marginal_cap", "ctl_feasible", sc, 0.0, "open", False, 0.0,
+             {"stake": 0.0, "alloc": "equal", "fmax": 500e-4, "stake_epoch_s": HOUR, "lease": {"slack_bps": 0.1, "series": True}})
+            for sc in SCENARIOS]
+    res = I.main(runs, workers=5)
+    out = {"chain": ACTIVE.name, "epoch_s": HOUR,
+           "scenarios": {sc: {"lease_k": r["lease"]["per_epoch_lease_k"], "arb_volume_b": r["arb_volume_b"]} for sc, r in zip(SCENARIOS, res)}}
+    (I.OUT / "lease_series.json").write_text(json.dumps(out))
+    return out
 
 
 def main() -> dict:
@@ -57,6 +69,9 @@ def main() -> dict:
 
 
 if __name__ == "__main__":
+    import sys
+    if sys.argv[1:2] == ["series"]:
+        series(); raise SystemExit
     for r in main()["rows"]:
         ls = r["lease"]
         print(r["scenario"], "|", r["config"], "| gain", r["lp_gain_vs_today_m"], "| reb", r["keeps_rebalanced"], "| unc h", r["uncorrected_hours"],

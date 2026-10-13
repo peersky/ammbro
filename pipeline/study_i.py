@@ -1089,6 +1089,7 @@ def run_one(args) -> dict:
                                          "peak_epoch_lease_m": round(ls["peak"] / 1e6, 3),
                                          "mean_epoch_lease_m": round(ls["sum"] / max(ls["n_ep"], 1) / 1e6, 3),
                                          "p99_epoch_lease_m": round(float(np.percentile(ls["per_ep"], 99)) / 1e6, 3) if ls["per_ep"] else 0.0,
+                                         "per_epoch_lease_k": [round(x / 1e3, 1) for x in ls["per_ep"]] if lease.get("series") else None,
                                          "credit_total_m": round(ls["credit"] / 1e6, 3), "credit_epoch_max_m": round(ls["credit_ep_max"] / 1e6, 3),
                                          "bust_out_bound_by_arb_m": [round(float(x) / 1e6, 3) for x in ls["credit_arb_ep_max"]],
                                          "s_end": [round(float(x), 2) for x in ls["s"]], "bro_end_m": [round(float(x) / 1e6, 1) for x in ls["bro"]]},
