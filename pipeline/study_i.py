@@ -423,7 +423,7 @@ def run_one(args) -> dict:
         ls_slack = lease.get("slack_bps", 0.1) / 1e4
         ls_ln = math.log(max(fmax_fee - F, 1e-9) / ls_slack)
         bro_cfg = lease.get("bro")
-        ls = {"r": np.zeros(_nl), "bro": np.zeros(_nl), "s": np.ones(_nl),
+        ls = {"r": np.zeros(_nl), "bro": np.zeros(_nl), "s": np.full(_nl, float(lease.get("s", 1.0))),
               "peak": 0.0, "sum": 0.0, "n_ep": 0, "per_ep": [], "ch_series": [], "credit": 0.0, "credit_ep_max": 0.0, "credit_arb_ep_max": np.zeros(_nl)}
         if bro_cfg:
             bro_decay = 0.5 ** (1.0 / bro_cfg.get("half_life_epochs", 720))
@@ -441,6 +441,18 @@ def run_one(args) -> dict:
             ls["bro"] = ls["bro"] * bro_decay + vol_ep
             ls["s"] = 1.0 + (bro_smax - 1.0) * np.minimum(ls["bro"] / bro_b0, 1.0)
         ls["r"][:] = 0.0
+
+    # Prepaid charges (B): charges are paid in REP minted by declared prepayment at P_int / (1 - tau), so
+    # each unit of charge costs the arbitrageur surcharge = tau / (1 - tau) more; it weighs this when
+    # choosing a trade, and the surcharge goes to the reserve.
+    surcharge = float(settings.get("charge_surcharge", 0.0)); sur_tot = 0.0
+    # REP supply without prepayment (D): pooled arbitrage stake starts at the launch issuance, charges burn
+    # it at each settlement, and rebates add to it; arbitrageurs cannot otherwise acquire REP.
+    rsup = settings.get("rep_supply")
+    rs_min = rs_burn = 0.0
+    if rsup is not None:
+        stake_K = float(rsup["launch_usd"]); rs_min = stake_K
+        rs_reb_h = float(rsup.get("rebate_usd_per_h", 0.0))
 
     rep = settings.get("report")
     rep_on = rep is not None and not rep.get("off", False)
@@ -566,12 +578,18 @@ def run_one(args) -> dict:
             d_wins[:] = 0
             if not stake_epoch_s:
                 _close_lease_epoch()
+                if rsup is not None:
+                    _b = min(ch_ep.sum(), stake_K); rs_burn += _b
+                    stake_K = stake_K - _b + rs_reb_h * 24; rs_min = min(rs_min, stake_K)
                 vol_hist.append(vol_ep.copy()); vol_ep[:] = 0.0; ch_ep[:] = 0.0
         if stake_epoch_s:                           # settlement epoch shorter than a day: stake recycles
             _sep = int(i * _DATA["step_s"] // stake_epoch_s)
             if _sep != cur_sep:
                 if cur_sep >= 0:
                     _close_lease_epoch()
+                    if rsup is not None:
+                        _b = min(ch_ep.sum(), stake_K); rs_burn += _b
+                        stake_K = stake_K - _b + rs_reb_h * stake_epoch_s / 3600; rs_min = min(rs_min, stake_K)
                     vol_hist.append(vol_ep.copy())
                 vol_ep[:] = 0.0; ch_ep[:] = 0.0; cur_sep = _sep
         oi = o0 + vol_k * (o[i] - o0); D = Dd[i] * depth_x
@@ -842,8 +860,16 @@ def run_one(args) -> dict:
                       res.append(max(opts, key=lambda x: (x[0] if x[1] > 0 else -1e18)))
                   res.sort(key=lambda x: x[0], reverse=True)
               elif pm_v is None:
-                  res = sorted(((*arb_choice(rule, gab - fees[j], D, h, gas[i], m_of(j), gab), h, fees[j], j)
-                                for j, h in enumerate(costs)), reverse=True)
+                  res = [(*arb_choice(rule, gab - fees[j], D, h, gas[i], m_of(j), gab), h, fees[j], j) for j, h in enumerate(costs)]
+                  if surcharge:
+                      def _adj(x):
+                          if x[1] <= 0 or x[3]:
+                              return x
+                          _c = max((gab - x[5] - x[1] / (2 * D)) * x[1] - x[2], 0.0)
+                          return (x[0] - surcharge * _c, *x[1:])
+                      res = sorted((_adj(x) for x in res), key=lambda x: x[0], reverse=True)
+                  else:
+                      res = sorted(res, reverse=True)
               else:
                   res = sorted(((*arb_choice(rule, gab - F, D, h + (1 - pm_v * (1 - TAU)) * (fees[j] - F), gas[i], m_blk, gab), h, fees[j], j)
                                 for j, h in enumerate(costs)), reverse=True)
@@ -936,6 +962,8 @@ def run_one(args) -> dict:
                           unc = max(chg - max(avail, 0.0), 0.0)          # charge the stake cannot cover
                           ch_ep[jw] += chg; stake_uncov += unc
                           extra_fee -= unc                    # lost to LPs (covered by the reserve, if at all)
+                      if surcharge and not w[3]:
+                          sur_tot += surcharge * max(E - kept, 0.0)
                       if rep is not None and not path and not w[3]:
                           rp_stats["plain_volume"] += V
                   else:
@@ -1094,6 +1122,8 @@ def run_one(args) -> dict:
                                          "credit_total_m": round(ls["credit"] / 1e6, 3), "credit_epoch_max_m": round(ls["credit_ep_max"] / 1e6, 3),
                                          "bust_out_bound_by_arb_m": [round(float(x) / 1e6, 3) for x in ls["credit_arb_ep_max"]],
                                          "s_end": [round(float(x), 2) for x in ls["s"]], "bro_end_m": [round(float(x) / 1e6, 1) for x in ls["bro"]]},
+        "charge_surcharge": {"rate": surcharge, "paid_m": round(sur_tot / 1e6, 3)} if surcharge else None,
+        "rep_supply": None if rsup is None else {**rsup, "end_usd": round(stake_K), "min_usd": round(rs_min), "burned_m": round(rs_burn / 1e6, 3)},
         "report": None if rep is None else {**rep, **{k: (round(v / 1e9, 3) if "volume" in k else round(v / 1e6, 4) if isinstance(v, float) else v) for k, v in rp_stats.items()},
                                            "mu_end_bps": [round(float(x) * 1e4, 3) for x in rp_mu]},
         "arb_volume_b": round(arb_vol / 1e9, 3),
