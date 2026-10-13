@@ -78,7 +78,7 @@ must pass before any study runs against a pool.
 | Appendix G.5 router costs and charges | `router_costs.py`, `router_risk.py` | `results/router_costs.json`, `results/*router_risk*.json` |
 | §4.5, §5.3 controllers, Appendix F.7 | `study_i.py`, `study_i_position.py`, `study_i_redundancy.py`, `study_i_paths.py`, `study_i_final.py` | `results/study_i/` |
 | §4.5 Timeboost, Appendix B | `study_i_timeboost.py` (public Arbitrum RPC) | `results/arbitrum/study_i/timeboost.json` |
-| §4.7, §5.4 stake, fresh accounts, REP leases; Appendix F.4 correction lane | `study_i_stake.py`, `study_i_lease.py`, `study_i_report.py`, `study_i_relief.py` | `results/study_i/stake.json`, `lease.json`, `report*.json`, `relief.json` |
+| §4.7, §5.4 stake, fresh accounts, prepaid bonds, redemption, initial issuance; Appendix F.4 correction lane | `study_i_stake.py`, `study_i_lease.py`, `study_i_prepay.py`, `study_i_redeem.py`, `rep_bootstrap.py`, `study_i_report.py`, `study_i_relief.py` | `results/study_i/{stake,lease,prepay,redeem,report*,relief}.json`, `results/rep_bootstrap.json` |
 | Appendix F rejected designs | `study_i_review.py`, `study_i_bonus.py`, `study_i_rotation.py`, `study_i_relief.py` | `results/study_i/` |
 | §5.5 collateral | `study_c_collateral.py` | `results/study_c/` |
 | §5.6 oracle error | `study_j.py` | `results/study_j/` |
