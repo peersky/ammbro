@@ -1,0 +1,908 @@
+{
+ "chain": "mainnet",
+ "delays_min": [
+  0,
+  15,
+  60,
+  120,
+  1440,
+  2880
+ ],
+ "keeper_lag_min": {
+  "keeper 2 min": 2,
+  "keeper outage 1 h": 60,
+  "keeper outage 24 h": 1440
+ },
+ "rows": [
+  {
+   "scenario": "stable",
+   "epoch": "hourly",
+   "charges_m": 4.244,
+   "parked_only_escaped_m": 0.0,
+   "parked_only_epoch_max_m": 0.0,
+   "account_lock_escaped_m": 0.022,
+   "account_lock_epoch_max_m": 0.018,
+   "fixed_delay": {
+    "keeper 2 min, delay 0 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper 2 min, delay 15 min": {
+     "escaped_m": 3.388,
+     "share": 0.7984
+    },
+    "keeper 2 min, delay 60 min": {
+     "escaped_m": 0.095,
+     "share": 0.0224
+    },
+    "keeper 2 min, delay 120 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper 2 min, delay 1440 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper 2 min, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 0 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 15 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 60 min": {
+     "escaped_m": 4.194,
+     "share": 0.9882
+    },
+    "keeper outage 1 h, delay 120 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 1440 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 24 h, delay 0 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 15 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 60 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 120 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 1440 min": {
+     "escaped_m": 4.194,
+     "share": 0.9882
+    },
+    "keeper outage 24 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    }
+   },
+   "flows": {
+    "prepaid_m": 17.683,
+    "redeemed_m": 13.44,
+    "burned_m": 4.244,
+    "peak_outstanding_m": 0.149
+   }
+  },
+  {
+   "scenario": "stable",
+   "epoch": "daily",
+   "charges_m": 4.244,
+   "parked_only_escaped_m": 0.0,
+   "parked_only_epoch_max_m": 0.0,
+   "account_lock_escaped_m": 0.0,
+   "account_lock_epoch_max_m": 0.0,
+   "fixed_delay": {
+    "keeper 2 min, delay 0 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper 2 min, delay 15 min": {
+     "escaped_m": 4.185,
+     "share": 0.986
+    },
+    "keeper 2 min, delay 60 min": {
+     "escaped_m": 4.096,
+     "share": 0.9652
+    },
+    "keeper 2 min, delay 120 min": {
+     "escaped_m": 3.917,
+     "share": 0.923
+    },
+    "keeper 2 min, delay 1440 min": {
+     "escaped_m": 0.003,
+     "share": 0.0008
+    },
+    "keeper 2 min, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 0 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 15 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 60 min": {
+     "escaped_m": 4.24,
+     "share": 0.999
+    },
+    "keeper outage 1 h, delay 120 min": {
+     "escaped_m": 4.09,
+     "share": 0.9637
+    },
+    "keeper outage 1 h, delay 1440 min": {
+     "escaped_m": 0.156,
+     "share": 0.0368
+    },
+    "keeper outage 1 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 24 h, delay 0 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 15 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 60 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 120 min": {
+     "escaped_m": 4.244,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 1440 min": {
+     "escaped_m": 4.24,
+     "share": 0.999
+    },
+    "keeper outage 24 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    }
+   },
+   "flows": {
+    "prepaid_m": 15.45,
+    "redeemed_m": 11.211,
+    "burned_m": 4.239,
+    "peak_outstanding_m": 1.432
+   }
+  },
+  {
+   "scenario": "costs_x4",
+   "epoch": "hourly",
+   "charges_m": 4.18,
+   "parked_only_escaped_m": 0.0,
+   "parked_only_epoch_max_m": 0.0,
+   "account_lock_escaped_m": 0.022,
+   "account_lock_epoch_max_m": 0.018,
+   "fixed_delay": {
+    "keeper 2 min, delay 0 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper 2 min, delay 15 min": {
+     "escaped_m": 3.339,
+     "share": 0.799
+    },
+    "keeper 2 min, delay 60 min": {
+     "escaped_m": 0.096,
+     "share": 0.0229
+    },
+    "keeper 2 min, delay 120 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper 2 min, delay 1440 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper 2 min, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 0 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 15 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 60 min": {
+     "escaped_m": 4.131,
+     "share": 0.9883
+    },
+    "keeper outage 1 h, delay 120 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 1440 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 24 h, delay 0 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 15 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 60 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 120 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 1440 min": {
+     "escaped_m": 4.131,
+     "share": 0.9883
+    },
+    "keeper outage 24 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    }
+   },
+   "flows": {
+    "prepaid_m": 17.354,
+    "redeemed_m": 13.175,
+    "burned_m": 4.179,
+    "peak_outstanding_m": 0.149
+   }
+  },
+  {
+   "scenario": "costs_x4",
+   "epoch": "daily",
+   "charges_m": 4.18,
+   "parked_only_escaped_m": 0.0,
+   "parked_only_epoch_max_m": 0.0,
+   "account_lock_escaped_m": 0.0,
+   "account_lock_epoch_max_m": 0.0,
+   "fixed_delay": {
+    "keeper 2 min, delay 0 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper 2 min, delay 15 min": {
+     "escaped_m": 4.123,
+     "share": 0.9864
+    },
+    "keeper 2 min, delay 60 min": {
+     "escaped_m": 4.039,
+     "share": 0.9663
+    },
+    "keeper 2 min, delay 120 min": {
+     "escaped_m": 3.864,
+     "share": 0.9245
+    },
+    "keeper 2 min, delay 1440 min": {
+     "escaped_m": 0.003,
+     "share": 0.0007
+    },
+    "keeper 2 min, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 0 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 15 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 60 min": {
+     "escaped_m": 4.175,
+     "share": 0.999
+    },
+    "keeper outage 1 h, delay 120 min": {
+     "escaped_m": 4.033,
+     "share": 0.9648
+    },
+    "keeper outage 1 h, delay 1440 min": {
+     "escaped_m": 0.151,
+     "share": 0.0362
+    },
+    "keeper outage 1 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 24 h, delay 0 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 15 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 60 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 120 min": {
+     "escaped_m": 4.18,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 1440 min": {
+     "escaped_m": 4.175,
+     "share": 0.999
+    },
+    "keeper outage 24 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    }
+   },
+   "flows": {
+    "prepaid_m": 14.91,
+    "redeemed_m": 10.735,
+    "burned_m": 4.174,
+    "peak_outstanding_m": 1.432
+   }
+  },
+  {
+   "scenario": "costs_x8",
+   "epoch": "hourly",
+   "charges_m": 4.073,
+   "parked_only_escaped_m": 0.0,
+   "parked_only_epoch_max_m": 0.0,
+   "account_lock_escaped_m": 0.025,
+   "account_lock_epoch_max_m": 0.018,
+   "fixed_delay": {
+    "keeper 2 min, delay 0 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper 2 min, delay 15 min": {
+     "escaped_m": 3.257,
+     "share": 0.7997
+    },
+    "keeper 2 min, delay 60 min": {
+     "escaped_m": 0.091,
+     "share": 0.0223
+    },
+    "keeper 2 min, delay 120 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper 2 min, delay 1440 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper 2 min, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 0 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 15 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 60 min": {
+     "escaped_m": 4.026,
+     "share": 0.9884
+    },
+    "keeper outage 1 h, delay 120 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 1440 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 24 h, delay 0 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 15 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 60 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 120 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 1440 min": {
+     "escaped_m": 4.026,
+     "share": 0.9884
+    },
+    "keeper outage 24 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    }
+   },
+   "flows": {
+    "prepaid_m": 16.948,
+    "redeemed_m": 12.875,
+    "burned_m": 4.073,
+    "peak_outstanding_m": 0.149
+   }
+  },
+  {
+   "scenario": "costs_x8",
+   "epoch": "daily",
+   "charges_m": 4.073,
+   "parked_only_escaped_m": 0.0,
+   "parked_only_epoch_max_m": 0.0,
+   "account_lock_escaped_m": 0.0,
+   "account_lock_epoch_max_m": 0.0,
+   "fixed_delay": {
+    "keeper 2 min, delay 0 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper 2 min, delay 15 min": {
+     "escaped_m": 4.017,
+     "share": 0.9863
+    },
+    "keeper 2 min, delay 60 min": {
+     "escaped_m": 3.935,
+     "share": 0.9662
+    },
+    "keeper 2 min, delay 120 min": {
+     "escaped_m": 3.764,
+     "share": 0.9241
+    },
+    "keeper 2 min, delay 1440 min": {
+     "escaped_m": 0.003,
+     "share": 0.0007
+    },
+    "keeper 2 min, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 0 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 15 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 60 min": {
+     "escaped_m": 4.069,
+     "share": 0.999
+    },
+    "keeper outage 1 h, delay 120 min": {
+     "escaped_m": 3.929,
+     "share": 0.9647
+    },
+    "keeper outage 1 h, delay 1440 min": {
+     "escaped_m": 0.139,
+     "share": 0.0342
+    },
+    "keeper outage 1 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 24 h, delay 0 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 15 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 60 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 120 min": {
+     "escaped_m": 4.073,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 1440 min": {
+     "escaped_m": 4.069,
+     "share": 0.999
+    },
+    "keeper outage 24 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    }
+   },
+   "flows": {
+    "prepaid_m": 14.354,
+    "redeemed_m": 10.287,
+    "burned_m": 4.067,
+    "peak_outstanding_m": 1.432
+   }
+  },
+  {
+   "scenario": "vol_x2",
+   "epoch": "hourly",
+   "charges_m": 22.635,
+   "parked_only_escaped_m": 0.0,
+   "parked_only_epoch_max_m": 0.0,
+   "account_lock_escaped_m": 0.084,
+   "account_lock_epoch_max_m": 0.047,
+   "fixed_delay": {
+    "keeper 2 min, delay 0 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper 2 min, delay 15 min": {
+     "escaped_m": 17.87,
+     "share": 0.7895
+    },
+    "keeper 2 min, delay 60 min": {
+     "escaped_m": 0.424,
+     "share": 0.0187
+    },
+    "keeper 2 min, delay 120 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper 2 min, delay 1440 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper 2 min, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 0 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 15 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 60 min": {
+     "escaped_m": 22.337,
+     "share": 0.9868
+    },
+    "keeper outage 1 h, delay 120 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 1440 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 24 h, delay 0 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 15 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 60 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 120 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 1440 min": {
+     "escaped_m": 22.337,
+     "share": 0.9868
+    },
+    "keeper outage 24 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    }
+   },
+   "flows": {
+    "prepaid_m": 51.986,
+    "redeemed_m": 29.352,
+    "burned_m": 22.634,
+    "peak_outstanding_m": 0.42
+   }
+  },
+  {
+   "scenario": "vol_x2",
+   "epoch": "daily",
+   "charges_m": 22.635,
+   "parked_only_escaped_m": 0.0,
+   "parked_only_epoch_max_m": 0.0,
+   "account_lock_escaped_m": 0.0,
+   "account_lock_epoch_max_m": 0.0,
+   "fixed_delay": {
+    "keeper 2 min, delay 0 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper 2 min, delay 15 min": {
+     "escaped_m": 22.366,
+     "share": 0.9881
+    },
+    "keeper 2 min, delay 60 min": {
+     "escaped_m": 21.867,
+     "share": 0.9661
+    },
+    "keeper 2 min, delay 120 min": {
+     "escaped_m": 20.937,
+     "share": 0.925
+    },
+    "keeper 2 min, delay 1440 min": {
+     "escaped_m": 0.02,
+     "share": 0.0009
+    },
+    "keeper 2 min, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 0 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 15 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 60 min": {
+     "escaped_m": 22.615,
+     "share": 0.9991
+    },
+    "keeper outage 1 h, delay 120 min": {
+     "escaped_m": 21.843,
+     "share": 0.965
+    },
+    "keeper outage 1 h, delay 1440 min": {
+     "escaped_m": 0.915,
+     "share": 0.0404
+    },
+    "keeper outage 1 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 24 h, delay 0 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 15 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 60 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 120 min": {
+     "escaped_m": 22.635,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 1440 min": {
+     "escaped_m": 22.615,
+     "share": 0.9991
+    },
+    "keeper outage 24 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    }
+   },
+   "flows": {
+    "prepaid_m": 51.669,
+    "redeemed_m": 29.077,
+    "burned_m": 22.592,
+    "peak_outstanding_m": 4.07
+   }
+  },
+  {
+   "scenario": "vol_x4",
+   "epoch": "hourly",
+   "charges_m": 114.063,
+   "parked_only_escaped_m": 0.0,
+   "parked_only_epoch_max_m": 0.0,
+   "account_lock_escaped_m": 0.875,
+   "account_lock_epoch_max_m": 0.246,
+   "fixed_delay": {
+    "keeper 2 min, delay 0 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper 2 min, delay 15 min": {
+     "escaped_m": 89.179,
+     "share": 0.7818
+    },
+    "keeper 2 min, delay 60 min": {
+     "escaped_m": 2.178,
+     "share": 0.0191
+    },
+    "keeper 2 min, delay 120 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper 2 min, delay 1440 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper 2 min, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 0 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 15 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 60 min": {
+     "escaped_m": 112.487,
+     "share": 0.9862
+    },
+    "keeper outage 1 h, delay 120 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 1440 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 24 h, delay 0 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 15 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 60 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 120 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 1440 min": {
+     "escaped_m": 112.487,
+     "share": 0.9862
+    },
+    "keeper outage 24 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    }
+   },
+   "flows": {
+    "prepaid_m": 166.6,
+    "redeemed_m": 52.538,
+    "burned_m": 114.062,
+    "peak_outstanding_m": 1.122
+   }
+  },
+  {
+   "scenario": "vol_x4",
+   "epoch": "daily",
+   "charges_m": 114.063,
+   "parked_only_escaped_m": 0.0,
+   "parked_only_epoch_max_m": 0.0,
+   "account_lock_escaped_m": 0.0,
+   "account_lock_epoch_max_m": 0.0,
+   "fixed_delay": {
+    "keeper 2 min, delay 0 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper 2 min, delay 15 min": {
+     "escaped_m": 113.072,
+     "share": 0.9913
+    },
+    "keeper 2 min, delay 60 min": {
+     "escaped_m": 110.334,
+     "share": 0.9673
+    },
+    "keeper 2 min, delay 120 min": {
+     "escaped_m": 106.313,
+     "share": 0.9321
+    },
+    "keeper 2 min, delay 1440 min": {
+     "escaped_m": 0.103,
+     "share": 0.0009
+    },
+    "keeper 2 min, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 1 h, delay 0 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 15 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 1 h, delay 60 min": {
+     "escaped_m": 113.968,
+     "share": 0.9992
+    },
+    "keeper outage 1 h, delay 120 min": {
+     "escaped_m": 110.212,
+     "share": 0.9662
+    },
+    "keeper outage 1 h, delay 1440 min": {
+     "escaped_m": 4.848,
+     "share": 0.0425
+    },
+    "keeper outage 1 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    },
+    "keeper outage 24 h, delay 0 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 15 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 60 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 120 min": {
+     "escaped_m": 114.063,
+     "share": 1.0
+    },
+    "keeper outage 24 h, delay 1440 min": {
+     "escaped_m": 113.968,
+     "share": 0.9992
+    },
+    "keeper outage 24 h, delay 2880 min": {
+     "escaped_m": 0.0,
+     "share": 0.0
+    }
+   },
+   "flows": {
+    "prepaid_m": 175.009,
+    "redeemed_m": 61.229,
+    "burned_m": 113.78,
+    "peak_outstanding_m": 10.39
+   }
+  }
+ ]
+}
