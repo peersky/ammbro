@@ -1,0 +1,182 @@
+{
+ "chain": "mainnet",
+ "stake_unit_usd": 36386,
+ "curves": {
+  "exponential, steepness 0.25": {
+   "steepness": 0.25
+  },
+  "exponential, steepness 0.5": {
+   "steepness": 0.5
+  },
+  "exponential, steepness 1": {
+   "steepness": 1.0
+  },
+  "exponential, steepness 2": {
+   "steepness": 2.0
+  },
+  "exponential, steepness 4": {
+   "steepness": 4.0
+  },
+  "exponential, steepness 8": {
+   "steepness": 8.0
+  }
+ },
+ "rows": [
+  {
+   "scenario": "stable",
+   "curve": "fully staked",
+   "stake_units": null,
+   "lp_gain_vs_today_m": 5.163,
+   "uncorrected_hours": 1.35,
+   "keeps_rebalanced": true,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 2.4586,
+   "user_staleness_bps": 12.753,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 0.25",
+   "stake_units": 25,
+   "lp_gain_vs_today_m": 4.75,
+   "uncorrected_hours": 224.19,
+   "keeps_rebalanced": false,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 4.9994,
+   "user_staleness_bps": 14.053,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 0.5",
+   "stake_units": 25,
+   "lp_gain_vs_today_m": 4.34,
+   "uncorrected_hours": 52.55,
+   "keeps_rebalanced": false,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 2.4586,
+   "user_staleness_bps": 12.954,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 1",
+   "stake_units": 25,
+   "lp_gain_vs_today_m": 5.134,
+   "uncorrected_hours": 4.97,
+   "keeps_rebalanced": true,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 2.4586,
+   "user_staleness_bps": 12.761,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 2",
+   "stake_units": 25,
+   "lp_gain_vs_today_m": 5.087,
+   "uncorrected_hours": 1.36,
+   "keeps_rebalanced": true,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 2.4586,
+   "user_staleness_bps": 12.753,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 4",
+   "stake_units": 25,
+   "lp_gain_vs_today_m": 5.087,
+   "uncorrected_hours": 1.35,
+   "keeps_rebalanced": true,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 2.4586,
+   "user_staleness_bps": 12.753,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 8",
+   "stake_units": 25,
+   "lp_gain_vs_today_m": 5.087,
+   "uncorrected_hours": 1.35,
+   "keeps_rebalanced": true,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 2.4586,
+   "user_staleness_bps": 12.753,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 0.25",
+   "stake_units": 10,
+   "lp_gain_vs_today_m": 8.522,
+   "uncorrected_hours": 812.25,
+   "keeps_rebalanced": false,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 18.4026,
+   "user_staleness_bps": 18.812,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 0.5",
+   "stake_units": 10,
+   "lp_gain_vs_today_m": 5.398,
+   "uncorrected_hours": 321.79,
+   "keeps_rebalanced": false,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 7.9325,
+   "user_staleness_bps": 14.805,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 1",
+   "stake_units": 10,
+   "lp_gain_vs_today_m": 4.119,
+   "uncorrected_hours": 91.03,
+   "keeps_rebalanced": false,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 2.588,
+   "user_staleness_bps": 13.149,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 2",
+   "stake_units": 10,
+   "lp_gain_vs_today_m": 4.782,
+   "uncorrected_hours": 11.77,
+   "keeps_rebalanced": true,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 2.4586,
+   "user_staleness_bps": 12.783,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 4",
+   "stake_units": 10,
+   "lp_gain_vs_today_m": 5.088,
+   "uncorrected_hours": 1.46,
+   "keeps_rebalanced": true,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 2.4586,
+   "user_staleness_bps": 12.753,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "curve": "exponential, steepness 8",
+   "stake_units": 10,
+   "lp_gain_vs_today_m": 5.087,
+   "uncorrected_hours": 1.35,
+   "keeps_rebalanced": true,
+   "uncovered_charges_m": 0.0,
+   "m_end_bps": 2.4586,
+   "user_staleness_bps": 12.753,
+   "today_user_staleness_bps": 12.749
+  }
+ ]
+}

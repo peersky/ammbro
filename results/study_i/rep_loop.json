@@ -1,0 +1,150 @@
+{
+ "chain": "mainnet",
+ "stake_unit_usd": 36386,
+ "rows": [
+  {
+   "scenario": "stable",
+   "design": "fully staked",
+   "lp_gain_vs_today_m": 5.163,
+   "uncorrected_hours": 1.35,
+   "keeps_rebalanced": true,
+   "m_end_bps": 2.4586,
+   "lp_from_arbs_m": -2.225,
+   "arb_margin_m": 0.379,
+   "user_staleness_bps": 12.753,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "design": "stake for normal markets",
+   "lp_gain_vs_today_m": 5.134,
+   "uncorrected_hours": 4.97,
+   "keeps_rebalanced": true,
+   "m_end_bps": 2.4586,
+   "lp_from_arbs_m": -2.252,
+   "arb_margin_m": 0.378,
+   "user_staleness_bps": 12.761,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "design": "stake for normal markets + lane",
+   "lp_gain_vs_today_m": 5.035,
+   "uncorrected_hours": 18.66,
+   "keeps_rebalanced": true,
+   "m_end_bps": 2.7242,
+   "lp_from_arbs_m": -2.352,
+   "arb_margin_m": 0.379,
+   "user_staleness_bps": 12.759,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "vol_x2",
+   "design": "fully staked",
+   "lp_gain_vs_today_m": 23.494,
+   "uncorrected_hours": 3.28,
+   "keeps_rebalanced": true,
+   "m_end_bps": 2.1079,
+   "lp_from_arbs_m": -7.177,
+   "arb_margin_m": 1.128,
+   "user_staleness_bps": 13.089,
+   "today_user_staleness_bps": 13.085
+  },
+  {
+   "scenario": "vol_x2",
+   "design": "stake for normal markets",
+   "lp_gain_vs_today_m": 16.534,
+   "uncorrected_hours": 123.17,
+   "keeps_rebalanced": false,
+   "m_end_bps": 2.3357,
+   "lp_from_arbs_m": -14.035,
+   "arb_margin_m": 1.06,
+   "user_staleness_bps": 13.787,
+   "today_user_staleness_bps": 13.085
+  },
+  {
+   "scenario": "vol_x2",
+   "design": "stake for normal markets + lane",
+   "lp_gain_vs_today_m": 22.212,
+   "uncorrected_hours": 18.22,
+   "keeps_rebalanced": true,
+   "m_end_bps": 2.1079,
+   "lp_from_arbs_m": -8.458,
+   "arb_margin_m": 1.153,
+   "user_staleness_bps": 13.094,
+   "today_user_staleness_bps": 13.085
+  },
+  {
+   "scenario": "vol_x4",
+   "design": "fully staked",
+   "lp_gain_vs_today_m": 118.827,
+   "uncorrected_hours": 2.76,
+   "keeps_rebalanced": true,
+   "m_end_bps": 2.0025,
+   "lp_from_arbs_m": -22.476,
+   "arb_margin_m": 3.052,
+   "user_staleness_bps": 13.384,
+   "today_user_staleness_bps": 13.366
+  },
+  {
+   "scenario": "vol_x4",
+   "design": "stake for normal markets",
+   "lp_gain_vs_today_m": 107.094,
+   "uncorrected_hours": 604.98,
+   "keeps_rebalanced": false,
+   "m_end_bps": 17.4825,
+   "lp_from_arbs_m": -33.546,
+   "arb_margin_m": 2.32,
+   "user_staleness_bps": 18.923,
+   "today_user_staleness_bps": 13.366
+  },
+  {
+   "scenario": "vol_x4",
+   "design": "stake for normal markets + lane",
+   "lp_gain_vs_today_m": 117.859,
+   "uncorrected_hours": 18.42,
+   "keeps_rebalanced": true,
+   "m_end_bps": 1.9024,
+   "lp_from_arbs_m": -23.444,
+   "arb_margin_m": 3.053,
+   "user_staleness_bps": 13.371,
+   "today_user_staleness_bps": 13.366
+  },
+  {
+   "scenario": "stable",
+   "design": "stake costs +0.25 bp",
+   "lp_gain_vs_today_m": 4.736,
+   "uncorrected_hours": 1.81,
+   "keeps_rebalanced": false,
+   "m_end_bps": 2.588,
+   "lp_from_arbs_m": -2.632,
+   "arb_margin_m": 0.364,
+   "user_staleness_bps": 12.88,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "design": "stake costs +0.5 bp",
+   "lp_gain_vs_today_m": 4.635,
+   "uncorrected_hours": 2.3,
+   "keeps_rebalanced": false,
+   "m_end_bps": 2.8676,
+   "lp_from_arbs_m": -2.715,
+   "arb_margin_m": 0.353,
+   "user_staleness_bps": 13.005,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "design": "stake costs +1 bp",
+   "lp_gain_vs_today_m": 4.241,
+   "uncorrected_hours": 2.21,
+   "keeps_rebalanced": false,
+   "m_end_bps": 2.588,
+   "lp_from_arbs_m": -3.079,
+   "arb_margin_m": 0.334,
+   "user_staleness_bps": 13.249,
+   "today_user_staleness_bps": 12.749
+  }
+ ]
+}

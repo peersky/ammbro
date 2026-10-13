@@ -1,0 +1,42 @@
+{
+ "chain": "mainnet",
+ "stake_unit_usd": 36386,
+ "rows": [
+  {
+   "scenario": "vol_x2",
+   "epoch_h": 1.0,
+   "stake_units": 25,
+   "lp_gain_vs_today_m": 23.416,
+   "uncovered_charges_m": 0.0,
+   "uncorrected_hours": 3.28,
+   "keeps_rebalanced": true
+  },
+  {
+   "scenario": "vol_x2",
+   "epoch_h": 1.0,
+   "stake_units": 10,
+   "lp_gain_vs_today_m": 23.2,
+   "uncovered_charges_m": 0.221,
+   "uncorrected_hours": 3.29,
+   "keeps_rebalanced": true
+  },
+  {
+   "scenario": "vol_x2",
+   "epoch_h": 4.0,
+   "stake_units": 25,
+   "lp_gain_vs_today_m": 23.429,
+   "uncovered_charges_m": 0.0,
+   "uncorrected_hours": 3.41,
+   "keeps_rebalanced": true
+  },
+  {
+   "scenario": "vol_x2",
+   "epoch_h": 4.0,
+   "stake_units": 10,
+   "lp_gain_vs_today_m": 15.791,
+   "uncovered_charges_m": 0.209,
+   "uncorrected_hours": 14.98,
+   "keeps_rebalanced": false
+  }
+ ]
+}

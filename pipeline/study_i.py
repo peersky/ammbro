@@ -395,6 +395,14 @@ def run_one(args) -> dict:
     p = o0
     n_arb = len(costs_base)
     vol_ep = np.zeros(n_arb)
+    vol_hist = []                                    # per-epoch arb volumes, for trailing coverage
+    ch_ep = np.zeros(n_arb); stake_uncov = 0.0       # charges against stake within the epoch
+    curve = settings.get("curve") or {}
+    c_form, c_alpha, c_trail = curve.get("form", "exp"), float(curve.get("alpha", 4.7)), int(curve.get("trailing_days", 0))
+    c_steep = float(curve.get("steepness", 1.0))
+    collateral = bool(settings.get("collateral", False))
+    stake_epoch_s = float(settings.get("stake_epoch_s", 0.0))   # coverage/collateral epoch (default: UTC day)
+    cur_sep = -1
     day0 = day[0]
     fee_prem = 0.0; stalled_fee = 0
 
@@ -413,7 +421,15 @@ def run_one(args) -> dict:
             r, v = stake_K / n_arb * ramp, vol_ep[j]
         if r <= 0:
             return fmax_fee
-        return F if v <= 0 else F + (fmax_fee - F) * math.exp(-r / (RHO * v))
+        if c_trail and vol_hist:                     # coverage against trailing average epoch volume
+            tail = vol_hist[-c_trail:]
+            v = float(np.mean([h.sum() if pooled else h[j] for h in tail]))
+        if v <= 0:
+            return F
+        cov = c_steep * r / (RHO * v)                # steepness s scales the coverage a unit of stake buys
+        if c_form == "power":                        # power-law tail: degrades gently when volume spikes
+            return F + (fmax_fee - F) * (1.0 + cov) ** (-c_alpha)
+        return F + (fmax_fee - F) * math.exp(-cov)
 
     lp_arb = lp_exo = builder = margin = charge_tot = arb_vol = 0.0
     exo_gap_w = exo_vol = 0.0
@@ -495,7 +511,14 @@ def run_one(args) -> dict:
             d_cur = day[i]; d_stale = d_n = d_arb = d_cont = 0; d_m = m
             d_sr_obs = d_sr_stale = 0
             d_wins[:] = 0
-            vol_ep[:] = 0.0
+            if not stake_epoch_s:
+                vol_hist.append(vol_ep.copy()); vol_ep[:] = 0.0; ch_ep[:] = 0.0
+        if stake_epoch_s:                           # settlement epoch shorter than a day: stake recycles
+            _sep = int(i * _DATA["step_s"] // stake_epoch_s)
+            if _sep != cur_sep:
+                if cur_sep >= 0:
+                    vol_hist.append(vol_ep.copy())
+                vol_ep[:] = 0.0; ch_ep[:] = 0.0; cur_sep = _sep
         oi = o0 + vol_k * (o[i] - o0); D = Dd[i] * depth_x
         _jump = 0.0 if o_prev is None else abs(oi - o_prev); o_prev = oi
         if pm_v is not None and i % _DATA["raise_steps"] == 0:
@@ -798,6 +821,12 @@ def run_one(args) -> dict:
                       E = (aw - V / (2 * D)) * V
                       extra_fee = (w[5] - F) * V             # fee above the pool fee, to LPs
                       fee_prem += extra_fee
+                      if collateral and stake_K is not None and not w[3]:
+                          jw = w[6]; chg = max(E - kept, 0.0)
+                          avail = (stake_K - ch_ep.sum()) if pooled else (stake_K / n_arb - ch_ep[jw])
+                          unc = max(chg - max(avail, 0.0), 0.0)          # charge the stake cannot cover
+                          ch_ep[jw] += chg; stake_uncov += unc
+                          extra_fee -= unc                    # lost to LPs (covered by the reserve, if at all)
                   else:
                       E = (gab - F - V / (2 * D)) * V
                       prem = (w[5] - F) * V; ch = E - kept; jw = w[6]
@@ -943,7 +972,7 @@ def run_one(args) -> dict:
         "stake": {"usd": stake_K, "fmax_bps": round(fmax_fee * 1e4), "ramp_days": ramp_days, "alloc": "pooled" if pooled else "equal", "fee_premium_to_lps_m": round(fee_prem / 1e6, 3),
                   "correctable_blocks_uncorrected_for_lack_of_stake": stalled_fee,
                   "premium_mint_v": pm_v, "shock_k": shock_k, "shock_key": shock_key,
-                  "relief": relief, "relief_trades": rl_trades, "relief_volume_b": round(rl_vol / 1e9, 3), "relief_on_blocks": rl_blocks, "rep_minted_to_arbs_m": round(pm_minted / 1e6, 3), "uncovered_charges_m": round(pm_leak / 1e6, 3),
+                  "relief": relief, "relief_trades": rl_trades, "relief_volume_b": round(rl_vol / 1e9, 3), "relief_on_blocks": rl_blocks, "rep_minted_to_arbs_m": round(pm_minted / 1e6, 3), "uncovered_charges_m": round((pm_leak + stake_uncov) / 1e6, 3),
                   "arb_stake_end_m": None if pm_v is None else round(float(r_arb.sum()) / 1e6, 3)}, "vol_x": vol_k,
         "arb_volume_b": round(arb_vol / 1e9, 3),
         "uncorrected_share_of_correctable": round(n_uncorr / max(n_corr, 1), 5),

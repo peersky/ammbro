@@ -33,8 +33,10 @@ def base(sc):
     return ("marginal_cap", ctl(), sc, 0.0, "open", False, 0.0)
 
 
-def main() -> dict:
+def main(hourly: bool = False) -> dict:
     c = ctl()
+    ep = {"stake_epoch_s": 3600.0, "collateral": True} if hourly else {}
+    mults = ([1, 2, 5] + S_MULT) if hourly else S_MULT
     ref = I.main([base("stable") + ({"stale_rule": "outcome"},)], workers=1)[0]
     vbar = ref["arb_volume_b"] * 1e9 / 184                       # mean daily arbitrage volume
     unit = I.RHO * vbar
@@ -42,14 +44,17 @@ def main() -> dict:
     for sc in I.SCENARIOS:
         runs.append(("today", None, sc, 0.0, "open", False, 0.0, {}))
         runs.append(base(sc) + ({"stale_rule": "outcome"},))
-        for sm in S_MULT:
+        for sm in mults:
             for alloc in ("equal", "pooled"):
-                runs.append(base(sc) + ({"stake": sm * unit, "alloc": alloc, "fmax": 500e-4},))
-        runs.append(base(sc) + ({"stake": 50 * unit, "alloc": "pooled", "fmax": 500e-4, "stake_ramp_days": 30},))
+                runs.append(base(sc) + ({"stake": sm * unit, "alloc": alloc, "fmax": 500e-4, **ep},))
+        runs.append(base(sc) + ({"stake": 50 * unit, "alloc": "pooled", "fmax": 500e-4, "stake_ramp_days": 30, **ep},))
     for sc in VOLS[1:]:
         runs.append(("today", None, sc, 0.0, "open", False, 0.0, {}))
     for sc in VOLS:
         runs.append(base(sc) + ({"stale_rule": "outcome"},))
+        if hourly:                                   # stake sized for normal markets, under the market's shocks
+            for sm in (5, 10, 25):
+                runs.append(base(sc) + ({"stake": sm * unit, "alloc": "pooled", "fmax": 500e-4, **ep},))
         for f in FMAX_STRESS:
             runs.append(base(sc) + ({"stale_rule": "outcome", "unstaked": (f, 0.0)},))
     res = I.main(runs)
@@ -72,14 +77,17 @@ def main() -> dict:
             "user_staleness_bps": r["user_pretrade_staleness_bps_vw"], "today_user_staleness_bps": t["user_pretrade_staleness_bps_vw"],
             "uncorrected_hours": r["uncorrected_hours"], "fee_premium_to_lps_m": st["fee_premium_to_lps_m"],
             "unstaked_trades": r["unstaked"]["trades"], "builder_payments_m": r["builder_payments_m"],
+            "uncovered_charges_m": st.get("uncovered_charges_m"),
         })
     out = {"chain": ACTIVE.name, "controller": c, "mean_daily_arb_volume_m": round(vbar / 1e6, 2),
            "stake_unit_usd": round(unit), "rows": rows}
-    (I.OUT / "stake.json").write_text(json.dumps(out, indent=1))
+    out["epoch"] = "hourly" if hourly else "daily"
+    (I.OUT / ("stake_hourly.json" if hourly else "stake.json")).write_text(json.dumps(out, indent=1))
     for row in rows:
         print(row)
     return out
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(hourly="hourly" in sys.argv[1:])
