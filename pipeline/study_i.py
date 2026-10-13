@@ -405,8 +405,26 @@ def run_one(args) -> dict:
     cur_sep = -1
     day0 = day[0]
     fee_prem = 0.0; stalled_fee = 0
+    # Report-carrying corrections (§4.7): a correcting swap may carry a signed report. Its charge is
+    # computed against the report at execution and taken from its output; only the true-up against
+    # the batch benchmark is owed later, from a margin mu_a * V. The margin is parked from stake
+    # (the swap then uses mu_a / rho of its volume in coverage) or withheld from the output (it
+    # uses none). mu_a is the account's own record: a high quantile of its past true-ups per unit.
+    rep = settings.get("report")
+    rep_on = rep is not None and not rep.get("off", False)
+    if rep is not None:
+        _na = len(POPULATIONS.get(scenario, ARB_COSTS_BPS))
+        rp_mu0, rp_min = rep.get("mu0_bps", 5.0) / 1e4, rep.get("mu_min_bps", 0.25) / 1e4
+        rp_q, rp_n, rp_warm = rep.get("q", 0.99), int(rep.get("hist", 200)), int(rep.get("warmup", 20))
+        rp_lag, rp_win, rp_pick = rep.get("lag_s", 0.25), rep.get("window_s", 1.0), int(rep.get("pick", 1))
+        rp_gas = rep.get("gas_frac", 0.24); rp_withheld = rep.get("withheld", True)
+        rp_mu = np.full(_na, rp_mu0); rp_hist = [[] for _ in range(_na)]
+        rp_sig = float(np.std(np.diff(o[: min(len(o), 200_000)]))) / math.sqrt(_DATA["step_s"])
+        rng_rep = np.random.default_rng(23)
+        rp_stats = {"park_trades": 0, "park_volume": 0.0, "withheld_trades": 0, "withheld_volume": 0.0,
+                    "plain_volume": 0.0, "trueup_pos": 0.0, "trueup_neg": 0.0, "uncovered_beyond_margin": 0.0}
 
-    def arb_fee(j):
+    def arb_fee(j, add=0.0):
         if stake_K is None or rule == "today":
             return F
         if pm_v is not None:
@@ -419,11 +437,12 @@ def run_one(args) -> dict:
             r, v = stake_K * ramp, vol_ep.sum()
         else:                                        # each arb holds an equal share
             r, v = stake_K / n_arb * ramp, vol_ep[j]
-        if r <= 0:
-            return fmax_fee
         if c_trail and vol_hist:                     # coverage against trailing average epoch volume
             tail = vol_hist[-c_trail:]
             v = float(np.mean([h.sum() if pooled else h[j] for h in tail]))
+        v += add                                     # this swap's own (risk-weighted) volume, with reports
+        if r <= 0:
+            return F if (rep_on and v <= 0) else fmax_fee
         if v <= 0:
             return F
         cov = c_steep * r / (RHO * v)                # steepness s scales the coverage a unit of stake buys
@@ -758,7 +777,35 @@ def run_one(args) -> dict:
                   m_of = lambda j: m_blk if (fallback or j == desig) else m_blk * (1.0 - r_phi)
               else:
                   m_of = lambda j: m_blk
-              if pm_v is None:
+              if rep is not None and pm_v is None:
+                  # one set of signed reports per block, dated lag + U(0, window) before t*, on a Brownian
+                  # bridge from the previous block; a picking corrector submits the one that proves the
+                  # smallest gap still above the fee (the lowest charge at execution)
+                  _st = _DATA["step_s"]
+                  _lags = np.minimum(rp_lag + rng_rep.random(rp_pick) * (rp_win if rp_pick > 1 else 0.0), _st)
+                  _mean = oi + (o_prev_blk - oi) * _lags / _st
+                  _sd = vol_k * rp_sig * np.sqrt(_lags * (_st - _lags) / _st)
+                  _cand = np.sign(G) * (_mean + _sd * rng_rep.standard_normal(rp_pick) - p)
+                  _ok = _cand[_cand > F]
+                  g_rep = float(_ok.min()) if _ok.size else -1.0
+                  res = []
+                  for j, h in enumerate(costs):
+                      Vest = max(D * (gab - F - h), 0.0)
+                      fn = arb_fee(j, Vest if rep_on else 0.0)
+                      opts = [(*arb_choice(rule, gab - fn, D, h, gas[i], m_of(j), gab), h, fn, j, 0)]
+                      if rep_on and g_rep > 0:
+                          _u, UNSTAKED = UNSTAKED, None
+                          r_have = (stake_K or 0.0) > 0
+                          if r_have:
+                              fp = arb_fee(j, rp_mu[j] / RHO * Vest)
+                              opts.append((*arb_choice(rule, gab - fp, D, h, gas[i] * (1 + rp_gas), m_of(j), gab), h, fp, j, 1))
+                          if rp_withheld:
+                              fw = arb_fee(j, 0.0)
+                              opts.append((*arb_choice(rule, gab - fw, D, h, gas[i] * (1 + rp_gas), m_of(j), gab), h, fw, j, 2))
+                          UNSTAKED = _u
+                      res.append(max(opts, key=lambda x: (x[0] if x[1] > 0 else -1e18)))
+                  res.sort(key=lambda x: x[0], reverse=True)
+              elif pm_v is None:
                   res = sorted(((*arb_choice(rule, gab - fees[j], D, h, gas[i], m_of(j), gab), h, fees[j], j)
                                 for j, h in enumerate(costs)), reverse=True)
               else:
@@ -812,21 +859,46 @@ def run_one(args) -> dict:
                       win_cnt[w[6]] += 1; arb_inc[w[6]] += w[0] - max(r2[0], 0.0)
                       last_win[w[6]] = i * _DATA["step_s"]; wake_at[w[6]] = np.inf
                   V, kept = w[1], w[2]
+                  path = w[7] if len(w) > 7 else 0
                   if w[3]:
                       unst_n += 1; unst_vol += V
-                  else:
+                  elif path == 1:
+                      vol_ep[w[6]] += rp_mu[w[6]] / RHO * V
+                  elif path == 0:
                       vol_ep[w[6]] += V
                   if pm_v is None:
                       aw = gab - w[5]                        # edge beyond the fee this arb pays
                       E = (aw - V / (2 * D)) * V
                       extra_fee = (w[5] - F) * V             # fee above the pool fee, to LPs
                       fee_prem += extra_fee
-                      if collateral and stake_K is not None and not w[3]:
+                      if path:                            # report-carrying: charge vs report now, true-up later
+                          jw = w[6]; chg = max(E - kept, 0.0)
+                          Y = min(max(D * (g_rep - w[5] - m_blk), 0.0), V)
+                          prov = (g_rep - w[5] - m_blk) * Y - Y * Y / (2 * D)
+                          tu = chg - prov
+                          rp_stats["trueup_pos" if tu > 0 else "trueup_neg"] += tu
+                          rp_hist[jw].append(abs(tu) / V); rp_hist[jw] = rp_hist[jw][-rp_n:]
+                          if len(rp_hist[jw]) >= rp_warm:
+                              rp_mu[jw] = max(rp_min, float(np.quantile(rp_hist[jw], rp_q)))
+                          if path == 1:
+                              rp_stats["park_trades"] += 1; rp_stats["park_volume"] += V
+                              if collateral:
+                                  avail = (stake_K - ch_ep.sum()) if pooled else (stake_K / n_arb - ch_ep[jw])
+                                  unc = max(max(tu, 0.0) - max(avail, 0.0), 0.0)
+                                  ch_ep[jw] += max(tu, 0.0); stake_uncov += unc; extra_fee -= unc
+                          else:
+                              rp_stats["withheld_trades"] += 1; rp_stats["withheld_volume"] += V
+                              unc = max(tu - rp_mu[jw] * V, 0.0)        # beyond the withheld margin
+                              rp_stats["uncovered_beyond_margin"] += unc
+                              stake_uncov += unc; extra_fee -= unc
+                      elif collateral and stake_K is not None and not w[3]:
                           jw = w[6]; chg = max(E - kept, 0.0)
                           avail = (stake_K - ch_ep.sum()) if pooled else (stake_K / n_arb - ch_ep[jw])
                           unc = max(chg - max(avail, 0.0), 0.0)          # charge the stake cannot cover
                           ch_ep[jw] += chg; stake_uncov += unc
                           extra_fee -= unc                    # lost to LPs (covered by the reserve, if at all)
+                      if rep is not None and not path and not w[3]:
+                          rp_stats["plain_volume"] += V
                   else:
                       E = (gab - F - V / (2 * D)) * V
                       prem = (w[5] - F) * V; ch = E - kept; jw = w[6]
@@ -974,6 +1046,8 @@ def run_one(args) -> dict:
                   "premium_mint_v": pm_v, "shock_k": shock_k, "shock_key": shock_key,
                   "relief": relief, "relief_trades": rl_trades, "relief_volume_b": round(rl_vol / 1e9, 3), "relief_on_blocks": rl_blocks, "rep_minted_to_arbs_m": round(pm_minted / 1e6, 3), "uncovered_charges_m": round((pm_leak + stake_uncov) / 1e6, 3),
                   "arb_stake_end_m": None if pm_v is None else round(float(r_arb.sum()) / 1e6, 3)}, "vol_x": vol_k,
+        "report": None if rep is None else {**rep, **{k: (round(v / 1e9, 3) if "volume" in k else round(v / 1e6, 4) if isinstance(v, float) else v) for k, v in rp_stats.items()},
+                                           "mu_end_bps": [round(float(x) * 1e4, 3) for x in rp_mu]},
         "arb_volume_b": round(arb_vol / 1e9, 3),
         "uncorrected_share_of_correctable": round(n_uncorr / max(n_corr, 1), 5),
         "uncorrected_hours": round(n_uncorr * _DATA["step_s"] / 3600, 2),

@@ -1,0 +1,1058 @@
+{
+ "chain": "mainnet",
+ "stake_unit_usd": 36386,
+ "configs": {
+  "2 units, hourly, margin from stake, mu_0 = 2 bp": [
+   2,
+   3600.0,
+   {
+    "mu0_bps": 2.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false
+   }
+  ],
+  "2 units, hourly, margin from stake, mu_0 = 1 bp": [
+   2,
+   3600.0,
+   {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false
+   }
+  ],
+  "2 units, daily, margin from stake, mu_0 = 1 bp": [
+   2,
+   0.0,
+   {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false
+   }
+  ],
+  "25 units, daily, margin from stake, mu_0 = 1 bp": [
+   25,
+   0.0,
+   {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false
+   }
+  ],
+  "no stake, withheld, mu_0 = 10 bp": [
+   0,
+   3600.0,
+   {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25
+   }
+  ],
+  "no stake, withheld, picking among 5 reports, mu_0 = 10 bp": [
+   0,
+   3600.0,
+   {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "pick": 5,
+    "window_s": 1.0
+   }
+  ]
+ },
+ "rows": [
+  {
+   "scenario": "stable",
+   "config": "2 units, hourly, margin from stake, mu_0 = 2 bp",
+   "lp_gain_vs_today_m": 4.97,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.01,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 2.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 1928,
+    "park_volume": 0.621,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 12.731,
+    "trueup_pos": 0.0232,
+    "trueup_neg": -0.0049,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     1.285,
+     2.0,
+     2.0,
+     2.0,
+     2.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 13.379,
+   "user_staleness_bps": 12.756,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "config": "2 units, hourly, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 4.97,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.0,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 1923,
+    "park_volume": 0.621,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 12.732,
+    "trueup_pos": 0.0233,
+    "trueup_neg": -0.0049,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     1.285,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 13.379,
+   "user_staleness_bps": 12.756,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "config": "2 units, daily, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 4.315,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 295.09,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 76163,
+    "park_volume": 7.851,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 3.962,
+    "trueup_pos": 0.0661,
+    "trueup_neg": -0.0138,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     0.25,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 11.835,
+   "user_staleness_bps": 13.538,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "config": "25 units, daily, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 5.118,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 3.83,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 1102,
+    "park_volume": 0.297,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 13.037,
+    "trueup_pos": 0.0101,
+    "trueup_neg": -0.0019,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     1.247,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 13.36,
+   "user_staleness_bps": 12.759,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "config": "no stake, withheld, mu_0 = 10 bp",
+   "lp_gain_vs_today_m": 4.675,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 34.85,
+   "uncovered_charges_m": 0.023,
+   "report": {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "park_trades": 0,
+    "park_volume": 0.0,
+    "withheld_trades": 240290,
+    "withheld_volume": 13.331,
+    "plain_volume": 0.0,
+    "trueup_pos": 0.2336,
+    "trueup_neg": -0.1011,
+    "uncovered_beyond_margin": 0.0229,
+    "mu_end_bps": [
+     0.361,
+     10.0,
+     10.0,
+     10.0,
+     10.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 13.357,
+   "user_staleness_bps": 13.92,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "stable",
+   "config": "no stake, withheld, picking among 5 reports, mu_0 = 10 bp",
+   "lp_gain_vs_today_m": 4.576,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 18.9,
+   "uncovered_charges_m": 0.126,
+   "report": {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "pick": 5,
+    "window_s": 1.0,
+    "park_trades": 0,
+    "park_volume": 0.0,
+    "withheld_trades": 243933,
+    "withheld_volume": 13.342,
+    "plain_volume": 0.0,
+    "trueup_pos": 1.0175,
+    "trueup_neg": -0.0012,
+    "uncovered_beyond_margin": 0.1255,
+    "mu_end_bps": [
+     0.693,
+     10.0,
+     10.0,
+     10.0,
+     10.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 13.368,
+   "user_staleness_bps": 13.917,
+   "today_user_staleness_bps": 12.749
+  },
+  {
+   "scenario": "costs_x4",
+   "config": "2 units, hourly, margin from stake, mu_0 = 2 bp",
+   "lp_gain_vs_today_m": 4.806,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 2.98,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 2.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 1920,
+    "park_volume": 0.618,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 12.22,
+    "trueup_pos": 0.0231,
+    "trueup_neg": -0.0049,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     1.459,
+     2.0,
+     2.0,
+     2.0,
+     2.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 12.864,
+   "user_staleness_bps": 12.965,
+   "today_user_staleness_bps": 12.948
+  },
+  {
+   "scenario": "costs_x4",
+   "config": "2 units, hourly, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 4.806,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 2.97,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 1915,
+    "park_volume": 0.618,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 12.221,
+    "trueup_pos": 0.0231,
+    "trueup_neg": -0.0049,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     1.459,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 12.864,
+   "user_staleness_bps": 12.965,
+   "today_user_staleness_bps": 12.948
+  },
+  {
+   "scenario": "costs_x4",
+   "config": "2 units, daily, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 4.3,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 266.86,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 70744,
+    "park_volume": 7.529,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 3.902,
+    "trueup_pos": 0.0651,
+    "trueup_neg": -0.0134,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     0.25,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 11.453,
+   "user_staleness_bps": 13.702,
+   "today_user_staleness_bps": 12.948
+  },
+  {
+   "scenario": "costs_x4",
+   "config": "25 units, daily, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 5.058,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 6.18,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 1102,
+    "park_volume": 0.297,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 12.524,
+    "trueup_pos": 0.0101,
+    "trueup_neg": -0.0019,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     1.247,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 12.847,
+   "user_staleness_bps": 12.97,
+   "today_user_staleness_bps": 12.948
+  },
+  {
+   "scenario": "costs_x4",
+   "config": "no stake, withheld, mu_0 = 10 bp",
+   "lp_gain_vs_today_m": 4.567,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 26.24,
+   "uncovered_charges_m": 0.023,
+   "report": {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "park_trades": 0,
+    "park_volume": 0.0,
+    "withheld_trades": 226207,
+    "withheld_volume": 12.827,
+    "plain_volume": 0.0,
+    "trueup_pos": 0.2214,
+    "trueup_neg": -0.0967,
+    "uncovered_beyond_margin": 0.0227,
+    "mu_end_bps": [
+     0.491,
+     10.0,
+     10.0,
+     10.0,
+     10.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 12.853,
+   "user_staleness_bps": 14.117,
+   "today_user_staleness_bps": 12.948
+  },
+  {
+   "scenario": "costs_x4",
+   "config": "no stake, withheld, picking among 5 reports, mu_0 = 10 bp",
+   "lp_gain_vs_today_m": 4.469,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 18.16,
+   "uncovered_charges_m": 0.123,
+   "report": {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "pick": 5,
+    "window_s": 1.0,
+    "park_trades": 0,
+    "park_volume": 0.0,
+    "withheld_trades": 228133,
+    "withheld_volume": 12.835,
+    "plain_volume": 0.0,
+    "trueup_pos": 0.9797,
+    "trueup_neg": -0.001,
+    "uncovered_beyond_margin": 0.1229,
+    "mu_end_bps": [
+     1.36,
+     10.0,
+     10.0,
+     10.0,
+     10.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 12.861,
+   "user_staleness_bps": 14.116,
+   "today_user_staleness_bps": 12.948
+  },
+  {
+   "scenario": "costs_x8",
+   "config": "2 units, hourly, margin from stake, mu_0 = 2 bp",
+   "lp_gain_vs_today_m": 4.745,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 3.17,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 2.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 1908,
+    "park_volume": 0.615,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 11.699,
+    "trueup_pos": 0.023,
+    "trueup_neg": -0.0049,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     1.285,
+     2.0,
+     2.0,
+     2.0,
+     2.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 12.341,
+   "user_staleness_bps": 13.212,
+   "today_user_staleness_bps": 13.196
+  },
+  {
+   "scenario": "costs_x8",
+   "config": "2 units, hourly, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 4.745,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 3.17,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 1903,
+    "park_volume": 0.615,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 11.7,
+    "trueup_pos": 0.023,
+    "trueup_neg": -0.0048,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     1.285,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 12.341,
+   "user_staleness_bps": 13.212,
+   "today_user_staleness_bps": 13.196
+  },
+  {
+   "scenario": "costs_x8",
+   "config": "2 units, daily, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 4.25,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 237.81,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 65465,
+    "park_volume": 7.194,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 3.83,
+    "trueup_pos": 0.0659,
+    "trueup_neg": -0.0141,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     0.671,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 11.046,
+   "user_staleness_bps": 13.898,
+   "today_user_staleness_bps": 13.196
+  },
+  {
+   "scenario": "costs_x8",
+   "config": "25 units, daily, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 4.962,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 6.16,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 1102,
+    "park_volume": 0.297,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 11.998,
+    "trueup_pos": 0.0101,
+    "trueup_neg": -0.0019,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     1.247,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 12.321,
+   "user_staleness_bps": 13.215,
+   "today_user_staleness_bps": 13.196
+  },
+  {
+   "scenario": "costs_x8",
+   "config": "no stake, withheld, mu_0 = 10 bp",
+   "lp_gain_vs_today_m": 4.528,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 27.41,
+   "uncovered_charges_m": 0.022,
+   "report": {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "park_trades": 0,
+    "park_volume": 0.0,
+    "withheld_trades": 210233,
+    "withheld_volume": 12.301,
+    "plain_volume": 0.0,
+    "trueup_pos": 0.2178,
+    "trueup_neg": -0.0916,
+    "uncovered_beyond_margin": 0.0222,
+    "mu_end_bps": [
+     1.021,
+     10.0,
+     10.0,
+     10.0,
+     10.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 12.327,
+   "user_staleness_bps": 14.37,
+   "today_user_staleness_bps": 13.196
+  },
+  {
+   "scenario": "costs_x8",
+   "config": "no stake, withheld, picking among 5 reports, mu_0 = 10 bp",
+   "lp_gain_vs_today_m": 4.434,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 19.49,
+   "uncovered_charges_m": 0.119,
+   "report": {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "pick": 5,
+    "window_s": 1.0,
+    "park_trades": 0,
+    "park_volume": 0.0,
+    "withheld_trades": 212120,
+    "withheld_volume": 12.308,
+    "plain_volume": 0.0,
+    "trueup_pos": 0.9561,
+    "trueup_neg": -0.001,
+    "uncovered_beyond_margin": 0.1193,
+    "mu_end_bps": [
+     1.572,
+     10.0,
+     10.0,
+     10.0,
+     10.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 12.334,
+   "user_staleness_bps": 14.368,
+   "today_user_staleness_bps": 13.196
+  },
+  {
+   "scenario": "vol_x2",
+   "config": "2 units, hourly, margin from stake, mu_0 = 2 bp",
+   "lp_gain_vs_today_m": 12.81,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 6.05,
+   "uncovered_charges_m": 0.181,
+   "report": {
+    "mu0_bps": 2.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 29468,
+    "park_volume": 9.768,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 29.651,
+    "trueup_pos": 0.2882,
+    "trueup_neg": -0.0701,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     4.325,
+     1.22,
+     2.0,
+     2.0,
+     2.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 39.442,
+   "user_staleness_bps": 13.204,
+   "today_user_staleness_bps": 13.085
+  },
+  {
+   "scenario": "vol_x2",
+   "config": "2 units, hourly, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 12.806,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 6.05,
+   "uncovered_charges_m": 0.181,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 29462,
+    "park_volume": 9.769,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 29.652,
+    "trueup_pos": 0.288,
+    "trueup_neg": -0.0702,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     4.325,
+     1.451,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 39.443,
+   "user_staleness_bps": 13.201,
+   "today_user_staleness_bps": 13.085
+  },
+  {
+   "scenario": "vol_x2",
+   "config": "2 units, daily, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 20.525,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 760.05,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 215130,
+    "park_volume": 26.326,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 4.109,
+    "trueup_pos": 0.1875,
+    "trueup_neg": -0.0199,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     0.25,
+     1.601,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.006,
+   "arb_volume_b": 30.455,
+   "user_staleness_bps": 16.002,
+   "today_user_staleness_bps": 13.085
+  },
+  {
+   "scenario": "vol_x2",
+   "config": "25 units, daily, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 18.563,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 62.8,
+   "uncovered_charges_m": 0.0,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 27648,
+    "park_volume": 8.814,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 29.453,
+    "trueup_pos": 0.3592,
+    "trueup_neg": -0.1055,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     1.51,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.007,
+   "arb_volume_b": 38.29,
+   "user_staleness_bps": 13.319,
+   "today_user_staleness_bps": 13.085
+  },
+  {
+   "scenario": "vol_x2",
+   "config": "no stake, withheld, mu_0 = 10 bp",
+   "lp_gain_vs_today_m": 20.845,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 89.1,
+   "uncovered_charges_m": 0.087,
+   "report": {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "park_trades": 0,
+    "park_volume": 0.0,
+    "withheld_trades": 419913,
+    "withheld_volume": 39.609,
+    "plain_volume": 0.0,
+    "trueup_pos": 1.5941,
+    "trueup_neg": -0.8958,
+    "uncovered_beyond_margin": 0.0867,
+    "mu_end_bps": [
+     2.067,
+     10.0,
+     10.0,
+     10.0,
+     10.0
+    ]
+   },
+   "unstaked_volume_b": 0.008,
+   "arb_volume_b": 39.636,
+   "user_staleness_bps": 14.165,
+   "today_user_staleness_bps": 13.085
+  },
+  {
+   "scenario": "vol_x2",
+   "config": "no stake, withheld, picking among 5 reports, mu_0 = 10 bp",
+   "lp_gain_vs_today_m": 20.308,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 20.02,
+   "uncovered_charges_m": 0.6,
+   "report": {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "pick": 5,
+    "window_s": 1.0,
+    "park_trades": 0,
+    "park_volume": 0.0,
+    "withheld_trades": 436155,
+    "withheld_volume": 39.717,
+    "plain_volume": 0.0,
+    "trueup_pos": 6.9975,
+    "trueup_neg": -0.0163,
+    "uncovered_beyond_margin": 0.6004,
+    "mu_end_bps": [
+     3.63,
+     10.0,
+     10.0,
+     10.0,
+     10.0
+    ]
+   },
+   "unstaked_volume_b": 0.008,
+   "arb_volume_b": 39.744,
+   "user_staleness_bps": 14.151,
+   "today_user_staleness_bps": 13.085
+  },
+  {
+   "scenario": "vol_x4",
+   "config": "2 units, hourly, margin from stake, mu_0 = 2 bp",
+   "lp_gain_vs_today_m": 41.209,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 66.86,
+   "uncovered_charges_m": 0.877,
+   "report": {
+    "mu0_bps": 2.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 97800,
+    "park_volume": 42.67,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 58.671,
+    "trueup_pos": 0.8305,
+    "trueup_neg": -0.1038,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     5.099,
+     4.751,
+     2.014,
+     2.681,
+     2.0
+    ]
+   },
+   "unstaked_volume_b": 0.018,
+   "arb_volume_b": 101.382,
+   "user_staleness_bps": 14.555,
+   "today_user_staleness_bps": 13.366
+  },
+  {
+   "scenario": "vol_x4",
+   "config": "2 units, hourly, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 53.862,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 147.39,
+   "uncovered_charges_m": 2.147,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 49413,
+    "park_volume": 23.641,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 72.782,
+    "trueup_pos": 0.5497,
+    "trueup_neg": -0.069,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     5.067,
+     4.837,
+     4.179,
+     3.366,
+     1.645
+    ]
+   },
+   "unstaked_volume_b": 0.025,
+   "arb_volume_b": 96.484,
+   "user_staleness_bps": 15.559,
+   "today_user_staleness_bps": 13.366
+  },
+  {
+   "scenario": "vol_x4",
+   "config": "2 units, daily, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 185.236,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 2262.46,
+   "uncovered_charges_m": 0.201,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 200671,
+    "park_volume": 39.662,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 6.496,
+    "trueup_pos": 0.7131,
+    "trueup_neg": -0.0658,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     5.089,
+     4.385,
+     6.693,
+     4.541,
+     3.137
+    ]
+   },
+   "unstaked_volume_b": 0.041,
+   "arb_volume_b": 46.24,
+   "user_staleness_bps": 36.984,
+   "today_user_staleness_bps": 13.366
+  },
+  {
+   "scenario": "vol_x4",
+   "config": "25 units, daily, margin from stake, mu_0 = 1 bp",
+   "lp_gain_vs_today_m": 106.17,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 603.63,
+   "uncovered_charges_m": 0.658,
+   "report": {
+    "mu0_bps": 1.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "withheld": false,
+    "park_trades": 828,
+    "park_volume": 1.045,
+    "withheld_trades": 0,
+    "withheld_volume": 0.0,
+    "plain_volume": 77.679,
+    "trueup_pos": 0.0293,
+    "trueup_neg": -0.0032,
+    "uncovered_beyond_margin": 0.0,
+    "mu_end_bps": [
+     6.589,
+     0.963,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "unstaked_volume_b": 0.019,
+   "arb_volume_b": 78.765,
+   "user_staleness_bps": 18.814,
+   "today_user_staleness_bps": 13.366
+  },
+  {
+   "scenario": "vol_x4",
+   "config": "no stake, withheld, mu_0 = 10 bp",
+   "lp_gain_vs_today_m": 94.96,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 177.41,
+   "uncovered_charges_m": 0.296,
+   "report": {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "park_trades": 0,
+    "park_volume": 0.0,
+    "withheld_trades": 610642,
+    "withheld_volume": 105.247,
+    "plain_volume": 0.0,
+    "trueup_pos": 7.6525,
+    "trueup_neg": -4.7637,
+    "uncovered_beyond_margin": 0.2961,
+    "mu_end_bps": [
+     3.516,
+     10.0,
+     10.0,
+     10.0,
+     10.0
+    ]
+   },
+   "unstaked_volume_b": 0.085,
+   "arb_volume_b": 105.402,
+   "user_staleness_bps": 16.576,
+   "today_user_staleness_bps": 13.366
+  },
+  {
+   "scenario": "vol_x4",
+   "config": "no stake, withheld, picking among 5 reports, mu_0 = 10 bp",
+   "lp_gain_vs_today_m": 100.685,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 23.49,
+   "uncovered_charges_m": 2.21,
+   "report": {
+    "mu0_bps": 10.0,
+    "mu_min_bps": 0.25,
+    "lag_s": 0.25,
+    "pick": 5,
+    "window_s": 1.0,
+    "park_trades": 0,
+    "park_volume": 0.0,
+    "withheld_trades": 647727,
+    "withheld_volume": 105.758,
+    "plain_volume": 0.0,
+    "trueup_pos": 36.0837,
+    "trueup_neg": -0.1594,
+    "uncovered_beyond_margin": 2.2103,
+    "mu_end_bps": [
+     5.252,
+     10.0,
+     10.0,
+     10.0,
+     10.0
+    ]
+   },
+   "unstaked_volume_b": 0.086,
+   "arb_volume_b": 105.914,
+   "user_staleness_bps": 16.38,
+   "today_user_staleness_bps": 13.366
+  }
+ ]
+}
