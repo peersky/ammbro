@@ -96,9 +96,8 @@ test:
 clean:
 	rm -rf data/parquet data/bars
 
-paper-pdf: # render paper.md (LaTeX math) to paper.pdf via pandoc + xelatex
-	uv run python tools/mermaid2png.py
-	pandoc paper.md -o paper.pdf --pdf-engine=xelatex -V mainfont="Times New Roman" -V geometry:margin=2.2cm -V fontsize=10pt --resource-path=. --lua-filter=tools/math-block.lua --citeproc --bibliography=references.bib
+paper-pdf: preprint       # paper.pdf: the same build as the preprint (captions merged, figures in place)
+	cp dist/bro-amm-preprint.pdf paper.pdf
 
 preprint:                # preprint PDF for Zenodo → dist/bro-amm-preprint.pdf (vector figures, .bib citations)
 	uv run python tools/mermaid2png.py
