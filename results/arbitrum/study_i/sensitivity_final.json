@@ -1,0 +1,120 @@
+{
+ "chain": "arbitrum",
+ "populations_bps": {
+  "pop_monopoly": [
+   0.3
+  ],
+  "pop_duo": [
+   0.3,
+   0.6
+  ],
+  "pop_ten": [
+   0.3,
+   0.45,
+   0.6,
+   0.8,
+   1.0,
+   1.25,
+   1.5,
+   2.0,
+   2.5,
+   3.0
+  ],
+  "pop_cheap": [
+   0.15,
+   0.3,
+   0.5,
+   0.75,
+   1.25
+  ],
+  "pop_dear": [
+   0.6,
+   1.2,
+   2.0,
+   3.0,
+   5.0
+  ]
+ },
+ "rows": [
+  {
+   "scenario": "stable",
+   "design": "sender rule, K_min = 3, 4 bp",
+   "lp_gain_vs_today_m": 0.59,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 0.239,
+   "today_builder_payments_m": 0.942,
+   "m_end_bps": 0.9686
+  },
+  {
+   "scenario": "pop_monopoly",
+   "design": "sender rule, K_min = 3, 4 bp",
+   "lp_gain_vs_today_m": 0.171,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 0.0,
+   "today_builder_payments_m": 0.0,
+   "m_end_bps": 5.0
+  },
+  {
+   "scenario": "pop_duo",
+   "design": "sender rule, K_min = 3, 4 bp",
+   "lp_gain_vs_today_m": 0.171,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 0.652,
+   "today_builder_payments_m": 0.942,
+   "m_end_bps": 5.0
+  },
+  {
+   "scenario": "pop_ten",
+   "design": "sender rule, K_min = 3, 4 bp",
+   "lp_gain_vs_today_m": 0.691,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.01,
+   "builder_payments_m": 0.216,
+   "today_builder_payments_m": 1.0,
+   "m_end_bps": 0.5799
+  },
+  {
+   "scenario": "pop_cheap",
+   "design": "sender rule, K_min = 3, 4 bp",
+   "lp_gain_vs_today_m": 0.704,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 0.258,
+   "today_builder_payments_m": 1.024,
+   "m_end_bps": 0.4972
+  },
+  {
+   "scenario": "pop_dear",
+   "design": "sender rule, K_min = 3, 4 bp",
+   "lp_gain_vs_today_m": 0.389,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 0.229,
+   "today_builder_payments_m": 0.816,
+   "m_end_bps": 1.9861
+  },
+  {
+   "scenario": "depth_x0.5",
+   "design": "sender rule, K_min = 3, 4 bp",
+   "lp_gain_vs_today_m": 1.041,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 0.203,
+   "today_builder_payments_m": 1.46,
+   "m_end_bps": 0.9686
+  },
+  {
+   "scenario": "depth_x2",
+   "design": "sender rule, K_min = 3, 4 bp",
+   "lp_gain_vs_today_m": 0.638,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 0.0,
+   "builder_payments_m": 0.485,
+   "today_builder_payments_m": 1.355,
+   "m_end_bps": 0.9686
+  }
+ ]
+}
