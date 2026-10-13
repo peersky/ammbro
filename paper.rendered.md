@@ -74,6 +74,12 @@ BRO-AMM executes a swap at once and prices it after the block. Every rule of the
 
 ### 4.1 The settlement equation
 
+A swap's payment to the pool cannot be settled at once, because its three parts become known at different times (Figure 1). The fee depends only on the sender's stake, so it is paid at execution and needs no oracle. The charge depends on the external price at the swap's decision instant, which no chain finalises as fast as an order book observes it, so it is settled at reconciliation, once the signed prices for the swap's block are available and agreed; consensus protocols separate inclusion from finality in the same way (Garay et al. 2015; Buterin et al. 2020; Kalodner et al. 2018). The rebate depends on the whole epoch's income against the LPs' target, so it is settled when the epoch closes. Reconciliation runs in epochs of fixed length, after which parked stake is released.
+
+![Timeline](figures/fig_timeline.png)
+
+*Figure 1. When each part of the settlement equation (1) becomes known: the fee at execution, the charge at reconciliation against the signed price at the decision instant, and the rebate when the epoch closes.*
+
 Let account $a$ send swaps $j \in \mathcal J_{a,i}$ in settlement epoch $i$, swap $j$ having notional $v_j$ in token 0, and let $V_{a,i} = \sum_{j \in \mathcal J_{a,i}} v_j$. What the account pays the pool for these swaps, beyond trading on the pool's curve, is
 
 ```math
@@ -81,27 +87,6 @@ Let account $a$ send swaps $j \in \mathcal J_{a,i}$ in settlement epoch $i$, swa
 ```
 
 where $f$ is the fee, set by the coverage curve (3) between a floor $f_{\min}$ and a ceiling $f_{\max}$ with a steepness $s$; $r_a$ is the account's staked reputation token (REP), valued at REP's internal mint and burn rate $P_{\mathrm{int}}$; $C_j$ is the charge for what swap $j$ extracts beyond an allowance $m$ per unit of volume, which the pool discovers on-chain (6); $\hat P_j$ is the signed external benchmark at the swap's decision instant (2); $\lambda$ is a penalty for correcting the pool after retail has traded at the stale price; $\varepsilon$ is a tolerance for oracle error; and $M_{a,i}$ is the REP minted to the account for paying more than the LPs' target take-rate $\theta^*$, netted over a window of $W$ epochs, after a protocol take $\tau$. The charge is collected from stake posted before the trade (9). Summed over all accounts, the LPs receive the pool's gain on every swap at the benchmark plus the charges, less the surplus placed in escrow behind minted REP (8).
-
-Only the fee is known at execution, and it needs no oracle; the charge and the rebate need the external price, which no chain finalises as fast as an order book observes it. Equation (1) is therefore settled twice, as consensus protocols separate inclusion from finality (Garay et al. 2015; Buterin et al. 2020; Kalodner et al. 2018): provisionally when the block is included, and finally at reconciliation, once the signed prices for its blocks are available and agreed. Reconciliation runs in epochs of fixed length, after which parked stake is released and the epoch's income is compared with the target. Figure 1 maps each term to the step that settles it.
-
-```mermaid
-flowchart LR
-  S[Swap] -->|hook: fee eq. 3,<br/>park ℓ·v eq. 9,<br/>record, prefund gas| P[(Pool + account record)]
-  L[Prepay REP at par] -->|internal rate per unit to escrow, eq. 10| P
-  P -->|any time| SS[Self-settlement<br/>by the account]
-  P -->|end of epoch| K[Keeper settlement]
-  O[Signed price batch] --> SS
-  O --> K
-  SS --> R{Score at t*, eq. 2:<br/>charge eq. 4b}
-  K --> R
-  R -->|charge| B[Burn stake,<br/>escrow to LPs eq. 8]
-  R -->|income above<br/>high-water mark| M[Mint REP eq. 7,<br/>τ to reserve]
-  R -->|no settlement pending| A[REP redeemable<br/>at par, eq. 10]
-  R -->|epoch settled| U[Release parked<br/>stake]
-  T[(Gas tank)] -->|reimburse + bounty| K
-```
-
-*Figure 1. Lifecycle of a swap and the terms of (1) settled at each step. Every swap is priced only at settlement. REP prepaid at par counts as stake at once, and REP not burned for charges can be redeemed at par once the account has no settlement pending.*
 
 ### 4.2 The benchmark
 

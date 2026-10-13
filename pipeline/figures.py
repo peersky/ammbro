@@ -52,6 +52,34 @@ def save(fig, name: str) -> None:
 
 
 # ---------------------------------------------------------------- theory
+def timeline() -> None:
+    """When each term of the settlement equation (1) becomes known: fee at execution, charge at
+    reconciliation, rebate at the epoch's end."""
+    from matplotlib.patches import FancyBboxPatch
+    fig, ax = plt.subplots(figsize=(7.2, 2.45))
+    ax.set_xlim(0, 10); ax.set_ylim(-0.1, 2.75); ax.axis("off")
+    ax.annotate("", xy=(9.98, 0.55), xytext=(0.02, 0.55), arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.2))
+    ax.text(9.98, 0.72, "time", ha="right", va="bottom", color=MUTED, fontsize=8)
+    phases = [(0.1, 3.0, C[0], "1  Fee, at execution", "eq. (3)",
+               "known from the sender's stake;\nno oracle needed; part of\nthe stake is parked (9)"),
+              (3.45, 3.1, C[1], "2  Charge, at reconciliation", "eq. (4b)",
+               "needs the signed price at\nthe decision instant; taken\nfrom the parked stake"),
+              (6.9, 3.0, C[2], "3  Rebate, at epoch end", "eq. (7)",
+               "needs the epoch's income\nagainst the target; stake\nreleased, REP minted")]
+    for x0, w, col, title, eq, body in phases:
+        ax.add_patch(FancyBboxPatch((x0, 1.05), w, 1.5, boxstyle="round,pad=0.02,rounding_size=0.08",
+                                    fc=col, alpha=0.10, ec=col, lw=1.0))
+        ax.text(x0 + 0.12, 2.4, title, fontsize=9, fontweight="bold", color=INK, va="top")
+        ax.text(x0 + w - 0.1, 1.15, eq, fontsize=8, color=MUTED, va="bottom", ha="right")
+        ax.text(x0 + 0.12, 2.0, body, fontsize=8, color=INK, va="top", linespacing=1.3)
+    for x, lab in [(0.6, "block $b$:\nswap executes"), (2.1, "$t^*_b = T_b + L$:\ndecision instant"),
+                   (4.3, "signed prices\nagreed"), (5.9, "settlement:\ncharges computed"),
+                   (7.6, "epoch closes:\nincome vs target"), (9.2, "REP redeemable\nonce settled")]:
+        ax.plot([x], [0.55], "o", color=INK, ms=4)
+        ax.text(x, 0.42, lab, ha="center", va="top", fontsize=7, color=MUTED, linespacing=1.2)
+    save(fig, "fig_timeline")
+
+
 def coverage_curve() -> None:
     """(a) the curve for three fee bands at s = 1; (b) the design band for a range of steepness s."""
     x = np.linspace(0, 8, 400)                      # coverage ratio r / (ρ·V)
@@ -379,7 +407,7 @@ def value_split() -> None:
 
 
 def main() -> None:
-    for f in (coverage_curve, payout_rule, latency_profile, score_distributions, extraction_by_position,
+    for f in (timeline, coverage_curve, payout_rule, latency_profile, score_distributions, extraction_by_position,
               recapture_frontier, controller_paths, oracle_error, settlement_cost, gas_tank, stake_and_shocks, urgency_block_space, value_split):
         f()
 
