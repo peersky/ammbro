@@ -310,7 +310,7 @@ The controller withstands the loss of its cheapest arbitrageurs. When the cheape
 
 The results above assume that arbitrageurs hold enough stake. We relax this in three steps. The position model does not yet combine with finite stake, so this section uses decay without a signal, which bounds the final design from below; its worst-case gain with full stake is \$5.01 M.
 
-**Fresh accounts.** If any arbitrageur may instead trade from an unstaked account at $f_{\max}$ and keep its whole edge, LPs' worst-case gain falls from \$5.01 M to \$3.53 M at $f_{\max}$ = 30 bp and recovers to \$4.93 M at 500 bp. With the market's shocks scaled by two and by four, fresh accounts take at most 1.5% of LPs' gain at 500 bp and none at 1,000 bp (Figure 12b in Appendix C).
+**Fresh accounts.** If any arbitrageur may instead trade from an unstaked account at $f_{\max}$ and keep its whole edge, LPs' worst-case gain falls from \$5.01 M to \$3.53 M at $f_{\max}$ = 30 bp and recovers to \$4.93 M at 500 bp. With the market's shocks scaled by two and by four, fresh accounts take at most \$0.51 M at 500 bp, under 1.5% of LPs' gain, and nothing at 1,000 bp (Figure 12b in Appendix C).
 
 **Arbitrage stake.** If arbitrageurs pay the coverage-curve fee on a finite stake, the pool freezes without any. Stake is measured in units of $\rho$ times the mean daily arbitrage volume, \$36 k; a stake *keeps the pool rebalanced* below if it passes the rebalancing constraint in all three cost scenarios. How much is needed depends on the settlement epoch, because parked stake and coverage renew at every settlement (§4.6):
 
@@ -600,7 +600,7 @@ A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps the
 
 ![Stake and shocks](figures/fig_stake_shocks.png)
 
-*Figure 12. (a) Uncorrected hours against arbitrageurs' stake, held by one staker or separately; dotted: arbitrageurs fully covered; zero is drawn at 0.1. (b) LPs' gain lost to fresh unstaked accounts against $f_{\max}$, for the market's shocks scaled by one, two and four.*
+*Figure 12. (a) Hours of correctable blocks left uncorrected in the worst cost scenario, against arbitrageurs' stake held by one staker or by each separately, with hourly and daily settlement epochs; zero is drawn at 0.1. (b) LPs' gain lost to fresh unstaked accounts, in dollars, against $f_{\max}$, for the market's shocks scaled by one, two and four; zero is drawn at \$0.01 M. Larger shocks lose more dollars but a smaller share of LPs' gain, which grows faster with shock size.*
 
 ## Appendix D. Settlement measurements
 

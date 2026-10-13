@@ -273,41 +273,45 @@ def gas_tank() -> None:
 
 
 def stake_and_shocks() -> None:
-    chains = [("Ethereum mainnet", R / "study_i" / "stake.json"), ("Arbitrum One", R / "arbitrum" / "study_i" / "stake.json")]
-    chains = [(n, p) for n, p in chains if p.exists()]
-    fig, axes = plt.subplots(1, 2, figsize=(8.0, 3.1))
+    fig, axes = plt.subplots(1, 2, figsize=(8.0, 4.4))
     ax = axes[0]
-    for ci, (name, path) in enumerate(chains):
+    series = [("Ethereum mainnet, hourly epochs", R / "study_i" / "stake_hourly.json", C[0], "-"),
+              ("Ethereum mainnet, daily epochs", R / "study_i" / "stake.json", C[0], "--"),
+              ("Arbitrum One, daily epochs", R / "arbitrum" / "study_i" / "stake.json", C[1], "--")]
+    for name, path, col, ls in series:
+        if not path.exists():
+            continue
         d = j(path)
-        for alloc, ls in (("pooled", "-"), ("equal", "--")):
-            pts = sorted((r["stake_mult"], r["uncorrected_hours"]) for r in d["rows"]
-                         if r["scenario"] == "stable" and r["alloc"] == alloc and not r["ramp_days"] and r["stake_mult"])
-            base = next(r["uncorrected_hours"] for r in d["rows"] if r["scenario"] == "stable" and r["stake_mult"] is None
-                        and r["unstaked_fmax_bps"] is None)
-            ax.plot([x for x, _ in pts], [max(y, 0.1) for _, y in pts], ls, color=C[ci], marker="o", ms=3,
-                    label=f"{name}, {'pooled' if alloc == 'pooled' else 'held separately'}")
-            if alloc == "pooled":
-                ax.axhline(max(base, 0.1), color=C[ci], lw=0.8, ls=":", label=f"{name}, fully covered")
+        for alloc, mk in (("pooled", "o"), ("equal", "s")):
+            rows = [r for r in d["rows"] if r["stake_mult"] and r["alloc"] == alloc and not r["ramp_days"]
+                    and r["scenario"] in ("stable", "costs_x4", "costs_x8")]
+            pts = sorted((m_, max(max(r["uncorrected_hours"] for r in rows if r["stake_mult"] == m_), 0.1))
+                         for m_ in {r["stake_mult"] for r in rows})
+            ax.plot([x for x, _ in pts], [y for _, y in pts], ls, color=col, marker=mk, ms=3,
+                    alpha=1.0 if alloc == "pooled" else 0.55,
+                    label=f"{name}, {'one staker' if alloc == 'pooled' else 'each its own'}")
     ax.set_xscale("log"); ax.set_yscale("log")
     ax.set_xlabel("arbitrageurs' stake (multiples of ρ × mean daily arbitrage volume)")
-    ax.set_ylabel("uncorrected hours in six months")
+    ax.set_ylabel("uncorrected hours, worst cost scenario")
     ax.set_title("(a) stake needed to keep the pool corrected")
-    ax.legend(fontsize=6, loc="upper right")
+    ax.legend(fontsize=6, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=1, frameon=False)
     ax = axes[1]
     vols = [("stable", "shocks ×1"), ("vol_x2", "shocks ×2"), ("vol_x4", "shocks ×4")]
-    for ci, (name, path) in enumerate(chains):
+    for ci, (name, path) in enumerate((("Ethereum mainnet", R / "study_i" / "stake.json"), ("Arbitrum One", R / "arbitrum" / "study_i" / "stake.json"))):
+        if not path.exists():
+            continue
         d = j(path)
         for vi, (sc, lab) in enumerate(vols):
             ref = next(r["lp_gain_vs_today_m"] for r in d["rows"] if r["scenario"] == sc and r["stake_mult"] is None
                        and r["unstaked_fmax_bps"] is None)
-            pts = sorted((r["unstaked_fmax_bps"], 100 * (ref - r["lp_gain_vs_today_m"]) / ref) for r in d["rows"]
+            pts = sorted((r["unstaked_fmax_bps"], max(ref - r["lp_gain_vs_today_m"], 0.01)) for r in d["rows"]
                          if r["scenario"] == sc and r["stake_mult"] is None and r["unstaked_fmax_bps"])
             ax.plot([x for x, _ in pts], [y for _, y in pts], ["-", "--", ":"][vi], color=C[ci], marker="o", ms=3,
                     label=f"{name}, {lab}")
-    ax.set_xscale("log"); ax.set_ylim(bottom=0)
-    ax.set_xlabel("$f_{max}$ (bp)"); ax.set_ylabel("LP gain lost to fresh accounts (%)")
-    ax.set_title("(b) leakage to unstaked accounts")
-    ax.legend(fontsize=6.5)
+    ax.set_xscale("log"); ax.set_yscale("log")
+    ax.set_xlabel("$f_{max}$ (bp)"); ax.set_ylabel("LPs' gain lost to fresh accounts ($M)")
+    ax.set_title("(b) leakage to unstaked accounts, in dollars")
+    ax.legend(fontsize=6, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2, frameon=False)
     save(fig, "fig_stake_shocks")
 
 
