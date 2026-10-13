@@ -424,7 +424,7 @@ def run_one(args) -> dict:
         ls_ln = math.log(max(fmax_fee - F, 1e-9) / ls_slack)
         bro_cfg = lease.get("bro")
         ls = {"r": np.zeros(_nl), "bro": np.zeros(_nl), "s": np.ones(_nl),
-              "peak": 0.0, "sum": 0.0, "n_ep": 0, "per_ep": [], "credit": 0.0, "credit_ep_max": 0.0, "credit_arb_ep_max": np.zeros(_nl)}
+              "peak": 0.0, "sum": 0.0, "n_ep": 0, "per_ep": [], "ch_series": [], "credit": 0.0, "credit_ep_max": 0.0, "credit_arb_ep_max": np.zeros(_nl)}
         if bro_cfg:
             bro_decay = 0.5 ** (1.0 / bro_cfg.get("half_life_epochs", 720))
             bro_b0, bro_smax = bro_cfg.get("b0_usd", 5e8), bro_cfg.get("s_max", 4.0)
@@ -433,7 +433,7 @@ def run_one(args) -> dict:
         if lease is None:
             return
         tot = float(ls["r"].sum()); ls["peak"] = max(ls["peak"], tot); ls["sum"] += tot; ls["n_ep"] += 1
-        ls["per_ep"].append(tot)
+        ls["per_ep"].append(tot); ls["ch_series"].append(float(ch_ep.sum()))
         exc = np.maximum(ch_ep - ls["r"], 0.0)             # charges beyond the lease: credit
         ls["credit"] += float(exc.sum()); ls["credit_ep_max"] = max(ls["credit_ep_max"], float(exc.sum()))
         ls["credit_arb_ep_max"] = np.maximum(ls["credit_arb_ep_max"], exc)
@@ -1090,6 +1090,7 @@ def run_one(args) -> dict:
                                          "mean_epoch_lease_m": round(ls["sum"] / max(ls["n_ep"], 1) / 1e6, 3),
                                          "p99_epoch_lease_m": round(float(np.percentile(ls["per_ep"], 99)) / 1e6, 3) if ls["per_ep"] else 0.0,
                                          "per_epoch_lease_k": [round(x / 1e3, 1) for x in ls["per_ep"]] if lease.get("series") else None,
+                                         "per_epoch_charges_k": [round(x / 1e3, 2) for x in ls["ch_series"]] if lease.get("series") else None,
                                          "credit_total_m": round(ls["credit"] / 1e6, 3), "credit_epoch_max_m": round(ls["credit_ep_max"] / 1e6, 3),
                                          "bust_out_bound_by_arb_m": [round(float(x) / 1e6, 3) for x in ls["credit_arb_ep_max"]],
                                          "s_end": [round(float(x), 2) for x in ls["s"]], "bro_end_m": [round(float(x) / 1e6, 1) for x in ls["bro"]]},

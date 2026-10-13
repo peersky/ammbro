@@ -38,7 +38,8 @@ def series() -> dict:
             for sc in SCENARIOS]
     res = I.main(runs, workers=5)
     out = {"chain": ACTIVE.name, "epoch_s": HOUR,
-           "scenarios": {sc: {"lease_k": r["lease"]["per_epoch_lease_k"], "arb_volume_b": r["arb_volume_b"]} for sc, r in zip(SCENARIOS, res)}}
+           "scenarios": {sc: {"lease_k": r["lease"]["per_epoch_lease_k"], "charges_k": r["lease"]["per_epoch_charges_k"],
+                         "arb_volume_b": r["arb_volume_b"], "recapture_m": r["lp_recapture_m"]} for sc, r in zip(SCENARIOS, res)}}
     (I.OUT / "lease_series.json").write_text(json.dumps(out))
     return out
 
