@@ -53,16 +53,25 @@ def save(fig, name: str) -> None:
 
 # ---------------------------------------------------------------- theory
 def coverage_curve() -> None:
+    """(a) the curve for three fee bands at s = 1; (b) the design band for a range of steepness s."""
     x = np.linspace(0, 8, 400)                      # coverage ratio r / (ρ·V)
-    fig, ax = plt.subplots(figsize=(4.6, 2.8))
+    fig, (a, b) = plt.subplots(1, 2, figsize=(10.0, 3.0), sharex=True)
     for i, (fmin, fmax) in enumerate([(1, 500), (1, 100), (5, 100)]):
-        f = fmin + (fmax - fmin) * np.exp(-x)
-        ax.plot(x, f, color=C[i], label=f"f_min = {fmin} bp, f_max = {fmax} bp")
-    ax.set_yscale("log")
-    ax.set_xlabel("coverage ratio  r / (ρ·V)")
-    ax.set_ylabel("fee on covered volume (bp, log)")
-    ax.set_title("Coverage curve  f = f_min + (f_max − f_min)·exp(−r/ρV)")
-    ax.legend(loc="upper right")
+        a.plot(x, fmin + (fmax - fmin) * np.exp(-x), color=C[i], label=f"f_min = {fmin} bp, f_max = {fmax} bp")
+    a.set_title("(a) fee bands, s = 1")
+    a.legend(loc="upper right")
+    steep = [0.25, 0.5, 1.0, 2.0, 4.0, 8.0]
+    blues = plt.get_cmap("Blues")(np.linspace(0.35, 0.95, len(steep)))
+    for k, col in zip(steep, blues):
+        design = k == 1.0
+        b.plot(x, 3 + (1000 - 3) * np.exp(-k * x), color="#000000" if design else col, lw=2.4 if design else 1.6,
+               label=f"s = {k:g}" + (" (design)" if design else ""))
+    b.set_title("(b) steepness s, f_min = 3 bp, f_max = 1,000 bp")
+    b.legend(loc="center left", bbox_to_anchor=(1.01, 0.5))
+    for ax in (a, b):
+        ax.set_yscale("log")
+        ax.set_xlabel("coverage ratio  r / (ρ·V)")
+    a.set_ylabel("fee on covered volume (bp, log)")
     save(fig, "fig_coverage_curve")
 
 

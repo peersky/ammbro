@@ -74,7 +74,7 @@ Let account $a$ send swaps $j \in \mathcal J_{a,i}$ in settlement epoch $i$, swa
 \Pi_{a,i} \;=\; \sum_{j \in \mathcal J_{a,i}} \Big[\, \underbrace{f\big(r_a, V_{a,i}\big)\, v_j}_{\text{fee (3), at execution}} \;+\; \underbrace{C_j\big(\hat P_j,\, m,\, \lambda,\, \varepsilon\big)}_{\text{charge (4b), at reconciliation}} \Big] \;-\; \underbrace{P_{\mathrm{int}}\, M_{a,i}\big(\theta^*, W, \tau\big)}_{\text{rebate (7), at epoch end}} \tag{1}
 ```
 
-where $f$ is the fee, set by the coverage curve (3) between a floor $f_{\min}$ and a ceiling $f_{\max}$; $r_a$ is the account's staked reputation token (REP), valued at REP's internal mint and burn rate $P_{\mathrm{int}}$; $C_j$ is the charge for what swap $j$ extracts beyond an allowance $m$ per unit of volume, which the pool discovers on-chain (6); $\hat P_j$ is the signed external benchmark at the swap's decision instant (2); $\lambda$ is a penalty for correcting the pool after retail has traded at the stale price; $\varepsilon$ is a tolerance for oracle error; and $M_{a,i}$ is the REP minted to the account for paying more than the LPs' target take-rate $\theta^*$, netted over a window of $W$ epochs, after a protocol take $\tau$. The charge is collected from stake posted before the trade (9). Summed over all accounts, the LPs receive the pool's gain on every swap at the benchmark plus the charges, less the surplus placed in escrow behind minted REP (8).
+where $f$ is the fee, set by the coverage curve (3) between a floor $f_{\min}$ and a ceiling $f_{\max}$ with a steepness $s$; $r_a$ is the account's staked reputation token (REP), valued at REP's internal mint and burn rate $P_{\mathrm{int}}$; $C_j$ is the charge for what swap $j$ extracts beyond an allowance $m$ per unit of volume, which the pool discovers on-chain (6); $\hat P_j$ is the signed external benchmark at the swap's decision instant (2); $\lambda$ is a penalty for correcting the pool after retail has traded at the stale price; $\varepsilon$ is a tolerance for oracle error; and $M_{a,i}$ is the REP minted to the account for paying more than the LPs' target take-rate $\theta^*$, netted over a window of $W$ epochs, after a protocol take $\tau$. The charge is collected from stake posted before the trade (9). Summed over all accounts, the LPs receive the pool's gain on every swap at the benchmark plus the charges, less the surplus placed in escrow behind minted REP (8).
 
 Only the fee is known at execution, and it needs no oracle; the charge and the rebate need the external price, which no chain finalises as fast as an order book observes it. Equation (1) is therefore settled twice, as consensus protocols separate inclusion from finality [@garay2015backbone; @buterin2020gasper; @kalodner2018arbitrum]: provisionally when the block is included, and finally at reconciliation, once the signed prices for its blocks are available and agreed. Reconciliation runs in hourly epochs, after which parked stake is released and the epoch's income is compared with the target. A correcting swap may instead evaluate (1) at execution against a signed report it carries, and true it up at reconciliation (10). Figure 1 maps each term to the step that settles it. Each parameter was set by the criteria of §3.3, and Appendix J collects them with their values.
 
@@ -114,16 +114,16 @@ The latency $L$ is measured, not assumed. A correcting swap trades until the poo
 Stake buys coverage of volume within the epoch:
 
 ```math
-f(r, V) = f_{\min} + (f_{\max} - f_{\min})\, e^{-r/(\rho V)}, \qquad r^*(f) = \rho V \ln\frac{f_{\max} - f_{\min}}{f - f_{\min}} \tag{3}
+f(r, V) = f_{\min} + (f_{\max} - f_{\min})\, e^{-s\, r/(\rho V)}, \qquad r^*(f) = \frac{\rho V}{s} \ln\frac{f_{\max} - f_{\min}}{f - f_{\min}} \tag{3}
 ```
 
-where $\rho > 0$ is the capacity scale, so that stake worth $\rho V$ cuts the premium above $f_{\min}$ by a factor $e$, and $r^*(f)$ is the stake needed to trade volume $V$ at fee $f$. We use $f_{\min}$ = 3 bp, $f_{\max}$ = 1,000 bp and $\rho$ = 5 bp (§5.2, §5.4, Appendix C). The curve (Figure 2) is convex and decreasing in $r$, which discourages concentration; it approaches $f_{\min}$, so LPs always earn a floor; and it depends only on the coverage ratio $r/(\rho V)$, not on wealth. Coverage renews when parked stake is released at each epoch's end, so hourly epochs let the same stake cover 24 times the daily volume that daily epochs would (§5.4).
+where $\rho > 0$ is the capacity scale, which measures stake in units of volume and also sets the base parking rate (9); $s > 0$ is the curve's steepness, so that stake worth $\rho V / s$ cuts the premium above $f_{\min}$ by a factor $e$; and $r^*(f)$ is the stake needed to trade volume $V$ at fee $f$. Steepness sets who the curve favours. A steeper curve ($s > 1$) lets each unit of stake buy more discounted volume, which makes holding REP more attractive to arbitrageurs but lets their charges outrun the stake that must cover them; a milder one ($s < 1$) protects LPs with more stake per unit of volume, but stalls correctors sooner when volume rises (Figure 2b). Measured on mainnet, no steepness avoids both failures under shocks, while hourly epochs do (Appendix C), so the design keeps $s$ = 1. We use $f_{\min}$ = 3 bp, $f_{\max}$ = 1,000 bp and $\rho$ = 5 bp (§5.2, §5.4, Appendix C). The curve (Figure 2) is convex and decreasing in $r$, which discourages concentration; it approaches $f_{\min}$, so LPs always earn a floor; and it depends only on the coverage ratio $r/(\rho V)$, not on wealth. Coverage renews when parked stake is released at each epoch's end, so hourly epochs let the same stake cover 24 times the daily volume that daily epochs would (§5.4).
 
 A fresh account has $r = 0$ and pays $f_{\max}$; nothing it owes after the block can be collected. Against a gap $g$ in a pool of depth $D$ per unit of log price, with its own cost rate $h$, it takes $D\,(g - f_{\max} - h)^2/2$ (Appendix G.2). $f_{\max}$ is therefore sized to the largest shock the pool must withstand, and by (3) the stake needed to escape it grows only with $\ln f_{\max}$.
 
 ![Coverage curve](figures/fig_coverage_curve.png)
 
-*Figure 2. The coverage curve (3) for three fee bands.*
+*Figure 2. The coverage curve (3): (a) for three fee bands at steepness $s$ = 1; (b) for the design band at steepnesses from 0.25 to 8.*
 
 ### 4.4 The charge term
 
@@ -490,7 +490,7 @@ Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum b
 
 *Table 6. Today's pools against BRO-AMM at today's 5 bp fee, users' corrections not charged. LPs' net is fees from users less what is lost to arbitrage after recapture. Arbitrageurs' payments for position go to block builders on mainnet and to winning the race to be ordered first on Arbitrum.*
 
-**Coverage curve and settlement epoch.** The curve (3) can be made steeper or milder by scaling the coverage a unit of stake buys, $f = f_{\min} + (f_{\max} - f_{\min})\, e^{-s\, r/(\rho V)}$, with $s$ = 1 the design value. Arbitrageurs hold a pooled stake of 25 units, enough for normal markets with daily epochs, or 10 units, and the market's shocks are scaled by two and four; charges are taken from stake within each epoch, and those beyond it are uncovered (dollar amounts below):
+**Coverage curve and settlement epoch.** The steepness $s$ of the curve (3) scales the coverage a unit of stake buys, with $s$ = 1 the design value (Figure 2b). Arbitrageurs hold a pooled stake of 25 units, enough for normal markets with daily epochs, or 10 units, and the market's shocks are scaled by two and four; charges are taken from stake within each epoch, and those beyond it are uncovered (dollar amounts below):
 
 | Steepness $s$ | Calm, 25 units | Shocks ×2, 25 units | Shocks ×4, 25 units | Shocks ×2, 10 units |
 |---|---|---|---|---|
@@ -826,7 +826,8 @@ Table 21 collects the variables and parameters of the settlement equation (1), t
 | $v_j$, $V_{a,i}$, $V_i$ | notional of swap $j$; account's and pool's volume in epoch $i$ | (1), (3), (7) | data | — |
 | $r_a$, $P_{\mathrm{int}}$ | account's staked REP; REP's internal mint and burn rate | (1), (3), (9) | — | — |
 | $f_{\min}$, $f_{\max}$ | fee floor and ceiling | (3) | 3 bp; 1,000 bp | lowest fee at which LPs' net stays positive in every cost scenario (§5.2); smallest at which fresh accounts take nothing under shocks four times the market's (§5.4) |
-| $\rho$ | capacity scale of the curve; base parking rate | (3), (9) | 5 bp | steeper curves trade stalls for uncollectable charges (Appendix C) |
+| $\rho$ | capacity scale of the curve; base parking rate | (3), (9) | 5 bp | held fixed; the curve's shape is varied through $s$ instead (Appendix C) |
+| $s$ | steepness of the curve | (3) | 1 | milder curves stall correctors, steeper ones leave charges uncovered; neither passes shocks with daily epochs (Appendix C) |
 | $L$, $t^*_b$, $\hat P_j$ | decision latency; decision instant of block $b$; directional benchmark | (2) | 1.5 s | measured from correcting swaps (§4.2) |
 | $\varepsilon$ | tolerance for oracle error | (4a) | 0.5 bp | $\max(\lvert\text{bias}\rvert, 2\sigma_o)$ (§5.6) |
 | $m$, $m_0$ | allowance per unit of volume; starting value | (4b), (6) | within [0.02, 50] bp | discovered by (6) |
