@@ -17,7 +17,7 @@ Foundry benchmarks of the hook and settlement layer.
 ## Results at a glance
 
 Ethereum mainnet ETH/USDC, simulated over the six months against today's 5 bp pool, with BRO-AMM
-charging 3 bp (paper §5.2, Table 4; stable costs):
+charging 3 bp (paper §5.1, Table 3; stable costs):
 
 | | Today, 5 bp | BRO-AMM, 3 bp |
 |---|---|---|
@@ -70,20 +70,20 @@ must pass before any study runs against a pool.
 | Paper | Code | Results |
 |---|---|---|
 | §4.2 decision latency, Appendix B | `pipeline/study_e.py`, `timing_gaming.py` | `results/study_e/` |
-| §5.1 score validity, extraction by position | `study_a.py`, `supp1.py`, `study_d.py`, `study_i_index.py` | `results/study_a/`, `supp1/`, `study_i/block_index.json` |
-| §5.2 recapture under perfect information | `study_b.py` | `results/study_b/` |
-| §5.2 Table 4 (lower fees, every correcting swap charged) | `study_i_ramp.py` (`baseline`, `fee4`), `router_risk.py` | `results/study_i/ramp_baseline.json`, `results/arbitrum/study_i/ramp_fee4.json`, `results/*router_risk*.json` |
-| §5.2 Figure 6, Appendix C at today's fee | `study_i_headline.py`, `study_i_retention.py`, `study_i_routing.py`, `study_i_capture.py` | `results/study_i/{headline,retention,routing,capture}.json` |
+| App. K.1 score validity, extraction by position | `study_a.py`, `supp1.py`, `study_d.py`, `study_i_index.py` | `results/study_a/`, `supp1/`, `study_i/block_index.json` |
+| §5.1 recapture under perfect information | `study_b.py` | `results/study_b/` |
+| §5.1 Table 3 (lower fees, every correcting swap charged) | `study_i_ramp.py` (`baseline`, `fee4`), `router_risk.py` | `results/study_i/ramp_baseline.json`, `results/arbitrum/study_i/ramp_fee4.json`, `results/*router_risk*.json` |
+| §5.1 Figure 6, Appendix C at today's fee | `study_i_headline.py`, `study_i_retention.py`, `study_i_routing.py`, `study_i_capture.py` | `results/study_i/{headline,retention,routing,capture}.json` |
 | Appendix I (Arbitrum): sender rule, Timeboost, per-gap reverse auction | `study_i_ramp.py` (`timeboost`, `main`, `robust`, `steep`, `monopoly`, `fee4`) | `results/arbitrum/study_i/ramp_*.json` |
 | Appendix G.5 router costs and charges | `router_costs.py`, `router_risk.py` | `results/router_costs.json`, `results/*router_risk*.json` |
-| §4.5, §5.3 controllers, Appendix F.7 | `study_i.py`, `study_i_position.py`, `study_i_redundancy.py`, `study_i_paths.py`, `study_i_final.py` | `results/study_i/` |
+| §4.5, App. K.3 controllers, Appendix F.7 | `study_i.py`, `study_i_position.py`, `study_i_redundancy.py`, `study_i_paths.py`, `study_i_final.py` | `results/study_i/` |
 | §4.5 Timeboost, Appendix B | `study_i_timeboost.py` (public Arbitrum RPC) | `results/arbitrum/study_i/timeboost.json` |
-| §4.7, §5.4 stake, fresh accounts, prepaid bonds, redemption, initial issuance; Appendix F.4 correction lane | `study_i_stake.py`, `study_i_lease.py`, `study_i_prepay.py`, `study_i_redeem.py`, `rep_bootstrap.py`, `study_i_report.py`, `study_i_relief.py` | `results/study_i/{stake,lease,prepay,redeem,report*,relief}.json`, `results/rep_bootstrap.json` |
+| §4.7, App. K.4 stake, fresh accounts, prepaid bonds, redemption, initial issuance; Appendix F.4 correction lane | `study_i_stake.py`, `study_i_lease.py`, `study_i_prepay.py`, `study_i_redeem.py`, `rep_bootstrap.py`, `study_i_report.py`, `study_i_relief.py` | `results/study_i/{stake,lease,prepay,redeem,report*,relief}.json`, `results/rep_bootstrap.json` |
 | Appendix F rejected designs | `study_i_review.py`, `study_i_bonus.py`, `study_i_rotation.py`, `study_i_relief.py` | `results/study_i/` |
-| §5.5 collateral | `study_c_collateral.py` | `results/study_c/` |
-| §5.6 oracle error | `study_j.py` | `results/study_j/` |
-| §5.7 settlement gas, Appendix D | `study_g.py`, `contracts/`, `zk/` | `results/study_g/` |
-| §5.7 keepers and gas tank | `study_k.py`–`study_k4.py`, `census.py` | `results/study_k/` |
+| App. K.5 collateral | `study_c_collateral.py` | `results/study_c/` |
+| App. K.6 oracle error | `study_j.py` | `results/study_j/` |
+| App. K.7 settlement gas, Appendix D | `study_g.py`, `contracts/`, `zk/` | `results/study_g/` |
+| App. K.7 keepers and gas tank | `study_k.py`–`study_k4.py`, `census.py` | `results/study_k/` |
 | Figures | `pipeline/figures.py` | `figures/` |
 
 `study_k5.py` and `klines.py` study a single REP shared across pools, which the
@@ -117,7 +117,7 @@ data/                       raw and derived data (gitignored); data/checksums/ i
 - **Benchmark.** Binance public archive (aggTrades ticks for ETHUSDT and USDCUSDT), corrected to
   USDC and turned into a touch-level bid/ask proxy. Archive files are not redistributed;
   `data/checksums/CHECKSUMS.sha256` pins every file the pipeline uses. The archive is
-  byte-reproducible but not signed, so oracle error is modelled (§5.6), not measured on a signed feed.
+  byte-reproducible but not signed, so oracle error is modelled (App. K.6), not measured on a signed feed.
 - **Timestamps.** Binance spot timestamps are milliseconds before 2025-01-01 and microseconds after;
   `binance_parse.normalize_ts_to_us` branches on magnitude and fails on ambiguity.
 - **On-chain.** Uniswap v3 ETH/USDC 0.05% on mainnet and WETH/USDC on Arbitrum, with a USDC/USDT
