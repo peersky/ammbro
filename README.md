@@ -17,7 +17,7 @@ Foundry benchmarks of the hook and settlement layer.
 ## Results at a glance
 
 Ethereum mainnet ETH/USDC, simulated over the six months against today's 5 bp pool, with BRO-AMM
-charging 3 bp (paper §5.2, Table 3; stable costs):
+charging 3 bp (paper §5.2, Table 4; stable costs):
 
 | | Today, 5 bp | BRO-AMM, 3 bp |
 |---|---|---|
@@ -72,7 +72,7 @@ must pass before any study runs against a pool.
 | §4.2 decision latency, Appendix B | `pipeline/study_e.py`, `timing_gaming.py` | `results/study_e/` |
 | §5.1 score validity, extraction by position | `study_a.py`, `supp1.py`, `study_d.py`, `study_i_index.py` | `results/study_a/`, `supp1/`, `study_i/block_index.json` |
 | §5.2 recapture under perfect information | `study_b.py` | `results/study_b/` |
-| §5.2 Table 3 (lower fees, every correcting swap charged) | `study_i_ramp.py` (`baseline`, `fee4`), `router_risk.py` | `results/study_i/ramp_baseline.json`, `results/arbitrum/study_i/ramp_fee4.json`, `results/*router_risk*.json` |
+| §5.2 Table 4 (lower fees, every correcting swap charged) | `study_i_ramp.py` (`baseline`, `fee4`), `router_risk.py` | `results/study_i/ramp_baseline.json`, `results/arbitrum/study_i/ramp_fee4.json`, `results/*router_risk*.json` |
 | §5.2 Figure 6, Appendix C at today's fee | `study_i_headline.py`, `study_i_retention.py`, `study_i_routing.py`, `study_i_capture.py` | `results/study_i/{headline,retention,routing,capture}.json` |
 | Appendix I (Arbitrum): sender rule, Timeboost, per-gap reverse auction | `study_i_ramp.py` (`timeboost`, `main`, `robust`, `steep`, `monopoly`, `fee4`) | `results/arbitrum/study_i/ramp_*.json` |
 | Appendix G.5 router costs and charges | `router_costs.py`, `router_risk.py` | `results/router_costs.json`, `results/*router_risk*.json` |

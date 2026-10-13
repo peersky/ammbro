@@ -46,6 +46,8 @@ This is a quantitative design-science study: we specify a mechanism (§4) and ev
 
 We study the Uniswap v3 ETH/USDC 5 bp pool on Ethereum mainnet from 1 March to 31 August 2026 (Table 1), chosen because its arbitrage is competitive and its block position is sold by builder auction. Swaps and their transactions were extracted from archive nodes over JSON-RPC; senders are grouped by labels that use no prices (Appendix B). The benchmark is Binance ETHUSDT corrected by USDCUSDT, from the exchange's public archive, with a touch-level bid/ask proxy built from aggressor-flagged trades; it stands in for a signed feed such as Chainlink Data Streams (Chainlink, n.d.), whose error is therefore modelled rather than measured (§5.6). A USDC/USDT pool, where no extraction is expected, is the negative control: it scored a median absolute $Q_{\mathrm{LP}}$ of 0.9–1.1 bp (95th percentile 2.3 bp), inside the band within which the peg itself moves (99th percentile 12.8 bp). Appendix I repeats the evaluation on Arbitrum's WETH/USDC pool, where ordering by arrival changes the competition signal (§4.5).
 
+*Decision latency.* The latency $L$ of (2) was measured, not assumed. A correcting swap trades until the pool's price net of the fee meets the price at which it can hedge, at the instant it decides; the offset from the block timestamp that minimises this residual over correcting swaps is $L$. It is 1.5 s on mainnet, where arbitrageurs re-price bundles until the proposer takes the winning bid, and 0.75 s on Arbitrum (Figure 5 in Appendix B; Appendix G.1). A clock derived from a transaction's index within the block was rejected because whoever orders the block would set it, and could sell it (Appendix B).
+
 | | Ethereum mainnet |
 |---|---|
 | Swaps | 990,555 |
@@ -66,7 +68,7 @@ Raw data are not redistributed; the repository pins checksums of every archive f
 
 ## 4. System design
 
-BRO-AMM executes a swap at once and prices it after the block. Every rule of the mechanism is a term of one settlement equation; §4.1 states it, §4.2–4.8 expand its terms, and §4.9–4.10 cover settlement, launch and the threat model.
+BRO-AMM executes a swap at once and prices it after the block. Every rule of the mechanism is a term of one settlement equation; §4.1 states it, §4.2–4.8 expand its terms, and §4.9–4.10 cover settlement and the threat model. The values used in the evaluation are collected in Appendix J, and Appendix H follows two swaps through the mechanism with numbers.
 
 ### 4.1 The settlement equation
 
@@ -78,14 +80,14 @@ Let account $a$ send swaps $j \in \mathcal J_{a,i}$ in settlement epoch $i$, swa
 
 where $f$ is the fee, set by the coverage curve (3) between a floor $f_{\min}$ and a ceiling $f_{\max}$ with a steepness $s$; $r_a$ is the account's staked reputation token (REP), valued at REP's internal mint and burn rate $P_{\mathrm{int}}$; $C_j$ is the charge for what swap $j$ extracts beyond an allowance $m$ per unit of volume, which the pool discovers on-chain (6); $\hat P_j$ is the signed external benchmark at the swap's decision instant (2); $\lambda$ is a penalty for correcting the pool after retail has traded at the stale price; $\varepsilon$ is a tolerance for oracle error; and $M_{a,i}$ is the REP minted to the account for paying more than the LPs' target take-rate $\theta^*$, netted over a window of $W$ epochs, after a protocol take $\tau$. The charge is collected from stake posted before the trade (9). Summed over all accounts, the LPs receive the pool's gain on every swap at the benchmark plus the charges, less the surplus placed in escrow behind minted REP (8).
 
-Only the fee is known at execution, and it needs no oracle; the charge and the rebate need the external price, which no chain finalises as fast as an order book observes it. Equation (1) is therefore settled twice, as consensus protocols separate inclusion from finality (Garay et al. 2015; Buterin et al. 2020; Kalodner et al. 2018): provisionally when the block is included, and finally at reconciliation, once the signed prices for its blocks are available and agreed. Reconciliation runs in hourly epochs, after which parked stake is released and the epoch's income is compared with the target. An account short of REP in a market swing prepays it at par, and redeems it at par once its settlements are done (10). Figure 1 maps each term to the step that settles it. Each parameter was set by the criteria of §3.3, and Appendix J collects them with their values.
+Only the fee is known at execution, and it needs no oracle; the charge and the rebate need the external price, which no chain finalises as fast as an order book observes it. Equation (1) is therefore settled twice, as consensus protocols separate inclusion from finality (Garay et al. 2015; Buterin et al. 2020; Kalodner et al. 2018): provisionally when the block is included, and finally at reconciliation, once the signed prices for its blocks are available and agreed. Reconciliation runs in epochs of fixed length, after which parked stake is released and the epoch's income is compared with the target. Figure 1 maps each term to the step that settles it.
 
 ```mermaid
 flowchart LR
   S[Swap] -->|hook: fee eq. 3,<br/>park ℓ·v eq. 9,<br/>record, prefund gas| P[(Pool + account record)]
   L[Prepay REP at par] -->|internal rate per unit to escrow, eq. 10| P
   P -->|any time| SS[Self-settlement<br/>by the account]
-  P -->|end of hourly epoch| K[Keeper settlement]
+  P -->|end of epoch| K[Keeper settlement]
   O[Signed price batch] --> SS
   O --> K
   SS --> R{Score at t*, eq. 2:<br/>charge eq. 4b}
@@ -107,9 +109,7 @@ Every swap in block $b$ is priced against the external price at one instant,
 t^*_b = T_b + L, \qquad Q_{\mathrm{LP},j} = \frac{\Delta_{0,j} + P_{\mathrm{dir}}(t^*_b)\,\Delta_{1,j}}{v_j} \tag{2}
 ```
 
-where $T_b$ is the block's timestamp, $L$ is the decision latency measured below, $\Delta_{0,j}$ and $\Delta_{1,j}$ are the amounts of tokens 0 and 1 the pool receives from swap $j$ (negative when it pays out), fees included, and $\hat P_j = P_{\mathrm{dir}}(t^*_b)$ is the price of token 1 in token 0 at the touch: the liquidity-weighted bid when the pool sells the risky asset, the ask when it buys it, as Chainlink Data Streams publishes them (Chainlink, n.d.). $Q_{\mathrm{LP},j}\, v_j$ is the swap's gain to LPs; it is negative for losses, needs no sign convention by direction, does not depend on the numeraire, and never scores a swap inside the bid–ask band as extractive. It is measured at horizon zero, where extraction occurs, rather than against later prices that mix extraction with drift.
-
-The latency $L$ is measured, not assumed. A correcting swap trades until the pool's price net of the fee meets the price at which it can hedge, at the instant it decides; the offset from $T_b$ that minimises this residual is $L$: 1.5 s on mainnet, where arbitrageurs re-price bundles until the proposer takes the winning bid, and 0.75 s on Arbitrum (Figure 7 in Appendix B; Appendix G.1). One instant per block makes the score position-invariant: a clock derived from a transaction's index would be set by whoever orders the block, and could be sold (Appendix B). Where $N$ blocks share a timestamp $S$ in whole seconds, the block of rank $j' = 0, \dots, N-1$ is placed at $S + (j' + \tfrac12)/N$, and the error of at most $\pm 1/(2N)$ s is absorbed by a one-second scoring window.
+where $T_b$ is the block's timestamp, $L$ is the pool's decision latency, measured from correcting swaps (§3.2), $\Delta_{0,j}$ and $\Delta_{1,j}$ are the amounts of tokens 0 and 1 the pool receives from swap $j$ (negative when it pays out), fees included, and $\hat P_j = P_{\mathrm{dir}}(t^*_b)$ is the price of token 1 in token 0 at the touch: the liquidity-weighted bid when the pool sells the risky asset, the ask when it buys it (Chainlink, n.d.). $Q_{\mathrm{LP},j}\, v_j$ is the swap's gain to LPs, negative for losses. One instant per block makes the score independent of position in the block. Where $N$ blocks share a timestamp $S$, the block of rank $j' = 0, \dots, N-1$ is placed at $S + (j' + \tfrac12)/N$ of the timestamp's resolution, and the error is absorbed by a scoring window of width $\Delta_{\mathrm w}$ around $t^*_b$.
 
 ### 4.3 The fee term
 
@@ -119,33 +119,41 @@ Stake buys coverage of volume within the epoch:
 f(r, V) = f_{\min} + (f_{\max} - f_{\min})\, e^{-s\, r/(\rho V)}, \qquad r^*(f) = \frac{\rho V}{s} \ln\frac{f_{\max} - f_{\min}}{f - f_{\min}} \tag{3}
 ```
 
-where $\rho > 0$ is the capacity scale, which measures stake in units of volume and also sets the base parking rate (9); $s > 0$ is the curve's steepness, so that stake worth $\rho V / s$ cuts the premium above $f_{\min}$ by a factor $e$; and $r^*(f)$ is the stake needed to trade volume $V$ at fee $f$. Steepness sets who the curve favours. A steeper curve ($s > 1$) lets each unit of stake buy more discounted volume, which makes holding REP more attractive to arbitrageurs but lets their charges outrun the stake that must cover them; a milder one ($s < 1$) protects LPs with more stake per unit of volume, but stalls correctors sooner when volume rises (Figure 2b). Measured on mainnet, no steepness avoids both failures under shocks, while hourly epochs do (Appendix C), so the design keeps $s$ = 1. We use $f_{\min}$ = 3 bp, $f_{\max}$ = 1,000 bp and $\rho$ = 5 bp (§5.2, §5.4, Appendix C). The curve (Figure 2) is convex and decreasing in $r$, which discourages concentration; it approaches $f_{\min}$, so LPs always earn a floor; and it depends only on the coverage ratio $r/(\rho V)$, not on wealth. Coverage renews when parked stake is released at each epoch's end, so hourly epochs let the same stake cover 24 times the daily volume that daily epochs would (§5.4).
+where $\rho > 0$ is the capacity scale, which measures stake in units of volume and also sets the base parking rate (9); $s > 0$ is the curve's steepness, so that stake worth $\rho V / s$ cuts the premium above $f_{\min}$ by a factor $e$; and $r^*(f)$ is the stake needed to trade volume $V$ at fee $f$. The curve (Figure 2) is convex and decreasing in $r$, approaches $f_{\min}$, and depends only on the coverage ratio $r/(\rho V)$. Coverage renews when parked stake is released at each epoch's end.
 
-A fresh account has $r = 0$ and pays $f_{\max}$; nothing it owes after the block can be collected. Against a gap $g$ in a pool of depth $D$ per unit of log price, with its own cost rate $h$, it takes $D\,(g - f_{\max} - h)^2/2$ (Appendix G.2). $f_{\max}$ is therefore sized to the largest shock the pool must withstand, and by (3) the stake needed to escape it grows only with $\ln f_{\max}$.
+A fresh account has $r = 0$ and pays $f_{\max}$; nothing it owes after the block can be collected. Against a gap $g$ in a pool of depth $D$ per unit of log price, with its own cost rate $h$, it takes
+
+```math
+x^{\mathrm{fresh}}(g) = \tfrac{1}{2} D\, \big(\max(g - f_{\max} - h,\ 0)\big)^2 ,
+```
+
+so $f_{\max}$ is sized to the largest shock the pool must withstand, and by (3) the stake needed to escape it grows only with $\ln f_{\max}$.
 
 ![Coverage curve](figures/fig_coverage_curve.png)
 
-*Figure 2. The coverage curve (3): (a) for three fee bands at steepness $s$ = 1; (b) for the design band at steepnesses from 0.25 to 8.*
+*Figure 2. The coverage curve (3): (a) for three fee bands at a fixed steepness; (b) for one band across steepnesses.*
 
 ### 4.4 The charge term
 
-Correcting the pool is a job with a cost — a hedge on the external venue, its fees, inventory risk and gas — and in a competitive market that cost, not the size of the gap, is its price. A correcting swap is paid an allowance $m$ per unit of volume and charged what it gains beyond it. For swap $j$ with fee $f_j$, let $p(u)$ be the pool's marginal price after its first $u \in [0, v_j]$ units, and $\eta_j = \operatorname{sgn} \ln(\hat P_j / p(0))$ the direction of mispricing; the swap is correcting if it moves $p$ in direction $\eta_j$. Its marginal edge and charge are
+A correcting swap is paid an allowance $m$ per unit of volume and charged what it gains beyond it. For swap $j$ with fee $f_j$, let $p(u)$ be the pool's marginal price after its first $u \in [0, v_j]$ units, and $\eta_j = \operatorname{sgn} \ln(\hat P_j / p(0))$ the direction of mispricing; the swap is correcting if it moves $p$ in direction $\eta_j$. Its marginal edge is
 
 ```math
 \mathrm{edge}_j(u) = \max\!\big(\eta_j \ln(\hat P_j / p(u)) - f_j - \varepsilon,\; 0\big) \tag{4a}
 ```
 
+and its charge, and what it keeps, are
+
 ```math
 C_j = \int_0^{v_j} \Big[\mathrm{edge}_j(u) - (1 - \lambda a_j)\,\min\big(\mathrm{edge}_j(u), m\big)\Big]\, du, \qquad K_j = \int_0^{v_j} \mathrm{edge}_j(u)\, du - C_j \tag{4b}
 ```
 
-where $K_j$ is what the swap keeps (Figure 3). Each unit keeps at most $m$ of its own edge, so the corrector stops at the band of width $f_j + \varepsilon$ around the benchmark; capping the trade's average edge instead would pay it to overshoot (Appendix F.1), and per-unit judging makes splitting pointless. $a_j \in [0, 1]$ is the share of the block's *protected* retail volume — swaps that do not correct the pool and pay a priority fee at most the epoch's 90th percentile — executed before swap $j$; the penalty $\lambda$, 0.25 in our simulations, charges a correction for letting retail trade at the stale price first. The tolerance is $\varepsilon \approx \max(\lvert\text{bias}\rvert, 2\sigma_o)$, where $\sigma_o$ is the standard deviation of the oracle's random error: 0.5 bp (§5.6). Since every swap in the block is scored at the same $t^*_b$, an arbitrageur with cost rate $h$ that pays $\beta_j$ for position earns $K_j - h v_j - \beta_j \ge 0$ only if
+where $a_j \in [0, 1]$ is the share of the block's *protected* retail volume executed before swap $j$; protected swaps do not correct the pool and pay a priority fee at most the epoch's $q_{\mathrm p}$-quantile, so that protection cannot be bought by bidding. Each unit keeps at most $m$ of its own edge, so the corrector stops at the band of width $f_j + \varepsilon$ around the benchmark, and splitting a trade changes nothing (Figure 3). Since every swap in the block is scored at the same $t^*_b$, an arbitrageur with cost rate $h$ that pays $\beta_j$ for position earns $K_j - h v_j - \beta_j \ge 0$ only if
 
 ```math
 \beta_j \;\le\; (m - h)\, v_j ,
 ```
 
-so what it can bid for position — \$6.57 M paid to builders on mainnet in our sample (§5.2) — is bounded by the allowance, which (6) drives toward $h$. The allowance includes the corrector's gas: reimbursing gas separately would pay native token against a charge in the pool's tokens (Appendix F.2).
+so what it can bid for position is bounded by the allowance, which (6) drives toward $h$. The allowance includes the corrector's gas (Appendix F.2).
 
 ![Payout rule](figures/fig_payout_rule.png)
 
@@ -153,80 +161,63 @@ so what it can bid for position — \$6.57 M paid to builders on mainnet in our 
 
 ### 4.5 The allowance
 
-$m$ should equal the competitive cost of correction, which is private and changes over time; BRO-AMM discovers it by feedback from reconciliation, as EIP-1559 sets the base fee from demand for block space (Roughgarden 2020). A block $b$ is *correctable* if $\lvert\ln(\hat P_b/p_b)\rvert > f + m + \varepsilon$, where $p_b$ is the pool's price at the start of the block and $\hat P_b$ the block's benchmark. With $\pi_b \in [0,1]$ the share of its transactions ordered before the first swap that leaves the pool within $f + m + \varepsilon$ of $\hat P_b$, and $\pi^{\mathrm r}_b$ the same share for its earliest protected retail swap (or, if none, the position of the epoch's 75th-percentile retail priority fee), the index and the class of the block are
+The allowance should equal the competitive cost of correction, which is private and changes over time; BRO-AMM discovers it by feedback from reconciliation, as EIP-1559 sets the base fee from demand for block space (Roughgarden 2020). A block $b$ is *correctable* if $\lvert\ln(\hat P_b/p_b)\rvert > f + m + \varepsilon$, where $p_b$ is the pool's price at the start of the block and $\hat P_b$ the block's benchmark. Let $\pi_b \in [0,1]$ be the share of its transactions ordered before the first swap that leaves the pool within $f + m + \varepsilon$ of $\hat P_b$, and $\pi^{\mathrm r}_b$ the same share for its earliest protected retail swap, or, if there is none, for a swap paying the epoch's $q_{\mathrm r}$-quantile retail priority fee. The block's index and class are
 
 ```math
 z_b = \ln\big(\pi^{\mathrm r}_b / \pi_b\big), \qquad z_b = -\infty \text{ if no swap closes the gap;} \qquad
 b \text{ is } \begin{cases} \text{stale} & z_b = -\infty \\ \text{late} & z_b < 0 \\ \text{timely} & 0 \le z_b \le \ln\kappa \\ \text{urgent} & z_b > \ln\kappa \end{cases} \tag{5}
 ```
 
-where $\kappa > 1$ separates timely from urgent corrections. Stale blocks show that $m$ is below every active corrector's cost; urgent blocks show a margin that rivals bid for, since a lead over retail costs a payment for position. Late blocks are charged by $\lambda$ in (4b) and do not move $m$. With $n^{\mathrm c}$, $n^{\mathrm s}$ the counts of correctable and stale blocks in hour $H$ or day $d$, and $u_d$ the share of the day's corrected blocks that are urgent, the controller (Figure 4) sets
+where $\kappa > 1$ separates timely from urgent corrections. Stale blocks show that $m$ is below every active corrector's cost; urgent blocks show a margin that rivals bid for. Late blocks are charged by $\lambda$ in (4b) and do not move $m$. Let $n^{\mathrm c}$ and $n^{\mathrm s}$ count correctable and stale blocks over a raise window $H$ or a day $d$, and $u_d$ be the share of the day's corrected blocks that are urgent. The controller sets
 
 ```math
-m \leftarrow 2m \ \text{ hourly, if } n^{\mathrm s}_H \ge 5,\ n^{\mathrm s}_H > 0.02\, n^{\mathrm c}_H ; \qquad
-m \leftarrow \begin{cases} 0.8\, m & \text{daily, if } u_d > \bar u \\ 0.95\, m & \text{daily, if } u_d \le \bar u,\ n^{\mathrm s}_d < 0.01\, n^{\mathrm c}_d \end{cases} \tag{6}
+m \leftarrow \chi_{\uparrow}\, m \ \text{ after each window } H \text{ if } n^{\mathrm s}_H \ge n_{\min} \text{ and } n^{\mathrm s}_H > q_{\mathrm s}\, n^{\mathrm c}_H ; \qquad
+m \leftarrow \begin{cases} \chi_{\mathrm u}\, m & \text{daily, if } u_d > \bar u \\ \chi_{\mathrm c}\, m & \text{daily, if } u_d \le \bar u \text{ and } n^{\mathrm s}_d < q_{\mathrm c}\, n^{\mathrm c}_d \end{cases} \tag{6}
 ```
 
-where $\bar u$ is a threshold on the urgent share; $m$ starts from a value $m_0$ and stays within [0.02, 50] bp. Our simulations use $\kappa$ = 2 and $\bar u$ = 0.5. It raises fast and lowers slowly because a stale pool harms users at once. Staleness is judged by a block's outcome, not its first swap, so an adversarial ordering cannot manufacture it (Appendix G.3); priority fees are not used, since they miss payments made to builders outside the transaction. On a chain that orders by arrival, a lead is won by latency rather than payment, and the condition $u_d > \bar u$ is replaced by $K_d \ge K_{\min}$, the number of senders with at least 5% of the day's corrections (Appendix I).
-
-```mermaid
-flowchart TB
-  B[Settled block] --> Z{Block-position index, eq. 5}
-  Z -->|stale| S[Hourly stale count]
-  Z -->|late| P[Late-fix penalty λ in charge, eq. 4b]
-  Z -->|urgent| U[Daily share of urgent blocks]
-  Z -->|timely| U
-  S -->|many stale blocks| R[m ← 2m]
-  U -->|share above ū| D1[m ← 0.8 m]
-  U -->|calm, few stale| D2[m ← 0.95 m]
-  R --> M[(Allowance m)]
-  D1 --> M
-  D2 --> M
-  M -->|next blocks| C[Charge, eq. 4b]
-```
-
-*Figure 4. The allowance controller (6). Stale blocks raise $m$ hourly; urgent blocks, where correctors pay for position, lower it daily; late corrections are charged rather than used as a signal.*
+with $\chi_{\uparrow} > 1 > \chi_{\mathrm c} > \chi_{\mathrm u}$, so that it raises fast and lowers slowly, minimum stale count $n_{\min}$, stale-share thresholds $q_{\mathrm s}$ and $q_{\mathrm c}$, urgent-share threshold $\bar u$, and $m$ kept within $[m_{\min}, m_{\max}]$ from a starting value $m_0$. Staleness is judged by a block's outcome, not its first swap, so an adversarial ordering cannot manufacture it (Appendix G.3). On a chain that orders transactions by arrival, the condition $u_d > \bar u$ becomes $K_d \ge K_{\min}$, where $K_d$ counts the senders with at least a share $q_{\mathrm k}$ of the day's corrections (Appendix I).
 
 ### 4.6 The rebate term
 
-Each epoch compares the pool's income with the LPs' target cumulatively, and mints REP only from income above the best cumulative result of the last $W$:
+The rebate is built up in four steps. An epoch's income to the LPs is the pool's gain on its swaps at the benchmark, fees included, plus the charges it recaptured:
+
+```math
+N_i = \sum_{j \in \text{epoch } i} \big(Q_{\mathrm{LP},j}\, v_j + C_j\big). \tag{7a}
+```
+
+Measured against the target $\theta^*$ on the epoch's volume $V_i$, income accumulates into a running excess $G_i$, whose best value over the last $W$ epochs is the high-water mark $H_{i-1}$:
+
+```math
+G_i = \sum_{k \le i} \big(N_k - \theta^* V_k\big), \qquad H_{i-1} = \max_{\max(0,\, i - W) \,\le\, k \,\le\, i-1} G_k, \qquad G_0 = 0. \tag{7b}
+```
+
+The epoch's surplus is the part of the running excess above that mark, so a shortfall must be recovered before new surplus mints, unless it is older than $W$ epochs:
+
+```math
+\Delta S_i = \max\big(G_i - H_{i-1},\ 0\big). \tag{7c}
+```
+
+Finally, each account's excess $O_{a,i}$ is what it paid above the target on its own volume, and it receives REP for it after the take $\tau$, scaled down pro rata when the surplus is smaller than all accounts' excess:
+
+```math
+O_{a,i} = \max\Big(\sum_{j \in \mathcal J_{a,i}} \big(Q_{\mathrm{LP},j}\, v_j + C_j\big) - \theta^* V_{a,i},\ 0\Big), \qquad
+M_{a,i} = \frac{1 - \tau}{P_{\mathrm{int}}}\; O_{a,i}\, \min\!\Big(1,\ \frac{\Delta S_i}{\sum_{a'} O_{a',i}}\Big). \tag{7d}
+```
+
+Surplus beyond the accounts' excess, such as charges, stays with the LPs, and the take $\tau$ funds a per-pool reserve $\Omega_i$.
+
+REP is issued in no other way than by swaps: as these rebates, and as prepayments, an overpayment an account declares in a swap to acquire REP at par (10). The backing of every unit is held in a per-pool escrow $E_i$, one balance per token. It is released to the LPs present when REP is burned for a charge, through the pool manager's `donate`, which credits in-range liquidity pro rata, or to the holder when REP is redeemed. With $M_i = \sum_a M_{a,i}$ the units rebated, $A_i$ the units prepaid, $B_i$ the units burned for charges, $\Xi_i$ the units redeemed, and $R_0$ an initial issuance at deployment backed by $P_{\mathrm{int}}$ per unit, the outstanding REP $R_i$ and the escrow evolve together:
 
 ```math
 \begin{aligned}
-N_i &= \sum_{j \in \text{epoch } i} \big(Q_{\mathrm{LP},j}\, v_j + C_j\big), \quad G_i = \sum_{k \le i} (N_k - \theta^* V_k), \quad H_{i-1} = \max_{i - W \le k \le i-1,\ k \ge 0} G_k, \quad \Delta S_i = \max(G_i - H_{i-1}, 0), \\
-M_{a,i} &= \frac{1 - \tau}{P_{\mathrm{int}}}\; O_{a,i}\, \min\!\Big(1,\ \frac{\Delta S_i}{\sum_{a'} O_{a',i}}\Big), \qquad O_{a,i} = \max\Big(\sum_{j \in \mathcal J_{a,i}} \big(Q_{\mathrm{LP},j}\, v_j + C_j\big) - \theta^* V_{a,i},\ 0\Big)
-\end{aligned} \tag{7}
+R_i &= R_{i-1} + M_i + A_i - B_i - \Xi_i, \\
+E_i &= E_{i-1} + P_{\mathrm{int}}\,\big(M_i + A_i - B_i - \Xi_i\big), \qquad E_0 = P_{\mathrm{int}}\, R_0,
+\end{aligned} \tag{8}
 ```
 
-with $G_0 = 0$, where $N_i$ is the LPs' gain at the benchmark in epoch $i$, fees included, plus charges; $V_k$ is the pool's volume in epoch $k$; $G_i$ is the cumulative income above the target; $H_{i-1}$ is its high-water mark over the last $W$ epochs; $\Delta S_i$ is the epoch's surplus; and $O_{a,i}$ is an account's payment above the target on its own volume. We use $\theta^*$ = 1.5–2 bp, near the LPs' realised take on mainnet, and $\tau$ = 2.5% (Appendix E). A shortfall must be recovered before new surplus mints, unless it is older than $W$ = 30 days, so traders are not denied rebates indefinitely; surplus beyond the accounts' excess, such as charges, stays with the LPs. The take $\tau$ funds the per-pool reserve $\Omega_i$.
+so that $E_i = P_{\mathrm{int}}\, R_i$ in every epoch: outstanding REP is always fully backed, whatever its source (Theorem 1 in Appendix E). Escrow also makes minting against one's own pool unprofitable for an LP at any share of liquidity (Proposition 1).
 
-REP is issued in no other way than by swaps: as the rebates of (7), and as prepayments, an overpayment an account declares in a swap to acquire REP at par (10). The backing of every unit is held in a per-pool escrow $E_i$, one balance per token, and released to the LPs present when REP is burned for a charge, through the pool manager's `donate`, which credits in-range liquidity pro rata at constant gas, or to the holder when REP is redeemed. With $M_i = \sum_a M_{a,i}$ the units rebated, $A_i$ the units prepaid, $B_i$ the units burned for charges, $\Xi_i$ the units redeemed, $R_i$ the outstanding REP and $R_0$ an initial issuance at deployment backed by $P_{\mathrm{int}}$ per unit,
-
-```math
-R_i = R_{i-1} + M_i + A_i - B_i - \Xi_i, \qquad E_i = E_{i-1} + P_{\mathrm{int}}\,(M_i + A_i - B_i - \Xi_i), \qquad E_0 = P_{\mathrm{int}}\, R_0, \qquad \text{hence } E_i = P_{\mathrm{int}}\, R_i \tag{8}
-```
-
-so outstanding REP is always fully backed, whatever its source (Theorem 1 in Appendix E), and a unit's value never depends on the pool's principal (Figure 5). Escrow also closes minting by LPs against their own pool. Without it, an LP holding a share $\phi$ of active liquidity could wash volume through a fresh account at $f_{\max}$, receive $\phi$ of the overpayment back as fees and mint REP against the rest; at $f_{\max}$ = 1,000 bp this pays once $\phi$ exceeds about 2.7%. With escrow the overpayment backs the REP instead of returning to its sender, and the wash loses money at any share (Proposition 1).
-
-```mermaid
-flowchart TB
-  X[Income above<br/>high-water mark, eq. 7] -->|1 − τ| E[(Escrow, eq. 8)]
-  X -->|τ| R[(Reserve)]
-  X -->|rebate at internal rate| T[REP]
-  Y[Prepayment in a swap, eq. 10] -->|internal rate per unit| E
-  Y --> T
-  I[Initial issuance] -->|internal rate per unit| E
-  I --> T
-  T -->|staked| F[Lower fee, eq. 3]
-  T -->|burned for a charge| E
-  E -->|internal rate per unit burned,<br/>via donate| LP[LPs in range]
-  T -->|redeemed, no settlement pending| E
-  E -->|internal rate per unit redeemed| H[Holder]
-```
-
-*Figure 5. Value flows of REP (7), (8) and (10). Every unit outstanding has $P_{\mathrm{int}}$ in escrow, whether it was rebated, prepaid or issued at deployment.*
-
-### 4.7 Collateral, epochs and shocks
+### 4.7 Collateral and bonds
 
 Only staked REP affects fees, which precludes flash-renting the discount. Swap $j$ parks part of its sender's stake until settled, and its charge is collected in a fixed order:
 
@@ -234,71 +225,77 @@ Only staked REP affects fees, which precludes flash-renting the discount. Swap $
 \ell_j = \rho + k\,\Delta_{\mathrm{block}}, \qquad C_j \ \text{collected from} \ \underbrace{\ell_j v_j}_{\text{parked}} \;\to\; \underbrace{r_a - \textstyle\sum \ell v}_{\text{rest of stake}} \;\to\; \underbrace{\Omega_i}_{\text{reserve}} \tag{9}
 ```
 
-where $\ell_j$ is the parked share of the swap's volume, $k \ge 0$ the parking speed and $\Delta_{\mathrm{block}}$ the pool's price move so far in the block, so corrections after a jump park more; splitting cannot reduce it, whereas rules keyed to trade size can be split around. Stake cannot be withdrawn while settlements are pending, and charges are never taken from other traders' stake. Parked stake returns at each epoch's end, so within an epoch an account's stake bounds both its discounted volume (3) and the charges it can absorb, and across epochs the same stake is reused. A pool may also accept liquidity only in predefined ranges and lock it until its epoch is reconciled, so that a large share of active liquidity cannot be taken briefly with little capital.
+where $\ell_j$ is the parked share of the swap's volume, $k \ge 0$ the parking speed and $\Delta_{\mathrm{block}}$ the pool's price move so far in the block, so corrections after a jump park more and splitting cannot reduce what is parked. Stake cannot be withdrawn while settlements are pending, and charges are never taken from other traders' stake. Parked stake returns at each epoch's end, so within an epoch an account's stake bounds both its discounted volume (3) and the charges it can absorb. A pool may also accept liquidity only in predefined ranges and lock it until its epoch is reconciled.
 
-**Bonds in a swing.** Staked REP is a performance bond: an honest corrector's stake is parked and returned every epoch, and only its charges burn it. Within an epoch, everything an arbitrageur corrects must be bonded at once, and in a market swing correction volume rises faster than stake held for calm markets, so coverage falls, the fee (3) rises towards $f_{\max}$ and gaps below it stay open just when they are largest. Charges also burn REP continuously, several times faster than surplus rebates it (§5.4). An account therefore tops up its bond by prepaying, and takes back what it does not need by redeeming:
+Staked REP is thus a performance bond: an honest corrector's stake is parked and returned every epoch, and only its charges burn it. An account tops up its bond by prepaying and takes back what it does not need by redeeming:
 
 ```math
-\text{prepay } X_a:\ R_a \leftarrow R_a + X_a / P_{\mathrm{int}},\ E \leftarrow E + X_a ; \qquad
-\text{redeem } \xi \le R_a \text{ once no settlement of } a \text{ is pending}:\ R_a \leftarrow R_a - \xi,\ E \leftarrow E - P_{\mathrm{int}}\,\xi \tag{10}
+\begin{aligned}
+\text{prepay } X_a &:\quad R_a \leftarrow R_a + X_a / P_{\mathrm{int}}, \qquad E \leftarrow E + X_a, \\
+\text{redeem } \xi \le R_a \text{ once no settlement of } a \text{ is pending} &:\quad R_a \leftarrow R_a - \xi, \qquad E \leftarrow E - P_{\mathrm{int}}\,\xi,
+\end{aligned} \tag{10}
 ```
 
-where $R_a$ is the REP the account holds, $X_a$ an overpayment in token 0 it declares in a swap, and $\xi$ the units it redeems. A prepayment mints at par: the account funds the whole backing, so neither the take $\tau$ nor the high-water mark applies, and (8) holds. A markup on prepayment would tax correction itself, and in simulation a markup of 1% already leaves users trading at staler prices than today (§5.4). Redemption waits until the account has no settlement pending, so REP cannot leave before the charges it bonds are settled; a fixed exit delay would instead have to exceed the epoch plus the worst keeper lag. An arbitrageur prepays $r^*(f) - R_a$ of (3) for the fee it wants, so the bond outstanding grows with the swing and contracts after it: under shocks four times the market's it peaks at \$1.12 M on mainnet (§5.4).
+where $R_a$ is the REP the account holds, $X_a$ an overpayment in token 0 it declares in a swap, and $\xi$ the units it redeems. A prepayment mints at par: the account funds the whole backing, so neither the take $\tau$ nor the high-water mark applies, and (8) holds. Redemption waits until the account has no settlement pending, so REP cannot leave before the charges it bonds are settled. An arbitrageur prepays $r^*(f) - R_a$ of (3) for the fee it wants, so the bond outstanding grows with a market swing and contracts after it.
 
-**Shock absorption.** Table 2 traces each kind of shock through (1).
+Table 2 traces each kind of shock through (1).
 
 | Shock | Effect on (1) | Absorbed by |
 |:-----|:-------|:----------|
 | Price jump | edge (4a) rises | charge (4b) above $m$; parking $\ell_j$ rises with $\Delta_{\mathrm{block}}$ (9) |
-| Volume surge | coverage $r/(\rho V)$ falls, fee (3) rises toward $f_{\max}$ | bond topped up by prepayment at par (10); hourly epochs renew coverage 24 times a day (§5.4) |
+| Volume surge | coverage $r/(\rho V)$ falls, fee (3) rises toward $f_{\max}$ | bond topped up by prepayment at par (10); coverage renewed every epoch |
 | Unstaked extraction | fee $f_{\max}$, charge uncollectable | $f_{\max}$ above the largest shock (3) |
-| Corrector costs rise or correctors leave | stale blocks (5) | $m \leftarrow 2m$ hourly (6) |
+| Corrector costs rise or correctors leave | stale blocks (5) | $m$ raised by $\chi_{\uparrow}$ (6) |
 | Charges beyond stake | (9) exhausts stake | reserve $\Omega_i$, funded by $\tau$ |
 | No arbitrage stake held in advance | every correction at $f_{\max}$ | bond prepaid at par (10) |
-| Epochs below the LPs' target | $G_i$ falls | high-water mark: no minting until recovered (7) |
+| Epochs below the LPs' target | $G_i$ falls | high-water mark: no minting until recovered (7c) |
 | Demand for REP falls | holders want to exit | redemption at par from escrow (8), (10) |
-| Oracle error | $\hat P_j$ off | tolerance $\varepsilon$ (4a); prices agreed after finality (§4.10) |
+| Oracle error | $\hat P_j$ off | tolerance $\varepsilon$ (4a); prices agreed after finality (§6.1) |
 
 *Table 2. Shocks and the terms of (1) that absorb them.*
 
-### 4.8 REP's market price
+### 4.8 REP's price
 
-Charges burn REP at $P_{\mathrm{int}}$, and prepayment and redemption both convert REP to and from its backing at $P_{\mathrm{int}}$, so its market price $P_{\mathrm{mkt}}$ stays within their costs of par:
+Charges burn REP at $P_{\mathrm{int}}$, and prepayment and redemption convert REP to and from its backing at $P_{\mathrm{int}}$, so its market price $P_{\mathrm{mkt}}$ stays within their costs of par:
 
 ```math
 P_{\mathrm{int}} - c_{\mathrm{r}} \;\le\; P_{\mathrm{mkt}} \;\le\; P_{\mathrm{int}} + c_{\mathrm{p}} \tag{11}
 ```
 
-where $c_{\mathrm{p}}$ is the cost of a prepayment, its gas, and $c_{\mathrm{r}}$ the cost of redeeming, its gas and the wait until the holder's settlements are done. Above the band, an account that needs REP prepays rather than buying; below it, a holder redeems rather than selling. Demand does not push the price above par even when arbitrageurs anticipate a swing: they can only prepay more, which adds backed bonds rather than bidding up a fixed supply. The reserve, funded by the take $\tau$ on rebates, covers charges beyond an account's stake (9) and the pool's maintenance; it needs no market operations to hold the price.
+where $c_{\mathrm{p}}$ is the cost of a prepayment and $c_{\mathrm{r}}$ the cost of a redemption, including the wait until the holder's settlements are done. Above the band an account prepays rather than buying; below it a holder redeems rather than selling. The reserve covers charges beyond an account's stake (9) and the pool's maintenance.
 
-### 4.9 Settlement, gas and deployment
+### 4.9 Settlement and gas
 
-The hook extends each swapper's record — post-trade price, active liquidity and token deltas, chained by hash — so that an account's unsettled swaps form a self-contained segment. An account may settle itself at any time, which releases its parked stake; at each epoch's end a keeper settles every account still in flight, and both paths advance the same pointer. Flights unsettled when the oracle's retention window expires are burned in full. Every swap prefunds $\gamma \times$ `block.basefee` into a gas tank, where $\gamma$ is a fixed number of gas units, in the native token and without any exchange rate, from which keepers are reimbursed with an escalating bounty, directly or through an ERC-4337 paymaster (Buterin et al. 2021); one tank can serve many pools. Settlement is never forced into the current block, and its per-swap work — a multiply-add against a verified price, a comparison and a state write — is smaller than the swap's; §5.7 measures it. Because reconciliation is not time-critical, its prices can pass through consensus first, for instance co-signed by LPs and stakers (Appendix G.4). Where charges are proven off-chain, a designated leader avoids duplicated proving; it cannot alter a charge, which the record and the signed prices fix.
-
-At deployment no account holds REP unless the pool makes an initial issuance $R_0$, each unit backed by $P_{\mathrm{int}}$ deposited in escrow so that (8) holds from the first epoch. Arbitrageurs bond by prepaying at par (10), so a pool needs no appointed arbitrageurs, and an initial issuance only spares early holders a first prepayment; charges consume it within weeks in calm markets and within days under shocks (§5.4). Every unit must be backed: REP issued without its $P_{\mathrm{int}}$ in escrow releases nothing to the LPs when it is burned for a charge. Benign flow reaches the pool through intermediaries — routers, solvers, RFQ desks — that hold stake and pass the discount on. By (3), a router with benign flow minimises its cost at a stake of 0.6–0.9% of its volume per epoch, and its premium over $f_{\min}$, including a 10% cost of capital and an expected 50% annual loss on REP's price, stays below 0.12 bp for $f_{\max}$ between 500 and 2,000 bp (Appendix G.5). It cannot avoid the toxicity of its own flow: the charge is computed per correcting swap, not per account, so an intermediary cannot net customers' overpayments against its own extraction. The protocol never identifies arbitrageurs; arbitrage is a role carried by a swap.
+The hook extends each swapper's record — post-trade price, active liquidity and token deltas, chained by hash — so that an account's unsettled swaps form a self-contained segment. An account may settle itself at any time, which releases its parked stake; at each epoch's end a keeper settles every account still in flight, and both paths advance the same pointer. Flights unsettled when the oracle's retention window expires are burned in full. Every swap prefunds $\gamma \times$ `block.basefee` into a gas tank, where $\gamma$ is a fixed number of gas units, in the native token and without any exchange rate; keepers are reimbursed from it with an escalating bounty, directly or through an ERC-4337 paymaster (Buterin et al. 2021), and one tank can serve many pools. Settlement is never forced into the current block. Where charges are proven off-chain, a designated leader avoids duplicated proving; it cannot alter a charge, which the record and the signed prices fix. At deployment, a pool may make an initial issuance $R_0$ of REP, each unit backed by $P_{\mathrm{int}}$ in escrow; REP issued without backing would release nothing to the LPs when burned for a charge.
 
 ### 4.10 Assumptions and threat model
 
-- **A1 (oracle).** Signed bid and ask prices exist for every block, are retained for about a month, and are correct up to a bias and noise bounded by $\varepsilon$ (§5.6); a compromised oracle is outside the model. No swap reads the oracle at execution.
+- **A1 (oracle).** Signed bid and ask prices exist for every block, are retained for longer than settlement takes, and are correct up to a bias and noise bounded by $\varepsilon$; a compromised oracle is outside the model. No swap reads the oracle at execution.
 - **A2 (chain).** The hook executes atomically with the swap and the chain exposes its base fee; reorganisations beyond finality are not considered.
 - **A3 (ordering).** No ordering is assumed to be honest. The only ordering property used is whether a chain runs builder auctions or a first-come-first-served sequencer (§4.5).
 - **A4 (arbitrage).** Arbitrageurs are rational, with private, time-varying costs; at least one is active, and competition among them is not assumed.
 - **A5 (liveness).** At least one keeper settles each epoch before its deadline.
-- **A6 (operation).** Each pool has an operator that maintains its oracle relationship and signing, monitors its security, and may change $f_{\max}$, $\rho$, $\theta^*$, $\tau$, $\varepsilon$, $L$ and the controller's thresholds only within ranges fixed at deployment and after a delay long enough for LPs to exit; it cannot move funds, alter a recorded swap or charge, or mint REP outside (7).
+- **A6 (operation).** Each pool has an operator that maintains its oracle relationship and signing, monitors its security, and may change $f_{\max}$, $\rho$, $\theta^*$, $\tau$, $\varepsilon$, $L$ and the controller's thresholds only within ranges fixed at deployment and after a delay long enough for LPs to exit; it cannot move funds, alter a recorded swap or charge, or mint REP outside (7) and (10).
 
-**Oracle risk under finality.** Most oracle failures in DeFi happen at the instant of use: a lending market liquidates, or an oracle-priced exchange fills, against a price that was manipulated, stale or wrong for seconds, and the loss is final before anyone can check it. BRO-AMM never acts on the oracle at that instant. A swap executes on the pool's own curve, and the signed price enters only at reconciliation, after the block is final and the reports are retained, so a batch can be compared with other sources, co-signed by the parties it affects, or held through a challenge window before it settles (Appendix G.4). Moving a spot market for a block does not move a signed external benchmark, and a feed that is briefly wrong can be caught before it counts. A price that stays wrong through every check only misallocates charges and rebates within the stake posted: under-charging leaves LPs where today's AMMs leave them, and over-charging takes from stake, not from the pool.
-
-The adversary may be any trader, LP, arbitrageur, builder, sequencer or keeper, or a coalition of them; it may create any number of accounts, split trades, buy position and trade REP, and an LP may trade against its own pool to mint REP and then withdraw (§4.6). Accounts carry no identity, and a new account pays $f_{\max}$. The mechanism aims for five properties: a swap's score does not depend on its position in the block (G1, by (2)); splitting a trade reduces neither its charge nor its parked stake (G2, by (4b) and (9)); charges are collected from stake posted before the trade, otherwise from the reserve, never from another trader (G3, by (9)); outstanding REP is always backed in escrow (G4, by (8)); and no keeper can alter a charge (G5). Contract bugs and relational attacks such as sandwiches, which per-swap scoring cannot see, are outside the model.
+The adversary may be any trader, LP, arbitrageur, builder, sequencer or keeper, or a coalition of them; it may create any number of accounts, split trades, buy position and trade REP, and an LP may trade against its own pool to mint REP and then withdraw. Accounts carry no identity, and a new account pays $f_{\max}$. The mechanism aims for five properties: a swap's score does not depend on its position in the block (G1, by (2)); splitting a trade reduces neither its charge nor its parked stake (G2, by (4b) and (9)); charges are collected from stake posted before the trade, otherwise from the reserve, never from another trader (G3, by (9)); outstanding REP is always backed in escrow (G4, by (8)); and no keeper can alter a charge (G5). Contract bugs and relational attacks such as sandwiches, which per-swap scoring cannot see, are outside the model.
 
 ## 5. Results
 
-### 5.1 Decision latency and scoring validity
+### 5.1 Scoring validity
 
-The decision latency $L$ is 1.5 s (Figure 7 in Appendix B); scoring at the block timestamp instead would turn mainnet's measured LP loss of \$1.58 M into an apparent gain of \$5.26 M. Against labels that use no prices, retail aggregators as benign and repeat top-of-block searchers as toxic, $Q_{\mathrm{LP}}$ separates the classes with an area under the ROC curve (AUC) of 0.889, and 0.983 for the largest swaps; against a position-free label, any non-router sender with at least 100 swaps, the AUC is 0.704 (0.971 for the largest swaps), lower because the label admits benign repeat senders (Figure 8 in Appendix B). Builders sell position, and 61% of extraction occurs in the first three positions of a block; most corrections lead retail by more than a factor of two (Figures 9–10 in Appendix B).
+$Q_{\mathrm{LP}}$ at the measured decision instant separates extraction from benign flow on labels that use no prices (Figures 5–8 in Appendix B).
+
+| Mainnet, March–August 2026 | Value |
+|---|---|
+| Decision latency $L$ | 1.5 s |
+| LPs' net loss, scored at $t^*$ / at the block timestamp | −\$1.58 M / +\$5.26 M |
+| AUC, position labels (retail aggregators against repeat top-of-block searchers) | 0.889 (largest swaps 0.983) |
+| AUC, position-free label (any non-router sender with at least 100 swaps) | 0.704 (largest swaps 0.971) |
+| Share of extraction in a block's first three positions | 61% |
+
+*Table 3. Scoring validity. Scoring at the block timestamp turns the LPs' measured loss into an apparent gain; the position-free label admits benign repeat senders, which lowers its AUC.*
 
 ### 5.2 BRO-AMM against today's pool
-
-Because LPs keep most of what arbitrage took, a BRO-AMM pool can charge less than the pool it replaces and still leave its LPs better off. Table 3 compares today's 5 bp pool with BRO-AMM two fee units below it, at 3 bp, with urgency measured by block position (§4.5). Every correcting swap is charged under (4b), users' included, as the mechanism specifies. Retail reaches the pool through an intermediary holding REP (§4.9), so retail's price is the fee, plus the charges that today's retail-aggregator flow would incur on its own accidental corrections, measured on the data (Appendix G.5), plus the router's cost of holding REP; a stale price is not counted, since uninformed flow meets it in either direction.
 
 | Six months, stable costs | Today, 5 bp | BRO-AMM, 3 bp |
 |---|---|---|
@@ -312,46 +309,64 @@ Because LPs keep most of what arbitrage took, a BRO-AMM pool can charge less tha
 | Charged to other correcting swaps | — | \$1.96 M |
 | Blocks ending within the band | 99.54% | 99.96% |
 
-*Table 3. Today's pool against BRO-AMM at a lower fee, Ethereum mainnet. Retail's charges and holding cost are upper bounds: charges are measured against the mid price on today's, staler flow, and holding assumes daily epochs and an expected 50% annual loss on REP's price.*
-
-In every cost scenario, LPs end ahead of today by \$5.76–6.52 M, retail pays about 1.7 bp less, users trade against fresher prices, arbitrageurs' payments to builders fall by 83–86%, and the pool is as well rebalanced as today. Arbitrageurs keep slightly more than today. Most of what other correcting swaps are charged comes from informed flow that is not arbitrage by our labels: unlabelled flow would pay 7 bp of its volume, retail aggregators 0.1–0.2 bp (Appendix G.5). The sensitivity studies below and in the appendices leave users' corrections uncharged, which understates LPs' result by about \$1.9 M. LPs' net here mints no REP; with a target of 2 bp and the high-water minting of (7), REP rebated to payers above the target would take \$0.30 M of it (Appendix E).
+*Table 4. Today's pool against BRO-AMM two fee units below it, Ethereum mainnet, urgency measured by block position, every correcting swap charged. Retail's price is the fee, plus the charges today's retail-aggregator flow would incur on its own accidental corrections (Appendix G.5), plus the router's cost of holding REP; both are upper bounds. LPs' net mints no REP; at $\theta^*$ = 2 bp, high-water minting would rebate \$0.30 M of it (Appendix E). The studies of Tables 7–12 leave users' corrections uncharged, which understates LPs' result by about \$1.9 M.*
 
 ![Value split](figures/fig_value_split.png)
 
-*Figure 6. Division of the value taken by arbitrage at today's 5 bp fee, stable costs: recaptured for LPs, paid by arbitrageurs for position (to block builders on mainnet), kept by arbitrageurs as margin, or spent on their hedging and gas. Totals and LPs' net position at right.*
+*Figure 4. Division of the value taken by arbitrage at today's 5 bp fee, stable costs: recaptured for LPs, paid by arbitrageurs for position (to block builders on mainnet), kept by arbitrageurs as margin, or spent on their hedging and gas. Totals and LPs' net position at right.*
 
-At today's 5 bp fee the same mechanism moves value rather than creating it: arbitrage takes about as much from the pool as before, but most of what arbitrageurs paid block builders for position is recaptured for LPs, while arbitrageurs' margin is unchanged (Figure 6, Table 6 in Appendix C). If users route away, the pool keeps a share of their flow, and LPs beat today even with none of it, by \$1.24 M in the worst case (Appendix C).
+| Robustness of the lower fee, mainnet | Result |
+|---|---|
+| LPs' gain over today, across the three cost scenarios | \$5.76–6.52 M |
+| Retail's price, across the scenarios | about 1.7 bp below today |
+| Arbitrageurs' payments to builders | 83–86% lower |
+| Lowest fee at which LPs beat today / stay positive | 0.5 bp / 3 bp |
+| LPs' net per unit of liquidity at 3 bp, today's flow / three times today's flow | \$1.41 M / \$1.95 M |
+| At today's 5 bp fee, all users routed away | LPs still beat today by \$1.24 M |
+| Arbitrum, arrival-ordered (Appendix I) | beats today at 4 bp, not at 3 bp |
+| Fixed schedule with the benchmark known exactly: recapture / arbitrage preserved / benign overcharge | 73% / 97–99% / below 0.1 bp |
 
-**How far the fee can fall.** LPs beat today at every fee down to 0.5 bp and stay positive down to 3 bp; if the cheaper quote draws other venues' flow and LPs follow with liquidity, their net per unit of liquidity at 3 bp rises from \$1.41 M to \$1.95 M at three times today's flow (Appendix C). On an arrival-ordered rollup the headroom is narrower: on Arbitrum users already close many small gaps for the fee alone, and the pool beats today at 4 bp but not at 3 bp (Appendix I).
+*Table 5. Sensitivity of the headline (Appendix C, Figure 10). The fixed schedule was selected on March–May and remains the best on June–August.*
 
-**Risks of competing.** LPs' daily result under BRO-AMM varies more than today (standard deviation \$65–66 k against \$32 k), because recapture arrives on volatile days, but its downside is smaller: at 3 bp the worst day loses \$103 k and the worst week \$324 k, against \$211 k and \$722 k today (Appendix C). A lower fee leaves more correctable blocks uncorrected, within the rebalancing constraint. For a router, holding REP costs at most 0.12 bp of its volume, and retail-aggregator flow incurs 0.19 bp of charges at 3 bp, up to 1.6 bp on the worst day; unscreened flow incurs 2–8 bp, so a router's risk is the toxicity of the flow it accepts (Appendix G.5).
+| Daily LPs' result and intermediaries' exposure | Today, 5 bp | BRO-AMM, 3 bp |
+|---|---|---|
+| Standard deviation of LPs' daily result | \$32 k | \$65–66 k |
+| Worst day / worst week | −\$211 k / −\$722 k | −\$103 k / −\$324 k |
+| Router's cost of holding REP | — | at most 0.12 bp of its volume |
+| Charges on retail-aggregator flow, average / worst day | — | 0.19 bp / 1.6 bp |
+| Charges on unscreened flow | — | 2–8 bp |
 
-As a reference measured on the data rather than simulated, a fixed schedule applied with the benchmark known exactly, charging extraction beyond 2 bp up to $f_{\max}$, recaptures 73% of extraction while preserving 97–99% of profitable arbitrage and overcharging benign flow by less than 0.1 bp (Figure 12 in Appendix C). The schedule was fixed in advance; selected on March–May, it remains the best schedule on June–August.
+*Table 6. Risks of competing on fee (Appendix C, Appendix G.5). Recapture arrives on volatile days, so daily results vary more but lose less.*
 
 ### 5.3 Allowance discovery and robustness
 
-The per-unit cap keeps the pool rebalanced under every controller below, whereas capping the average edge fails through overshoot (Appendix F.1). The controller determines how close the allowance stays to arbitrageurs' cost (Figure 13 in Appendix C). Without a competition signal, decay crosses the cheapest arbitrageur's cost about every two weeks and stalls rebalancing until a staleness raise restores it. The simulation orders transactions by payment, with 45% of arbitrageurs paying builders outside the transaction (Appendix F.7); measuring urgency by block position classifies 32% of corrected blocks as late, 23% as timely and 45% as urgent, and gives LPs a worst-case gain of \$5.38 M, against \$4.82 M without a signal and \$5.45 M with urgency observed exactly.
+| Controller, mainnet | LPs' worst-case gain |
+|---|---|
+| Decay without a competition signal | \$4.82 M |
+| Urgency measured by block position (late 32%, timely 23%, urgent 45% of corrected blocks) | \$5.38 M |
+| Urgency observed exactly (not implementable) | \$5.45 M |
+| Cheapest arbitrageur absent for a week, or two cheapest withholding for three days, redeploying after an hour or a day | \$5.35–5.86 M; withholders' income moves by at most \$0.03 M |
 
-The controller withstands the loss of its cheapest arbitrageurs. When the cheapest leaves for a week, or the two cheapest withhold corrections for three days, and idle arbitrageurs take an hour or a day to redeploy, the pool stays rebalanced, LPs' gain stays within \$5.35–5.86 M while withholding moves the withholders' income by at most \$0.03 M (Appendix F.7). The gains persist for arbitrage populations from a monopoly to ten arbitrageurs and for depth halved or doubled (Appendix C).
+*Table 7. Allowance controllers under the position model, with 45% of arbitrageurs paying builders outside the transaction (Appendix F.7). Every variant keeps the pool rebalanced, from a monopoly to ten arbitrageurs and with depth halved or doubled (Appendix C, Figure 11).*
 
-### 5.4 Arbitrage without stake
+### 5.4 Arbitrage stake and bonds
 
-The results above assume that arbitrageurs hold enough stake. We relax this in three steps. The position model does not yet combine with finite stake, so this section uses decay without a signal, which bounds the final design from below; its worst-case gain with full stake is \$5.01 M.
+This subsection uses decay without a signal, whose worst-case gain with full stake is \$5.01 M, because the position model does not yet combine with finite stake.
 
-**Fresh accounts.** If any arbitrageur may instead trade from an unstaked account at $f_{\max}$ and keep its whole edge, LPs' worst-case gain falls from \$5.01 M to \$3.53 M at $f_{\max}$ = 30 bp and recovers to \$4.93 M at 500 bp. With the market's shocks scaled by two and by four, fresh accounts take at most \$0.51 M at 500 bp, under 1.5% of LPs' gain, and nothing at 1,000 bp (Figure 14b in Appendix C).
+| Fresh accounts at $f_{\max}$ | LPs' worst-case gain | Taken by fresh accounts, shocks ×2 and ×4 |
+|---|---|---|
+| $f_{\max}$ = 30 bp | \$3.53 M | — |
+| $f_{\max}$ = 500 bp | \$4.93 M | at most \$0.51 M |
+| $f_{\max}$ = 1,000 bp | — | nothing |
 
-**Arbitrage stake.** If arbitrageurs pay the coverage-curve fee on a finite stake, the pool freezes without any. Stake is measured in units of $\rho$ times the mean daily arbitrage volume, \$36 k; a stake *keeps the pool rebalanced* below if it passes the rebalancing constraint in all three cost scenarios. How much is needed depends on the settlement epoch, because parked stake and coverage renew at every settlement (§4.7):
+*Table 8. Arbitrageurs free to trade from unstaked accounts (Figure 12b in Appendix C).*
 
 | Settlement epoch | Stake, one staker for all | Stake, each its own | Shocks ×2, 25 units pooled | Shocks ×4, 25 units pooled | Stake built from zero over a month |
 |---|---|---|---|---|---|
 | Daily | 25 units | 50 units | fails, 123 h stale | fails, 605 h stale | 88 h stale |
 | Hourly | 2 units (\$0.08 M uncovered); 5 units, none | 5 units (\$0.18 M uncovered); 25 units, none | passes, nothing uncovered | passes, \$0.36 M uncovered | 27 h stale |
 
-*Table 4. Mainnet, decay without a signal, $f_{\max}$ = 500 bp. Charges are taken from stake within each epoch; "uncovered" counts charges beyond it, lost to LPs. The stake columns give the smallest stake that keeps the pool rebalanced in every cost scenario, and the smallest that also leaves no charge uncovered.*
-
-With daily epochs, stake sized for normal markets runs out when volatility raises arbitrage volume: coverage falls, the fee climbs towards $f_{\max}$ and corrections stop exactly when gaps are largest. Hourly epochs recycle the same stake 24 times a day, so a pooled stake of 25 units, \$0.91 M, keeps the pool rebalanced through shocks four times the market's, at an LP gain within 1% of the fully staked result. This is why the design settles hourly (§4.9), and the stake that arbitrageurs bond (§4.7). Changing the coverage curve instead does not help: a steeper curve keeps arbitrageurs trading but lets their charges outrun their stake, and a milder one stalls them sooner (Appendix C).
-
-**Prepaid bonds.** Charges burn REP several times faster than surplus rebates it: \$4.24 M against \$0.30–1.31 M over six months in calm markets ($\theta^*$ = 2 and 1 bp), and \$114 M under shocks ×4. Held to an initial \$0.91 M and rebates, the pooled stake runs out within days, the allowance rises to 39–50 bp and the pool fails the rebalancing constraint in every scenario, leaving 70–4,020 hours of correctable blocks uncorrected. With prepayment (10), and no stake held in advance, each arbitrageur bonds every epoch the REP that holds its fee within 0.1 bp of $f_{\min}$. The pool stays rebalanced in every scenario, with LPs' worst-case gain of \$5.04 M against \$5.01 M fully staked, counting charges beyond the bonds as lost; the difference is the 0.1 bp of fee above $f_{\min}$. The bond outstanding is small and grows with the swing:
+*Table 9. Stake held in advance, in units of $\rho$ times the mean daily arbitrage volume (\$36 k). Charges are taken from stake within each epoch; "uncovered" counts charges beyond it. The stake columns give the smallest stake that keeps the pool rebalanced in every cost scenario, and the smallest that also leaves no charge uncovered. Steeper or milder curves do not substitute for shorter epochs (Appendix C).*
 
 | REP bonded per epoch, none held in advance | Calm | Costs ×8 | Shocks ×2 | Shocks ×4 |
 |---|---|---|---|---|
@@ -360,29 +375,72 @@ With daily epochs, stake sized for normal markets runs out when volatility raise
 | Daily epochs, peak | \$1.44 M | \$1.44 M | \$4.07 M | \$10.39 M |
 | Keeps the pool rebalanced | yes | yes | yes | yes |
 
-*Table 5. Mainnet, decay without a signal, $f_{\max}$ = 500 bp, steepness $s$ = 1. Bonds are sized on the epoch's volume so far. Charges beyond a bond, \$0.02 M over six months in the cost scenarios and \$0.88 M under shocks ×4 (at most \$0.25 M in one epoch), fall to the account's other REP or the reserve; at $s$ = 0.5 there are none, for twice the bond, and at $s$ = 4 they reach \$27.7 M.*
+*Table 10. Bonds prepaid at par (10), sized to hold each arbitrageur's fee within 0.1 bp of $f_{\min}$; LPs' worst-case gain \$5.04 M. Charges beyond a bond: \$0.02 M over six months in the cost scenarios and \$0.88 M under shocks ×4 (at most \$0.25 M in one epoch); none at $s$ = 0.5, for twice the bond, and \$27.7 M at $s$ = 4.*
 
-Prepayment must be at par. With a markup $\tau$ on it, the large corrections whose charges are highest stop paying, and users trade at prices 0.6 bp staler than today at $\tau$ = 1% and 2.4 bp staler at 2.5%, failing the rebalancing constraint, while LPs lose \$0.4–1.2 M of recapture for \$0.04–0.15 M of take. Redemption at par is safe once an account's REP is locked while any of its settlements is pending: only the charges beyond its bond escape, as they would without redemption. A fixed exit delay instead lets 2% of charges escape at one hour with hourly epochs and none from two hours, but a keeper outage of a day needs more than 25 hours. An initial issuance of \$1 M is consumed by charges in about 20 days in calm markets and within hours under shocks ×4; \$5 M lasts the six months in calm markets but 1.6 days under shocks ×4. Issued without backing, the same REP costs LPs nearly its face value as it is burned (`results/study_i/prepay.json`, `redeem.json`, `results/rep_bootstrap.json`).
+| Supply of REP, calm markets | Keeps the pool rebalanced | LPs' gain | Note |
+|---|---|---|---|
+| Initial \$0.91 M and rebates only, charges burning REP | no | \$3.6–4.1 M | supply exhausted within days; $m$ rises to 39–50 bp |
+| Prepayment at par | yes | \$5.24 M | — |
+| Prepayment with a 1% markup | no | \$5.23 M | users' staleness +0.6 bp |
+| Prepayment with a 2.5% markup | no | \$4.86 M | users' staleness +2.4 bp |
 
-An earlier design, a correction lane that charged correcting swaps at execution against a signed report they carried, does not survive a realistic report: a report dated 0.25 s before the decision instant often cannot prove that a small gap exceeds the fee, and without stake the pool fails the rebalancing constraint in every scenario (Appendix F.4).
+*Table 11. Where arbitrageurs' REP comes from. Charges burn \$4.24 M of REP over six months in calm markets and \$114 M under shocks ×4, against \$0.30–1.31 M of rebates; a markup takes \$0.04–0.15 M for the reserve and costs LPs \$0.4–1.2 M of recapture.*
+
+| Redemption and initial issuance | Result |
+|---|---|
+| Account's REP locked while any settlement is pending | only charges beyond the bond escape, as without redemption |
+| Fixed exit delay, hourly epochs: one hour / two hours | 2% of charges escape / none |
+| Fixed exit delay after a keeper outage of a day | needs more than 25 hours |
+| Initial issuance of \$1 M consumed by charges, calm / shocks ×4 | about 20 days / within hours |
+| Initial issuance of \$5 M, calm / shocks ×4 | lasts the six months / 1.6 days |
+| Initial issuance without backing | LPs lose nearly its face value as it is burned |
+
+*Table 12. Redemption at par (10) and the initial issuance (`results/study_i/redeem.json`, `results/rep_bootstrap.json`).*
 
 ### 5.5 Collateral
 
-The charge per trade is small at the median (0.17 bp) but heavy-tailed (99.9th percentile 21 bp, maximum 358 bp; trades above 50 bp carry 27% of the total), so parking alone collects 70–90% and the account's remaining stake and the reserve collect the rest. Parking keyed to the in-block price move resists splitting; parking keyed to trade size loses half its collection when a correction is split ten ways.
+| Charge per trade and its collection | Value |
+|---|---|
+| Median / 99.9th percentile / maximum | 0.17 bp / 21 bp / 358 bp |
+| Share of all charges on trades above 50 bp | 27% |
+| Collected by parking (9) alone | 70–90% |
+| Parking keyed to trade size, correction split ten ways | half its collection lost |
+
+*Table 13. Collateral. The account's remaining stake and the reserve collect what parking does not; parking keyed to the in-block price move resists splitting.*
 
 ### 5.6 Oracle error
 
-A degraded oracle leaves benign flow essentially unaffected (overcharge below 0.3 bp) but makes part of the charges on arbitrage unjustified (Figure 11 in Appendix B). A tolerance $\varepsilon \approx \max(\lvert \text{bias} \rvert, 2\sigma_o)$, where $\sigma_o$ is the standard deviation of the oracle's random error, removes most unjustified charges at about 8% of recapture per basis point. Staleness binds on fast chains, where a one-second-old feed halves recapture (Appendix I).
+| Oracle error | Effect |
+|---|---|
+| Overcharge on benign flow, degraded oracle | below 0.3 bp |
+| Tolerance $\varepsilon \approx \max(\lvert\text{bias}\rvert, 2\sigma_o)$ | removes most unjustified charges at about 8% of recapture per basis point |
+| A feed one second old, fast chains | halves recapture (Appendix I) |
+
+*Table 14. Oracle error (Figure 9 in Appendix B); $\sigma_o$ is the standard deviation of the oracle's random error.*
 
 ### 5.7 Settlement cost and keeper economics
 
-The hook adds 17,112 gas to a v4 swap; a keeper's epoch costs 26,000 gas plus 14,300 per account, and self-settlement 46,000 gas plus 6,000 per swap (Appendix D). Settled hourly against batch-signed prices, settlement costs 0.18× the execution gas of the settled swaps; a succinct proof lowers this only to 0.14–0.15×, so viability does not depend on proofs (Figure 15 in Appendix D). A gas tank shared by seven mainnet pools stays solvent with 2.3 k gas per swap at daily epochs, 1.2% of a swap's gas (Figure 16 in Appendix D). In simulation, 2–8% of accounts preferred to settle themselves, and an open keeper race settled on-chain epochs within 1.3 minutes.
+| Settlement | Gas or result |
+|---|---|
+| Hook overhead on a v4 swap | 17,112 gas |
+| Keeper's epoch | 26,000 gas + 14,300 per account |
+| Self-settlement | 46,000 gas + 6,000 per swap |
+| Settlement against batch-signed prices, hourly, relative to execution | 0.18× |
+| With a succinct proof | 0.14–0.15× |
+| Gas tank shared by seven mainnet pools, daily epochs | solvent at 2.3 k gas per swap, 1.2% of a swap's gas |
+| Accounts that settle themselves / keeper race settlement time | 2–8% / within 1.3 minutes |
+
+*Table 15. Settlement (Appendix D, Figures 13–14).*
 
 ## 6. Discussion
 
 ### 6.1 Principal findings
 
-The results support the paper's central claim, that the value arbitrage takes from a pool is not fixed but depends on how arbitrage is paid. Most of what BRO-AMM returns to LPs comes not from users, who pay less, nor from arbitrageurs, whose margin is unchanged or slightly higher, but from what arbitrageurs paid block builders for position: once the allowance bounds what a correction can earn, position is worth little (§5.2). This is also why the design depends on the chain's ordering: on Ethereum the competition for position is visible in the block and can be used to discover the allowance, while on an arrival-ordered rollup it must be inferred from senders, and the headroom for a lower fee is narrower (Appendix I). The mechanism's binding requirements are operational rather than economic — REP bonds prepaid at par in a swing, about \$1.1 M under shocks four times the market's, a sub-second oracle where blocks are fast, and a tolerance matched to the oracle's error. Appendix G discusses further implications, including governance, intermediaries and the oracle under finality.
+The results support the paper's central claim, that the value arbitrage takes from a pool is not fixed but depends on how arbitrage is paid. Most of what BRO-AMM returns to LPs comes not from users, who pay less, nor from arbitrageurs, whose margin is unchanged or slightly higher, but from what arbitrageurs paid block builders for position: once the allowance bounds what a correction can earn, position is worth little (§5.2). This is also why the design depends on the chain's ordering: on Ethereum the competition for position is visible in the block and can be used to discover the allowance, while on an arrival-ordered rollup it must be inferred from senders, and the headroom for a lower fee is narrower (Appendix I). The mechanism's binding requirements are operational rather than economic — REP bonds prepaid at par in a swing, about \$1.1 M under shocks four times the market's, a sub-second oracle where blocks are fast, and a tolerance matched to the oracle's error. Appendix G discusses further implications, including governance and intermediaries.
+
+**Design choices.** The coverage curve's steepness trades two failures: a steeper curve lets each unit of stake back more volume, which attracts arbitrageurs to hold REP but lets their charges outrun the bond, and a milder one protects LPs with more stake per unit of volume but stalls correctors when volume rises; no steepness avoids both under shocks, while shorter epochs do (Appendix C), so the design keeps $s$ = 1 and settles hourly. Prepayment is at par because the allowance controller drives correctors' margins toward zero, so any markup on prepayment taxes the largest corrections first (§5.4). $f_{\max}$ is set by the shocks the pool must withstand rather than by benign flow, which reaches $f_{\min}$ through stake held directly or by an intermediary; because the curve is exponential, a router with benign flow minimises its cost at a stake of 0.6–0.9% of its volume per epoch, and its premium over $f_{\min}$, including a 10% cost of capital, stays below 0.12 bp for $f_{\max}$ between 500 and 2,000 bp (Appendix G.5). An intermediary cannot net its customers' overpayments against its own extraction, because the charge is computed per correcting swap; the protocol never identifies arbitrageurs, since arbitrage is a role carried by a swap.
+
+**Oracle risk under finality.** Most oracle failures in DeFi happen at the instant of use: a lending market liquidates, or an oracle-priced exchange fills, against a price that was manipulated, stale or wrong for seconds, and the loss is final before anyone can check it. BRO-AMM never acts on the oracle at that instant. A swap executes on the pool's own curve, and the signed price enters only at reconciliation, after the block is final and the reports are retained, so a batch can be compared with other sources, co-signed by the parties it affects, or held through a challenge window before it settles (Appendix G.4). Moving a spot market for a block does not move a signed external benchmark, and a feed that is briefly wrong can be caught before it counts. A price that stays wrong through every check only misallocates charges and rebates within the stake posted: under-charging leaves LPs where today's AMMs leave them, and over-charging takes from stake, not from the pool.
 
 ### 6.2 Limitations
 
@@ -503,23 +561,23 @@ Uniswap Labs. n.d. “Uniswap V4 Core.” <https://github.com/Uniswap/v4-core>.
 
 ![Decision latency](figures/fig_decision_latency.png)
 
-*Figure 7. Median fee-adjusted residual between the pool's post-swap price and the hedgeable external quote, by offset from the block timestamp.*
+*Figure 5. Median fee-adjusted residual between the pool's post-swap price and the hedgeable external quote, by offset from the block timestamp.*
 
 ![Score distributions](figures/fig_score_distributions.png)
 
-*Figure 8. Distribution of $Q_{\mathrm{LP}}$ by label.*
+*Figure 6. Distribution of $Q_{\mathrm{LP}}$ by label.*
 
 ![Extraction by position](figures/fig_extraction_by_position.png)
 
-*Figure 9. (a) Share of extraction by transaction position in the block. (b) Distribution of the block-position index (5) of today's first correcting swap against the earliest non-correcting swap, among blocks containing both, with the late, timely and urgent ranges for $\kappa = 2$.*
+*Figure 7. (a) Share of extraction by transaction position in the block. (b) Distribution of the block-position index (5) of today's first correcting swap against the earliest non-correcting swap, among blocks containing both, with the late, timely and urgent ranges for $\kappa = 2$.*
 
 ![Block-position index](figures/fig_urgency_block_space.png)
 
-*Figure 10. Positions in the block of the first correcting swap and of the earliest retail (non-correcting) swap, among blocks containing both, March–August 2026; position is the share of the block's transactions ordered before the swap. Bars below each panel span the quartiles, with a tick at the median: on mainnet the first correcting swap sits at a median position of 0.015 and the earliest retail swap at 0.13; on Arbitrum, where position follows arrival, at 0.30 and 0.21.*
+*Figure 8. Positions in the block of the first correcting swap and of the earliest retail (non-correcting) swap, among blocks containing both, March–August 2026; position is the share of the block's transactions ordered before the swap. Bars below each panel span the quartiles, with a tick at the median: on mainnet the first correcting swap sits at a median position of 0.015 and the earliest retail swap at 0.13; on Arbitrum, where position follows arrival, at 0.30 and 0.21.*
 
 ![Oracle error](figures/fig_oracle_error.png)
 
-*Figure 11. Mainnet: (a) unjustified share of charges and (b) recapture, as functions of the tolerance $\varepsilon$, for four oracle errors.*
+*Figure 9. Mainnet: (a) unjustified share of charges and (b) recapture, as functions of the tolerance $\varepsilon$, for four oracle errors.*
 
 ## Appendix C. Simulation design
 
@@ -554,7 +612,7 @@ Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum b
 | Users' price staleness, volume-weighted | 12.75 bp | 12.54 bp | 4.28 bp | 4.28 bp |
 | Blocks ending within the band | 99.54% | 99.40% | 100.00% | 100.00% |
 
-*Table 6. Today's pools against BRO-AMM at today's 5 bp fee, users' corrections not charged. LPs' net is fees from users less what is lost to arbitrage after recapture. Arbitrageurs' payments for position go to block builders on mainnet and to winning the race to be ordered first on Arbitrum.*
+*Table 16. Today's pools against BRO-AMM at today's 5 bp fee, users' corrections not charged. LPs' net is fees from users less what is lost to arbitrage after recapture. Arbitrageurs' payments for position go to block builders on mainnet and to winning the race to be ordered first on Arbitrum.*
 
 **Coverage curve and settlement epoch.** The steepness $s$ of the curve (3) scales the coverage a unit of stake buys, with $s$ = 1 the design value (Figure 2b). Arbitrageurs hold a pooled stake of 25 units, enough for normal markets with daily epochs, or 10 units, and the market's shocks are scaled by two and four; charges are taken from stake within each epoch, and those beyond it are uncovered (dollar amounts below):
 
@@ -567,7 +625,7 @@ Every block is replayed in order — mainnet's 1.32 M, and all 63.4 M Arbitrum b
 | 4 | pass, 1.4 h | pass, 3.5 h, \$0.12 M | fail, 37 h, \$10.58 M | fail, 38 h, \$0.86 M |
 | 8 | pass, 1.4 h | pass, 3.3 h, \$0.12 M | pass, 4.5 h, \$30.15 M | pass, 4.9 h, \$2.08 M |
 
-*Table 7. Rebalancing test, hours of correctable blocks left uncorrected and uncovered charges, with daily epochs.*
+*Table 17. Rebalancing test, hours of correctable blocks left uncorrected and uncovered charges, with daily epochs.*
 
 A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps them trading through shocks, but only by letting each unit of stake back more volume, so their charges outrun it: at $s$ = 8 and shocks ×4 the pool is rebalanced with \$30 M of charges uncovered. With each arbitrageur holding only a thin stake of its own, every steepness fails the rebalancing test and uncovered charges grow with $s$, to \$5.14 M–\$11.36 M under shocks ×4. No curve resolves the trade-off, because in a shock the charges arising within one epoch exceed a stake sized for calm markets. A shorter epoch does, since stake and coverage renew at each settlement:
 
@@ -579,7 +637,7 @@ A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps the
 | 1-hour, 25 units | pass, 1.4 h | pass, 3.3 h | pass, 2.8 h, \$0.36 M |
 | 1-hour, 10 units | pass, 1.4 h | pass, 3.3 h, \$0.22 M | pass, 2.4 h, \$1.99 M |
 
-*Table 8. Same test with the design curve ($s$ = 1), varying the settlement epoch.*
+*Table 18. Same test with the design curve ($s$ = 1), varying the settlement epoch.*
 
 **Retention of user flow.** Every non-arbitrage swap is scaled by the share of user flow the pool keeps, its volume, fees and price impact alike, under the final design; LPs' gain is measured against today's pool at full flow.
 
@@ -591,7 +649,7 @@ A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps the
 | 75% | +\$3.97 M | −\$0.43 M |
 | 100% | +\$5.38 M | +\$0.65 M |
 
-*Table 9. LPs' worst-case gain over today's pool at full flow, across the three cost scenarios, when BRO-AMM keeps a share of user flow. On Arbitrum, removing user flow raises arbitrage volume from \$5.0 B to \$7.9 B, because users' own trades do part of the rebalancing.*
+*Table 19. LPs' worst-case gain over today's pool at full flow, across the three cost scenarios, when BRO-AMM keeps a share of user flow. On Arbitrum, removing user flow raises arbitrage volume from \$5.0 B to \$7.9 B, because users' own trades do part of the rebalancing.*
 
 **Fee headroom.** The pool fee $f_{\min}$ is lowered for users, who reach the pool fully covered, and for staked arbitrageurs, under the final design; the within-band test keeps today's 6 bp band. Users' all-in cost is what LPs earn from users per unit of user volume: the fee plus the markout of trading at a stale price, which on Arbitrum favours users today. Ranges span the three cost scenarios; gains over today are worst cases. Today's pool costs users 8.7–8.8 bp on mainnet and 2.9–3.3 bp on Arbitrum.
 
@@ -603,7 +661,7 @@ A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps the
 | 1 bp | \$1.81 M | −\$1.88 M to −\$0.57 M | 5.8–6.0 bp | −\$2.26 M | 1.7–2.2 bp |
 | 0.5 bp | \$1.11 M | −\$2.57 M to −\$1.14 M | 5.5–5.8 bp | −\$2.98 M | 1.5–1.9 bp |
 
-*Table 10. LPs' result and users' all-in cost at lower pool fees.*
+*Table 20. LPs' result and users' all-in cost at lower pool fees.*
 
 **Capture and risk.** If the lower fee wins routing, the pool draws flow from other venues and LPs follow with liquidity: user flow and depth are both scaled (stable costs, mainnet). LPs' net per unit of liquidity divides by the scale.
 
@@ -618,7 +676,7 @@ A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps the
 | 1 bp | ×2 | \$0.00 M | \$0.00 M | 6.0 bp | −\$1202 k |
 | 1 bp | ×3 | \$0.41 M | \$0.14 M | 5.6 bp | −\$1759 k |
 
-*Table 11. Mainnet LPs' result when the pool takes a multiple of today's flow and liquidity.*
+*Table 21. Mainnet LPs' result when the pool takes a multiple of today's flow and liquidity.*
 
 | Design | Daily mean | Daily s.d. | 1st percentile | Worst day | Worst week | Losing days |
 |---|---|---|---|---|---|---|
@@ -627,19 +685,19 @@ A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps the
 | BRO-AMM, 3 bp | \$8 k | \$65 k | −\$76 k | −\$103 k | −\$324 k | 45% |
 | BRO-AMM, 1 bp | −\$3 k | \$66 k | −\$129 k | −\$154 k | −\$587 k | 84% |
 
-*Table 12. Mainnet LPs' daily net result over six months, stable costs. The worst day and week fall before the cost shift, so they are the same in all three cost scenarios.*
+*Table 22. Mainnet LPs' daily net result over six months, stable costs. The worst day and week fall before the cost shift, so they are the same in all three cost scenarios.*
 
 ![Recapture frontier](figures/fig_recapture_frontier.png)
 
-*Figure 12. Recapture against profitable arbitrage preserved, for all schedules evaluated.*
+*Figure 10. Recapture against profitable arbitrage preserved, for all schedules evaluated.*
 
 ![Controller paths](figures/fig_controller_paths.png)
 
-*Figure 13. Allowance over time with arbitrage costs quadrupled from June (dashed line). (a) Mainnet under the position model, decay without a signal against urgency measured by block position. (b) Arbitrum, decay without a signal against the sender rule $K_d \ge 4$. Each upward step is a staleness raise.*
+*Figure 11. Allowance over time with arbitrage costs quadrupled from June (dashed line). (a) Mainnet under the position model, decay without a signal against urgency measured by block position. (b) Arbitrum, decay without a signal against the sender rule $K_d \ge 4$. Each upward step is a staleness raise.*
 
 ![Stake and shocks](figures/fig_stake_shocks.png)
 
-*Figure 14. (a) Hours of correctable blocks left uncorrected in the worst cost scenario, against arbitrageurs' stake held by one staker or by each separately, with hourly and daily settlement epochs. (b) LPs' gain lost to fresh unstaked accounts, in dollars, against $f_{\max}$, for the market's shocks scaled by one, two and four; zero is drawn at \$0.01 M. Larger shocks lose more dollars but a smaller share of LPs' gain, which grows faster with shock size.*
+*Figure 12. (a) Hours of correctable blocks left uncorrected in the worst cost scenario, against arbitrageurs' stake held by one staker or by each separately, with hourly and daily settlement epochs. (b) LPs' gain lost to fresh unstaked accounts, in dollars, against $f_{\max}$, for the market's shocks scaled by one, two and four; zero is drawn at \$0.01 M. Larger shocks lose more dollars but a smaller share of LPs' gain, which grows faster with shock size.*
 
 ## Appendix D. Settlement measurements
 
@@ -671,11 +729,11 @@ A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps the
 
 ![Settlement cost](figures/fig_settlement_cost.png)
 
-*Figure 15. Settlement gas relative to the execution gas of the settled swaps.*
+*Figure 13. Settlement gas relative to the execution gas of the settled swaps.*
 
 ![Gas tank](figures/fig_gas_tank.png)
 
-*Figure 16. Smallest per-swap gas contribution that keeps the gas tank solvent.*
+*Figure 14. Smallest per-swap gas contribution that keeps the gas tank solvent.*
 
 ## Appendix E. REP's market price and escrow
 
@@ -706,7 +764,7 @@ Concentrated liquidity makes a large share of active liquidity cheap, which is w
 | 2 bp | per epoch | \$2.32 M | \$1.05 M | \$5.48 M | \$8.71 M |
 | 2 bp | 30-epoch high-water (7) | \$0.30 M | \$3.07 M | \$7.49 M | \$8.71 M |
 
-*Table 13. Mainnet, final design at 3 bp, stable costs, daily epochs, an initial issuance of \$0.91 M backed at par. LPs' total value counts their assets, the reserve and the escrow left; it is the same with and without escrow, which changes when and to whom the backing is paid, not its amount. The headline LP net of Table 3, \$3.37 M, mints no REP.*
+*Table 23. Mainnet, final design at 3 bp, stable costs, daily epochs, an initial issuance of \$0.91 M backed at par. LPs' total value counts their assets, the reserve and the escrow left; it is the same with and without escrow, which changes when and to whom the backing is paid, not its amount. The headline LP net of Table 4, \$3.37 M, mints no REP.*
 
 What LPs give up is the rebate itself: REP minted to accounts that paid above the target. Minting per epoch rebates surplus from good days without netting the shortfalls of bad ones; the high-water mark of (7) nets them, and leaves LPs within \$0.30 M of an unminted pool at $\theta^*$ = 2 bp. Its window matters little beyond a few weeks:
 
@@ -719,7 +777,7 @@ What LPs give up is the rebate itself: REP minted to accounts that paid above th
 | Daily epochs, 30-epoch high-water | \$1.31 M | \$0.30 M |
 | Daily epochs, all-time high-water | \$1.25 M | \$0.27 M |
 
-*Table 14. REP rebated to payers above the target over six months, mainnet at 3 bp, stable costs. Monthly epochs would net as much as the window but delay settlement, unparking and escrow releases by a month.*
+*Table 24. REP rebated to payers above the target over six months, mainnet at 3 bp, stable costs. Monthly epochs would net as much as the window but delay settlement, unparking and escrow releases by a month.*
 
 A pool should therefore set $\theta^*$ near its realised take-rate, which here is about 1.5 bp of volume.
 
@@ -729,11 +787,11 @@ The escrow can also work as capital: held as a full-range position in the pool, 
 
 ## Appendix F. Designs considered and rejected
 
-**F.1 Average-edge cap.** A simpler rule would cap rent on the trade's *average* edge, $\bar e = \frac{1}{v}\int_0^v \mathrm{edge}(u)\,du$, letting the swap keep $\min(\bar e, m)$ on every unit, $\min(\bar e, m)\,v$ in total. The two rules differ most for a trade that continues past the band. Under the per-unit cap, a unit traded beyond the band has no edge and earns nothing, so the arbitrageur stops where the pool meets the band. Under the average-edge cap, the large edge of the first units keeps $\bar e$ above $m$ for a while after the band is crossed, so every further unit still earns $m$, even units that push the pool past the benchmark to a price that is wrong in the other direction. The arbitrageur is therefore paid to overshoot, until the average falls to $m$. In simulation an average-edge allowance of 1 bp raised LPs' net position by \$5.55 M on mainnet, against \$6.15 M for the per-unit cap at the same allowance, but overshot the benchmark in 24,092 blocks, nearly doubled arbitrage volume (\$24.5 B against \$13.4 B) and left users trading against prices 17.7 bp stale on average, against 12.75 bp today, failing the rebalancing constraint (Figure 17).
+**F.1 Average-edge cap.** A simpler rule would cap rent on the trade's *average* edge, $\bar e = \frac{1}{v}\int_0^v \mathrm{edge}(u)\,du$, letting the swap keep $\min(\bar e, m)$ on every unit, $\min(\bar e, m)\,v$ in total. The two rules differ most for a trade that continues past the band. Under the per-unit cap, a unit traded beyond the band has no edge and earns nothing, so the arbitrageur stops where the pool meets the band. Under the average-edge cap, the large edge of the first units keeps $\bar e$ above $m$ for a while after the band is crossed, so every further unit still earns $m$, even units that push the pool past the benchmark to a price that is wrong in the other direction. The arbitrageur is therefore paid to overshoot, until the average falls to $m$. In simulation an average-edge allowance of 1 bp raised LPs' net position by \$5.55 M on mainnet, against \$6.15 M for the per-unit cap at the same allowance, but overshot the benchmark in 24,092 blocks, nearly doubled arbitrage volume (\$24.5 B against \$13.4 B) and left users trading against prices 17.7 bp stale on average, against 12.75 bp today, failing the rebalancing constraint (Figure 15).
 
 ![Cap comparison](figures/fig_cap_comparison.png)
 
-*Figure 17. Rent kept as a function of trade size under the per-unit cap and the average-edge cap: the first stops growing at the band, the second keeps growing past the benchmark.*
+*Figure 15. Rent kept as a function of trade size under the per-unit cap and the average-edge cap: the first stops growing at the band, the second keeps growing past the benchmark.*
 
 **F.2 Reimbursing gas separately.** The chain exposes its base fee at execution, so the arbitrageur's gas could be reimbursed on top of the allowance rather than folded into it. An allowance paid per unit of volume cannot cover the gas of the smallest corrections, so reimbursement helps: in simulation it raised LPs' worst-case gain from \$4.81 M to \$5.07 M on mainnet and left it unchanged on Arbitrum (Appendix C). We forgo it because crediting gas, paid in the native token, against a charge in the pool's tokens needs an exchange rate the pair does not contain; the gas tank of §4.9 needs none, since swappers fund it and keepers draw from it in the same native token (§4.4).
 
@@ -751,7 +809,7 @@ The escrow can also work as capital: held as a full-range position in the pool, 
 | Hysteresis on the gap, threshold 5 bp, clearing fee | \$0.87 M | −\$0.53 M | no |
 | Per-unit charge, lane open only within an hour of staleness | \$3.91 M | \$0.64 M | mainnet no |
 
-*Table 15. LPs' worst-case gain over today across the three cost scenarios, for rejected variants of the correction lane.*
+*Table 25. LPs' worst-case gain over today across the three cost scenarios, for rejected variants of the correction lane.*
 
 **F.5 Allowance bonuses.** Raising the allowance beyond the arbitrageur's cost is rent, and rent is competed away for position. A flat premium of 0.5 bp tripled payments to builders in an early simulation. A bonus proportional to the market's jump within a block, paid only for corrections in that block so that waiting forfeits it, cost LPs 17–31% of their worst-case gain on mainnet and 11–17% on Arbitrum at REP's mint rate, while arbitrageurs' payments to builders roughly doubled; with REP valued below its mint rate it did not prevent stalls. Keying the bonus to the standing gap instead, which rewards waiting, did no better.
 
@@ -774,7 +832,7 @@ The escrow can also work as capital: held as a full-range position in the pool, 
 | $K_d \ge 5$ | Arbitrum | \$0.42 M | 0 / 0 / 0 | none |
 | Rotation, others earn 75% of $m$ | Arbitrum | \$0.75 M | 0–3 / 19 / 19 | \$0.03–0.04 M |
 
-*Table 16. On mainnet the sender-count rules assume arrival ordering, which builder auctions do not provide. With a one-hour redeploy, decay without a signal and urgency-accelerated decay both keep the pool rebalanced through both events.*
+*Table 26. On mainnet the sender-count rules assume arrival ordering, which builder auctions do not provide. With a one-hour redeploy, decay without a signal and urgency-accelerated decay both keep the pool rebalanced through both events.*
 
 Rotation designates, each hour, one registered arbitrageur that earns the full allowance while others earn less; it requires registration, and unless its windows are exclusive, cheaper non-designated arbitrageurs still take the corrections and the others still leave. A rule that raises $m$ when too few corrections are contested does not help under builder auctions either: competitors that never win cannot be kept deployed.
 
@@ -786,7 +844,7 @@ Rotation designates, each hour, one registered arbitrageur that earns the full a
 | Urgency by position, $\kappa = 2$ | \$5.35–5.86 M | \$0.57–0.80 M | 0.14–0.23 bp fresher | 0.50 pp | yes |
 | Urgency observed exactly | \$5.41–5.98 M | \$0.53–0.74 M | 0.01 bp staler to 0.12 bp fresher | 0.51 pp | no (withholding) |
 
-*Table 17. Mainnet controllers under the position model.*
+*Table 27. Mainnet controllers under the position model.*
 
 With the position model every controller leaves 35–47 hours of correctable blocks uncorrected over the six months, against 1–4 without it, because a correction must pay for position and keeps less allowance when late; the events add none. Urgency judged by priority fee alone, with no position, misses the 45% of payments made outside the transaction and was dropped. Targeting a fixed separation between corrections and retail through $m$ itself drove $m$ to its 50 bp ceiling and paid the excess to builders: timeliness belongs in the penalty, not in the allowance.
 
@@ -799,7 +857,7 @@ Lowering $m$ only while urgency is visible, with no default decay, leaves $m$ hi
 
 By contrast, L2s such as Arbitrum have no public mempool. Arbitrum's sequencer orders transactions by arrival into blocks of about 250 ms whose timestamps have a resolution of one second. Since April 2025, a sealed-bid second-price auction held every minute sells an express lane, and all other transactions are delayed by 200 ms, the Timeboost design (Mamageishvili et al. 2023). Three entities won almost all of these auctions (Messias and Torres 2025). An arbitrageur reacting to an external move is sequenced within its network latency plus at most that delay, so its decision lies close to its inclusion, wherever in the block that happens to be.
 
-Rather than assume a latency, we measure it. A swap that corrects the pool trades until the pool price net of the fee meets the external price at which it can hedge, at the instant it decides; the offset from the block timestamp that minimises this residual over correcting swaps therefore identifies the decision latency $L$, and we score at $t^* = \text{block timestamp} + L$ (Figure 7). The estimate is 1.5 s on mainnet (bracketed by 1.25–1.75 s), consistent with bids taken one to two seconds into the slot, and 0.75 s on Arbitrum (0–1.5 s), where the staleness of our price proxy dominates the bracket and its earliest estimate places the match at block time itself, as arrival ordering implies. Benign flow shows no relation to the offset: it is uninformed, so its decision instant does not affect its score. The anchor matters for informed flow: anchoring at the timestamp scores arbitrageurs against prices from before they traded (§5.1). $L$ is a parameter of each pool, re-estimated periodically from reconciled correcting swaps and changed only within its bracket; scores are insensitive to $L$ inside the bracket (Appendix B), and an arbitrageur can shift the estimate only by stopping its trades away from the hedgeable price, at a loss to itself.
+Rather than assume a latency, we measure it. A swap that corrects the pool trades until the pool price net of the fee meets the external price at which it can hedge, at the instant it decides; the offset from the block timestamp that minimises this residual over correcting swaps therefore identifies the decision latency $L$, and we score at $t^* = \text{block timestamp} + L$ (Figure 5). The estimate is 1.5 s on mainnet (bracketed by 1.25–1.75 s), consistent with bids taken one to two seconds into the slot, and 0.75 s on Arbitrum (0–1.5 s), where the staleness of our price proxy dominates the bracket and its earliest estimate places the match at block time itself, as arrival ordering implies. Benign flow shows no relation to the offset: it is uninformed, so its decision instant does not affect its score. The anchor matters for informed flow: anchoring at the timestamp scores arbitrageurs against prices from before they traded (§5.1). $L$ is a parameter of each pool, re-estimated periodically from reconciled correcting swaps and changed only within its bracket; scores are insensitive to $L$ inside the bracket (Appendix B), and an arbitrageur can shift the estimate only by stopping its trades away from the hedgeable price, at a loss to itself.
 
 **G.2 Fresh accounts and $f_{\max}$.** An account that holds no stake has $r = 0$, so $\min\{C(m), r\} = 0$ whatever it owes, and the fee it pays at execution is all the pool ever receives from it. Consider two arbitrageurs facing the same gap $g$ between the pool and the benchmark. One holds enough stake to pay a fee near $f_{\min}$: it corrects the gap, keeps at most $m$ per unit of volume, and pays the rest as $C(m)$ after the block. The other trades from a fresh account: it pays $f_{\max}$, and with $r = 0$ none of the $C(m)$ it owes can be collected, but it profits only while the remaining gap exceeds $f_{\max}$ plus its own cost rate $h$. In a pool of depth $D$ per unit of log price, each unit it trades moves the pool by $1/D$ toward the benchmark, so after volume $u$ its margin on the next unit is $g - u/D - f_{\max} - h$: the full excess $g - f_{\max} - h$ on the first unit, falling linearly to zero, where it stops after a volume of $D\,(g - f_{\max} - h)$. A margin that falls linearly to zero averages half its starting value, so the account's take is $D\,(g - f_{\max} - h)^2/2$, assuming depth is roughly constant over the range the trade moves the pool.
 
@@ -818,7 +876,7 @@ Two conclusions follow. For any gap smaller than $f_{\max} + h$, the fresh accou
 | daily | 0% a year | 13.5 | 0.72% | \$72 k | 0.021 bp |
 | daily | 50% a year | 11.7 | 0.64% | \$64 k | 0.113 bp |
 
-*Table 18. Cost to a router of quoting near $f_{\min}$, at its cost-minimising stake. With $f_{\max}$ = 500 or 2,000 bp the total cost changes by at most 0.006 bp, since it grows only with $\ln f_{\max}$.*
+*Table 28. Cost to a router of quoting near $f_{\min}$, at its cost-minimising stake. With $f_{\max}$ = 500 or 2,000 bp the total cost changes by at most 0.006 bp, since it grows only with $\ln f_{\max}$.*
 
 The cost assumes the router's flow is benign. Every price-correcting swap is charged on its edge beyond fee, $\varepsilon$ and $m$, whoever sends it, so a router's stake also pays for those of its users' trades that land on a stale pool. On today's swaps, with each swap's edge falling linearly from its pre-trade to its post-trade gap and $m$ = 2 bp, $\varepsilon$ = 0.5 bp:
 
@@ -831,7 +889,7 @@ The cost assumes the router's flow is benign. Every price-correcting swap is cha
 | top-of-block searchers | Mainnet | 77% | 3.74 bp | 2.28 bp | 23.7 bp | 97.0 bp |
 | top-of-block searchers | Arbitrum | 13% | 0.51 bp | 0.25 bp | 2.9 bp | 34.2 bp |
 
-*Table 19. Charges that flow by label would incur under (4b), per unit of its volume, March–August 2026. Measured against the mid price rather than the directional bid/ask, these are upper bounds; with $m$ of 1 or 3 bp retail-aggregator charges are 0.09–0.20 bp.*
+*Table 29. Charges that flow by label would incur under (4b), per unit of its volume, March–August 2026. Measured against the mid price rather than the directional bid/ask, these are upper bounds; with $m$ of 1 or 3 bp retail-aggregator charges are 0.09–0.20 bp.*
 
 Retail-aggregator flow is cheap to carry; mixed flow is not, so a router prices the toxicity of its flow as order-flow buyers do today.
 
@@ -839,17 +897,21 @@ Retail-aggregator flow is cheap to carry; mixed flow is not, so a router prices 
 
 Consider an ETH/USDC pool with $f_{\min} = 1$ bp, $f_{\max} = 1{,}000$ bp, $\rho = 5$ bp, $\theta^* = 2$ bp, $m = 2$ bp, $\varepsilon = 0$, $\tau = 2.5\%$ and an internal rate of 1 USDC per REP. Both swaps below are \$10,000 and fall in one epoch.
 
-*Alice*, an uninformed trader, holds 25 REP, directly or through an intermediary that trades on her behalf (§4.9). Her coverage ratio is $25/(0.0005 \times 10{,}000) = 5$, so by (3) she pays $1 + 999e^{-5} = 7.73$ bp, or \$7.73; without stake she would pay $f_{\max}$, 10%. Her markout before fees is zero, so her $Q_{\mathrm{LP}}$ is $+7.73$ bp. With no price move in the block she parks $\ell V = 5\,\text{bp} \times \$10{,}000$, or 5 of her REP, until settlement.
+*Alice*, an uninformed trader, holds 25 REP, directly or through an intermediary that trades on her behalf. Her coverage ratio is $25/(0.0005 \times 10{,}000) = 5$, so by (3) she pays $1 + 999e^{-5} = 7.73$ bp, or \$7.73; without stake she would pay $f_{\max}$, 10%. Her markout before fees is zero, so her $Q_{\mathrm{LP}}$ is $+7.73$ bp. With no price move in the block she parks $\ell V = 5\,\text{bp} \times \$10{,}000$, or 5 of her REP, until settlement.
 
 *Bob*, an arbitrageur holding 35 REP (coverage ratio 7), corrects the pool after a market move and pays $1 + 999e^{-7} = 1.91$ bp. Along his trade the edge beyond the fee falls linearly from 10 bp to zero, so he extracts 5 bp on average, \$5.00, and his $Q_{\mathrm{LP}}$ is $-5$ bp. Writing $u$ as a fraction of his notional, by (4b) he keeps $\int_0^1 \min\big(10(1 - u), 2\big)\, du = 1.80$ bp, and the remaining 3.20 bp, \$3.20, is charged. The pool had already moved 10 bp within the block, so by (9) with $k = 0.5$ he parks $\ell = 5 + 5 = 10$ bp of his volume, 10 REP; the charge burns 3.20 of them, and the other 6.80 are released at settlement.
 
 At reconciliation, by (7), $N = 7.73 - 5.00 + 3.20 = \$5.93$ against a target of $2\,\text{bp} \times \$20{,}000 = \$4.00$, a surplus of \$1.93. Only Alice paid more than the target on her own volume (Bob's net is $-1.8$ bp), so she receives $(1 - 0.025) \times 1.93 = 1.88$ REP, and her next \$10,000 swap, with 26.88 REP staked, pays $1 + 999e^{-5.38} = 5.62$ bp. Bob kept his allowance of \$1.80; his position did not change the benchmark he was scored against (§4.2), so the most he would rationally have paid for it is his margin over his cost. The swaps left the LPs \$2.73 in the pool's assets, from which the surplus of \$1.93 goes to escrow behind Alice's new REP; Bob's charge of \$3.20 is settled by burning his REP, which releases \$3.20 of escrow to the LPs. They end the epoch with \$4.00, exactly the target (Theorem 1).
 
+*The allowance.* With the controller of (6) at $\chi_{\uparrow} = 2$, $n_{\min} = 5$ and $q_{\mathrm s} = 2\%$, an hour in which 6 of 200 correctable blocks are stale (3%) raises $m$ from 2 to 4 bp. On a later day with $\bar u = 0.5$, if 60% of corrected blocks are urgent, $m$ falls to $0.8 \times 4 = 3.2$ bp ($\chi_{\mathrm u} = 0.8$); on a calm day with fewer than $q_{\mathrm c} = 1\%$ of correctable blocks stale, it falls by $\chi_{\mathrm c} = 0.95$. Had a quarter of the block's protected retail volume traded before Bob, the penalty $\lambda = 0.25$ would have cut what he keeps by $\lambda a = 6.25\%$, from 1.80 to 1.69 bp.
+
+*The bond.* After settlement Bob holds 31.80 REP. To trade his next \$10,000 at the same coverage ratio of 7, he declares a prepayment of \$3.20 in a swap, which mints 3.20 REP at par and adds \$3.20 to the escrow by (10). Alice may redeem her 1.88 new REP for \$1.88 from escrow once she has no settlement pending, or keep them staked for the lower fee.
+
 ## Appendix I. Arrival-ordered rollups: Arbitrum
 
 Each rollup orders transactions by its own sequencer rules, so the competition signal of §4.5 must be adapted chain by chain. This appendix adapts it to Arbitrum One, whose sequencer orders transactions by arrival except for the Timeboost express lane, and repeats the evaluation of §5 on its WETH/USDC 5 bp pool over the same six months: 5,237,793 swaps in 63.4 M blocks, 1.87 M of them with a pool swap, and \$11.2 B of volume.
 
-**I.1 Measurement.** The decision latency is 0.75 s, bracketed by 0–1.5 s (Figure 7). Against the price-free labels the AUC of $Q_{\mathrm{LP}}$ is 0.814 (0.897 for the largest swaps), and against the position-free label 0.828 (0.883), higher than on mainnet because extraction here occurs deep in the block, beyond the positional label's reach: 69% of it at position ten or later. Corrections are level with or behind retail in the block (Figures 9–10). Over the sample LPs lost \$1.34 M to extraction and ended \$0.86 M up after fees.
+**I.1 Measurement.** The decision latency is 0.75 s, bracketed by 0–1.5 s (Figure 5). Against the price-free labels the AUC of $Q_{\mathrm{LP}}$ is 0.814 (0.897 for the largest swaps), and against the position-free label 0.828 (0.883), higher than on mainnet because extraction here occurs deep in the block, beyond the positional label's reach: 69% of it at position ten or later. Corrections are level with or behind retail in the block (Figures 7–8). Over the sample LPs lost \$1.34 M to extraction and ended \$0.86 M up after fees.
 
 **The express lane.** Receipts on Arbitrum carry a `timeboosted` flag marking transactions sequenced through the Timeboost express lane. In a random sample of 3,000 blocks with a correction, read from the public endpoint, 65% of first correcting swaps and 68% of non-correcting swaps were timeboosted, and among corrections 68% of those that earned rent today and 65% of those that did not. The flag therefore does not distinguish contested corrections and is not used as an urgency signal.
 
@@ -857,7 +919,7 @@ Each rollup orders transactions by its own sequencer rules, so the competition s
 
 **Express-lane concentration.** On Arbitrum, three entities won almost all Timeboost auctions (Messias and Torres 2025). With one of three express-lane holders winning, in each one-minute round, every correction it can profit from, and every correcting swap charged, LPs' worst-case gain at 5 bp is +\$0.60 M with $K_{\min} = 4$ and +\$0.84 M with $K_{\min} = 3$, against +\$0.83 M in an open race: requiring four senders when three dominate keeps the allowance higher, whereas three recovers the open-race result. Both keep the pool rebalanced.
 
-**I.3 Results.** Every correcting swap charged, the sender rule at $K_{\min} = 3$ and a 4 bp fee leave LPs ahead of today's 5 bp pool by \$0.38–0.59 M across the cost scenarios (\$1.97 M against \$1.38 M with stable costs), with retail paying about 4.38 bp all-in (4 bp, 0.20–0.26 bp of retail charges, up to 0.12 bp of REP holding), users trading at fresher prices (3.62 against 4.28 bp), arbitrageurs' spending to be ordered first falling from \$0.94 M to \$0.24 M, and the pool as rebalanced as today. At 3 bp the sender rule falls short of today, because users already close many small gaps for the fee alone and a lower fee hands them to paid arbitrageurs (Table 10 in Appendix C). With users' corrections uncharged, LPs at today's fee gain \$0.65 M in the worst case; if users route away, LPs need to keep about 85% of their flow, because users' own trades do part of the rebalancing (Table 9). The sender rule settles at 1.46 bp and absorbs the cost shock without a raise (Figure 13), and under dropout and withholding costs 2% of LPs' gain (Table 16). Without arbitrage stake, fresh accounts take nothing at $f_{\max}$ = 500 bp; stake of about 25 times $\rho$ times mean daily arbitrage volume, \$0.34 M, keeps the pool rebalanced with daily epochs if one staker covers all arbitrageurs (hourly epochs, as on mainnet, need less); and the correction lane restores the fully staked result, \$0.65 M, unless its report is a second old, when the gain falls to \$0.23 M: a one-second-old feed halves recapture, so rollups require a sub-second pull oracle (§5.6). Settlement costs 0.19× the execution gas of the settled swaps, and a gas tank needs 0.64 k gas per swap (Figures 15–16).
+**I.3 Results.** Every correcting swap charged, the sender rule at $K_{\min} = 3$ and a 4 bp fee leave LPs ahead of today's 5 bp pool by \$0.38–0.59 M across the cost scenarios (\$1.97 M against \$1.38 M with stable costs), with retail paying about 4.38 bp all-in (4 bp, 0.20–0.26 bp of retail charges, up to 0.12 bp of REP holding), users trading at fresher prices (3.62 against 4.28 bp), arbitrageurs' spending to be ordered first falling from \$0.94 M to \$0.24 M, and the pool as rebalanced as today. At 3 bp the sender rule falls short of today, because users already close many small gaps for the fee alone and a lower fee hands them to paid arbitrageurs (Table 20 in Appendix C). With users' corrections uncharged, LPs at today's fee gain \$0.65 M in the worst case; if users route away, LPs need to keep about 85% of their flow, because users' own trades do part of the rebalancing (Table 19). The sender rule settles at 1.46 bp and absorbs the cost shock without a raise (Figure 11), and under dropout and withholding costs 2% of LPs' gain (Table 26). Without arbitrage stake, fresh accounts take nothing at $f_{\max}$ = 500 bp; stake of about 25 times $\rho$ times mean daily arbitrage volume, \$0.34 M, keeps the pool rebalanced with daily epochs if one staker covers all arbitrageurs (hourly epochs, as on mainnet, need less); and the correction lane restores the fully staked result, \$0.65 M, unless its report is a second old, when the gain falls to \$0.23 M: a one-second-old feed halves recapture, so rollups require a sub-second pull oracle (§5.6). Settlement costs 0.19× the execution gas of the settled swaps, and a gas tank needs 0.64 k gas per swap (Figures 13–14).
 
 **I.4 A per-gap reverse auction.** Instead of one allowance for all corrections, each gap's allowance could start low and rise with its age, $m(t) = \min(m_0 + \text{slope} \cdot \text{age}, m_{\text{cap}})$, so that the first corrector whose cost it covers takes the gap at that price; correctors then compete on the price they will work for, gap by gap. The age is computed at reconciliation from the same signed prices as the charge, and resets only when a block ends within $f + \varepsilon + m$ of the benchmark, so that a token correction cannot hold the allowance down. On Arbitrum, with $m_0$ = 0.5 bp, a 5 bp cap and every correcting swap charged, the ramp beats the sender rule when arbitrageurs act as soon as the allowance covers their cost, but not when they hold out for a margin above it, which a reverse Dutch auction invites. A slow ramp then leaves gaps standing; a steep one pays a whole step of about 1 bp per 250 ms block:
 
@@ -875,13 +937,13 @@ Each rollup orders transactions by its own sequencer rules, so the competition s
 | Ramp, +1 bp/s, margin 0 bp | 4 bp | +\$0.53 M | no (×8) |
 | Ramp, +1 bp/s, margin 0.25 bp | 4 bp | +\$0.24 M | no (×4, ×8) |
 
-*Table 20. Arbitrum, every correcting swap charged; gains are worst cases across the three cost scenarios.*
+*Table 30. Arbitrum, every correcting swap charged; gains are worst cases across the three cost scenarios.*
 
 A lone arbitrageur that waits for the cap leaves each gap open for several seconds: at 3 bp, 584 hours of correctable blocks go uncorrected and LPs end \$1.07 M short of today. The ramp therefore needs at least two active correctors, which liquid pools have, and its gain depends on how close to cost they act, which our data cannot measure. The final design keeps the sender rule.
 
 ## Appendix J. Variables and parameters
 
-Table 21 collects the variables and parameters of the settlement equation (1), the equations each enters, the values used on mainnet, and the evidence that set them.
+Table 31 collects the variables and parameters of the settlement equation (1), the equations each enters, the values used on mainnet, and the evidence that set them.
 
 | Symbol | Meaning | Enters | Mainnet value | How it is set |
 |:----|:----------|:---|:-----|:------------|
@@ -892,8 +954,13 @@ Table 21 collects the variables and parameters of the settlement equation (1), t
 | $s$ | steepness of the curve | (3) | 1 | milder curves stall correctors, steeper ones leave charges uncovered; neither passes shocks with daily epochs (Appendix C) |
 | $L$, $t^*_b$, $\hat P_j$ | decision latency; decision instant of block $b$; directional benchmark | (2) | 1.5 s | measured from correcting swaps (§4.2) |
 | $\varepsilon$ | tolerance for oracle error | (4a) | 0.5 bp | $\max(\lvert\text{bias}\rvert, 2\sigma_o)$ (§5.6) |
-| $m$, $m_0$ | allowance per unit of volume; starting value | (4b), (6) | within [0.02, 50] bp | discovered by (6) |
+| $m$ | allowance per unit of volume | (4b), (6) | discovered | by (6) |
 | $\lambda$, $a_j$ | late-fix penalty; protected retail share ahead of swap $j$ | (4b) | 0.25 | position model (Appendix F.7) |
+| $\chi_{\uparrow}$, $\chi_{\mathrm u}$, $\chi_{\mathrm c}$ | controller's raise, urgent-cut and calm-decay factors | (6) | 2, 0.8, 0.95 | raise fast, lower slowly; rebalancing constraint (§5.3, Appendix F.7) |
+| $n_{\min}$, $q_{\mathrm s}$, $q_{\mathrm c}$, $H$ | minimum stale count, stale-share thresholds for a raise and for calm decay, raise window | (6) | 5, 2%, 1%, one hour | as above |
+| $m_{\min}$, $m_{\max}$, $m_0$ | bounds and starting value of the allowance | (6) | 0.02 bp, 50 bp; 5 bp | — |
+| $q_{\mathrm p}$, $q_{\mathrm r}$, $q_{\mathrm k}$ | priority-fee quantile of protected retail; reference retail quantile; sender share counted in $K_d$ | (4b), (5), (6) | 90%, 75%, 5% | — |
+| $\Delta_{\mathrm w}$, $k$ | scoring window; parking speed | (2), (9) | one second; — | timing noise inside the window (Appendix B) |
 | $\kappa$, $\bar u$ ($K_{\min}$) | urgency boundary and threshold (senders' threshold on arrival-ordered chains) | (5), (6) | 2, 0.5 (3) | rebalancing constraint under cost shocks, dropout and withholding (§5.3, Appendix F.7) |
 | $\theta^*$, $W$ | LPs' target take-rate; high-water window | (7) | 1.5–2 bp; 30 days | target near LPs' realised take; window capturing most of an all-time mark (Appendix E) |
 | $\tau$ | protocol take on rebates, to the reserve | (7) | 2.5% | illustrative; never applied to prepayment, where a markup of 1% already fails the rebalancing constraint (§5.4) |
@@ -904,4 +971,4 @@ Table 21 collects the variables and parameters of the settlement equation (1), t
 | $c_{\mathrm{p}}$, $c_{\mathrm{r}}$ | costs of a prepayment and of a redemption | (11) | gas; and the wait for settlement | — |
 | $\gamma$ | gas units prefunded per swap | §4.9 | — | gas-tank solvency (§5.7) |
 
-*Table 21. Variables and parameters of (1). Parameters are fixed within ranges at deployment and changed only after a delay (A6). Each was chosen by two criteria applied together: the design must keep the pool rebalanced in every cost scenario, and among such designs the larger worst-case gain for LPs is preferred; designs that change collateral must also leave charges collectable from stake.*
+*Table 31. Variables and parameters of (1). Parameters are fixed within ranges at deployment and changed only after a delay (A6). Each was chosen by two criteria applied together: the design must keep the pool rebalanced in every cost scenario, and among such designs the larger worst-case gain for LPs is preferred; designs that change collateral must also leave charges collectable from stake.*
