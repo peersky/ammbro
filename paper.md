@@ -221,7 +221,7 @@ Staked REP is thus a performance bond: an honest corrector's stake is parked and
 \end{aligned} \tag{10}
 ```
 
-where $R_a$ is the REP the account holds, $X_a$ an overpayment in token 0 it declares in a swap, and $\xi$ the units it redeems. A prepayment mints at par: the account funds the whole backing, so neither the take $\tau$ nor the high-water mark applies, and (8) holds. Redemption waits until the account has no settlement pending, so REP cannot leave before the charges it bonds are settled. An arbitrageur prepays $r^*(f) - R_a$ of (3) for the fee it wants, so the bond outstanding grows with a market swing and contracts after it.
+where $R_a$ is the REP the account holds, $X_a$ an overpayment in token 0 it declares in a swap, and $\xi$ the units it redeems. A prepayment mints at par: the account funds the whole backing, so neither the take $\tau$ nor the high-water mark applies, and (8) holds. Redemption waits until the account has no settlement pending, so REP cannot leave before the charges it bonds are settled. An arbitrageur prepays $r^*(f) - R_a$ of (3) for the fee it wants, so the bond outstanding grows with a market swing and contracts after it. REP is not a claim on the pool's surplus: a rebate goes to an account for its own excess (7d), not for REP held, and every unit is backed at par whatever its source (8), so prepaying while $G_i$ is below its high-water mark gains nothing from the shortfall's recovery and dilutes no holder.
 
 Table 2 traces each kind of shock through (1).
 
