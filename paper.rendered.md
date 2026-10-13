@@ -303,20 +303,21 @@ The adversary may be any trader, LP, arbitrageur, builder, sequencer or keeper, 
 
 ### 5.2 Summary of the studies
 
-| Question | Result | Detail |
-|---|---|---|
-| Does $Q_{\mathrm{LP}}$ identify extraction? | AUC 0.889 on position labels, 0.983 for the largest swaps; scoring at the block timestamp would show a \$1.58 M loss as a \$5.26 M gain | Appendix K.1 |
-| Can the fee fall below today's? | LPs gain \$5.76–6.52 M at 3 bp in every cost scenario, and beat today down to 0.5 bp; on Arbitrum, at 4 bp | §5.1, Appendix K.2, Appendix I |
-| Is LPs' result riskier? | worst day −\$103 k against −\$211 k today; daily standard deviation \$65 k against \$32 k | Appendix K.2 |
-| Does allowance discovery hold? | worst-case gain \$5.38 M with urgency measured by block position; \$5.35–5.86 M under dropout and withholding | Appendix K.3 |
-| How much REP do arbitrageurs need? | bonds prepaid at par peak at \$0.26 M in calm markets and \$1.12 M under shocks ×4 with hourly epochs, and keep the pool rebalanced in every scenario | Appendix K.4 |
-| Can REP come from rebates alone, or with a markup on prepayment? | no: rebates alone run out within days, and a 1% markup fails the rebalancing constraint | Appendix K.4 |
-| Is redemption at par safe? | yes, with an account's REP locked while any settlement is pending | Appendix K.4 |
-| Are charges collectable? | parking collects 70–90%; the account's stake and the reserve collect the rest | Appendix K.5 |
-| How sensitive are charges to oracle error? | benign flow overcharged below 0.3 bp; the tolerance costs about 8% of recapture per basis point | Appendix K.6 |
-| Is settlement affordable? | 0.18× the execution gas of the settled swaps, hourly | Appendix K.7 |
+| Question | Answer | Key figure | Detail |
+|:------------|:---------|:------------|:---|
+| Does $Q_{\mathrm{LP}}$ identify extraction? | yes | AUC 0.889 (0.983, largest swaps) | K.1 |
+| Can the fee fall below today's? | to 3 bp on mainnet, 4 bp on Arbitrum | LPs +\$5.76–6.52 M at 3 bp | §5.1, K.2, I |
+| Is LPs' result riskier? | more variable, smaller losses | worst day −\$103 k (today −\$211 k) | K.2 |
+| Does allowance discovery hold? | yes, under dropout and withholding | worst case +\$5.35–5.86 M | K.3 |
+| How much REP do arbitrageurs need? | bonds prepaid at par, hourly epochs | peak \$1.12 M under shocks ×4 | K.4 |
+| Can rebates alone supply REP? | no | exhausted within days | K.4 |
+| Can prepayment carry a markup? | no | 1% fails the rebalancing test | K.4 |
+| Is redemption at par safe? | yes, if locked while settlement is pending | no charge escapes beyond the bond | K.4 |
+| Are charges collectable? | yes | parking collects 70–90% | K.5 |
+| How costly is oracle error? | small, with a tolerance | about 8% of recapture per bp | K.6 |
+| Is settlement affordable? | yes | 0.18× execution gas | K.7 |
 
-*Table 4. Results of the studies, mainnet, March–August 2026; Appendix K gives the detailed tables.*
+*Table 4. Results of the studies, mainnet, March–August 2026. Detail refers to the subsections of Appendix K, to §5.1 and to Appendix I.*
 
 ## 6. Discussion
 
