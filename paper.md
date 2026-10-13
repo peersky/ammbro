@@ -258,7 +258,7 @@ The pool extends each swapper's record — post-trade price, active liquidity an
 ### 4.10 Assumptions and threat model
 
 - **A1 (oracle).** Signed bid and ask prices exist for every block, are retained for longer than settlement takes, and are correct up to a bias and noise bounded by $\varepsilon$; a compromised oracle is outside the model. No swap reads the oracle at execution.
-- **A2 (chain).** The hook executes atomically with the swap and the chain exposes its base fee; reorganisations beyond finality are not considered.
+- **A2 (chain).** The mechanism executes atomically with the swap and the chain exposes its base fee; reorganisations beyond finality are not considered.
 - **A3 (ordering).** No ordering is assumed to be honest. The only ordering property used is whether a chain runs builder auctions or a first-come-first-served sequencer (§4.5).
 - **A4 (arbitrage).** Arbitrageurs are rational, with private, time-varying costs; at least one is active, and competition among them is not assumed.
 - **A5 (liveness).** At least one keeper settles each epoch before its deadline.
