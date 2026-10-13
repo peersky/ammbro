@@ -193,16 +193,17 @@ M_{a,i} = \frac{1 - \tau}{P_{\mathrm{int}}}\; O_{a,i}\, \min\!\Big(1,\ \frac{\De
 
 Surplus beyond the accounts' excess, such as charges, stays with the LPs, and the take $\tau$ funds a per-pool reserve $\Omega_i$.
 
-REP is issued in no other way than by swaps: as these rebates, and as prepayments, an overpayment an account declares in a swap to acquire REP at par (10). The backing of every unit is held in a per-pool escrow $E_i$, one balance per token. It is released to the LPs present when REP is burned for a charge, in proportion to their active liquidity, or to the holder when REP is redeemed. With $M_i = \sum_a M_{a,i}$ the units rebated, $A_i$ the units prepaid, $B_i$ the units burned for charges, $\Xi_i$ the units redeemed, and $R_0$ an initial issuance at deployment backed by $P_{\mathrm{int}}$ per unit, the outstanding REP $R_i$ and the escrow evolve together:
+REP is issued in no other way than by swaps: as these rebates, and as prepayments, an overpayment an account declares in a swap to acquire REP at par (10). The backing of every unit is held in a per-pool escrow $E_i$, one balance per token. It is released to the LPs present when REP is burned for a charge, in proportion to their active liquidity, or to the holder when REP is redeemed. With $M_i = \sum_a M_{a,i}$ the units rebated, $A_i$ the units prepaid, $B_i$ the units burned to pay the epoch's charges, $\Xi_i$ the units redeemed, and $R_0$ an initial issuance at deployment backed by $P_{\mathrm{int}}$ per unit, the outstanding REP $R_i$ and the escrow evolve together:
 
 ```math
 \begin{aligned}
 R_i &= R_{i-1} + M_i + A_i - B_i - \Xi_i, \\
-E_i &= E_{i-1} + P_{\mathrm{int}}\,\big(M_i + A_i - B_i - \Xi_i\big), \qquad E_0 = P_{\mathrm{int}}\, R_0,
+E_i &= E_{i-1} + P_{\mathrm{int}}\,\big(M_i + A_i - B_i - \Xi_i\big), \qquad E_0 = P_{\mathrm{int}}\, R_0, \\
+B_i &= \frac{1}{P_{\mathrm{int}}} \sum_{j \in \text{epoch } i} C_j ,
 \end{aligned} \tag{8}
 ```
 
-so that $E_i = P_{\mathrm{int}}\, R_i$ in every epoch: outstanding REP is always fully backed, whatever its source (Theorem 1 in Appendix E). Escrow also makes minting against one's own pool unprofitable for an LP at any share of liquidity (Proposition 1).
+so that $E_i = P_{\mathrm{int}}\, R_i$ in every epoch. Parking (9) only locks REP until settlement; a charge burns it, and the $P_{\mathrm{int}}$ released per unit is the charge's payment to the LPs. Thus outstanding REP is always fully backed, whatever its source (Theorem 1 in Appendix E). Escrow also makes minting against one's own pool unprofitable for an LP at any share of liquidity (Proposition 1).
 
 ### 4.7 Collateral and bonds
 
@@ -223,7 +224,13 @@ Staked REP is thus a performance bond: an honest corrector's stake is parked and
 \end{aligned} \tag{10}
 ```
 
-where $R_a$ is the REP the account holds, $X_a$ an overpayment in token 0 it declares in a swap, and $\xi$ the units it redeems. A prepayment mints at par: the account funds the whole backing, so neither the take $\tau$ nor the high-water mark applies, and (8) holds. Redemption waits until the account has no settlement pending, so REP cannot leave before the charges it bonds are settled. An arbitrageur prepays $r^*(f) - R_a$ of (3) for the fee it wants, so the bond outstanding grows with a market swing and contracts after it. REP is not a claim on the pool's surplus: a rebate goes to an account for its own excess (7d), not for REP held, and every unit is backed at par whatever its source (8), so prepaying while $G_i$ is below its high-water mark gains nothing from the shortfall's recovery and dilutes no holder.
+where $R_a$ is the REP the account holds, $X_a$ an overpayment in token 0 it declares in a swap, and $\xi$ the units it redeems. A prepayment mints at par: the account funds the whole backing, so neither the take $\tau$ nor the high-water mark applies, and (8) holds. Redemption waits until the account has no settlement pending, so REP cannot leave before the charges it bonds are settled. An arbitrageur prepays $r^*(f) - R_a$ of (3) for the fee it wants, so the bond outstanding grows with a market swing and contracts after it. Over epochs in which the bonds outstanding are unchanged, (8) requires prepayment to replace what charges burn net of rebates and redemptions,
+
+```math
+A_i = B_i - M_i + \Xi_i, \qquad \frac{B_i}{M_i} = \frac{\sum_j C_j}{(1 - \tau)\, \Delta S^{\mathrm r}_i},
+```
+
+where $\Delta S^{\mathrm r}_i \le \Delta S_i$ is the part of the surplus rebated by (7d). The ratio $B_i/M_i$ is the burn amplification: it measures how much of the LPs' gain comes from recapture rather than from benign overpayment, and it is large in our data (Appendix K.4), so REP held only as rebates could not sustain the bonds. REP is not a claim on the pool's surplus: a rebate goes to an account for its own excess (7d), not for REP held, and every unit is backed at par whatever its source (8), so prepaying while $G_i$ is below its high-water mark gains nothing from the shortfall's recovery and dilutes no holder.
 
 Table 2 traces each kind of shock through (1).
 
@@ -872,7 +879,7 @@ This subsection uses decay without a signal, whose worst-case gain with full sta
 | Prepayment with a 1% markup | no | \$5.23 M | users' staleness +0.6 bp |
 | Prepayment with a 2.5% markup | no | \$4.86 M | users' staleness +2.4 bp |
 
-*Table 28. Where arbitrageurs' REP comes from. Charges burn \$4.24 M of REP over six months in calm markets and \$114 M under shocks ×4, against \$0.30–1.31 M of rebates; a markup takes \$0.04–0.15 M for the reserve and costs LPs \$0.4–1.2 M of recapture.*
+*Table 28. Where arbitrageurs' REP comes from. Charges burn \$4.24 M of REP over six months in calm markets and \$114 M under shocks ×4, against \$0.30–1.31 M of rebates; a markup takes \$0.04–0.15 M for the reserve and costs LPs \$0.4–1.2 M of recapture. On the final design at 3 bp, charges burn \$8.71 M of REP over six months against \$0.30–1.31 M rebated at $\theta^*$ = 2 and 1 bp (Appendix E), a burn amplification $B/M$ of about 29 and 7.*
 
 | Redemption and initial issuance | Result |
 |---|---|
