@@ -285,12 +285,12 @@ def stake_and_shocks() -> None:
         for alloc, mk in (("pooled", "o"), ("equal", "s")):
             rows = [r for r in d["rows"] if r["stake_mult"] and r["alloc"] == alloc and not r["ramp_days"]
                     and r["scenario"] in ("stable", "costs_x4", "costs_x8")]
-            pts = sorted((m_, max(max(r["uncorrected_hours"] for r in rows if r["stake_mult"] == m_), 0.1))
+            pts = sorted((m_, max(r["uncorrected_hours"] for r in rows if r["stake_mult"] == m_))
                          for m_ in {r["stake_mult"] for r in rows})
             ax.plot([x for x, _ in pts], [y for _, y in pts], ls, color=col, marker=mk, ms=3,
                     alpha=1.0 if alloc == "pooled" else 0.55,
                     label=f"{name}, {'one staker' if alloc == 'pooled' else 'each its own'}")
-    ax.set_xscale("log"); ax.set_yscale("log")
+    ax.set_xscale("log"); ax.set_ylim(bottom=0)
     ax.set_xlabel("arbitrageurs' stake (multiples of ρ × mean daily arbitrage volume)")
     ax.set_ylabel("uncorrected hours, worst cost scenario")
     ax.set_title("(a) stake needed to keep the pool corrected")

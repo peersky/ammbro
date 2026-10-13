@@ -600,7 +600,7 @@ A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps the
 
 ![Stake and shocks](figures/fig_stake_shocks.png)
 
-*Figure 12. (a) Hours of correctable blocks left uncorrected in the worst cost scenario, against arbitrageurs' stake held by one staker or by each separately, with hourly and daily settlement epochs; zero is drawn at 0.1. (b) LPs' gain lost to fresh unstaked accounts, in dollars, against $f_{\max}$, for the market's shocks scaled by one, two and four; zero is drawn at \$0.01 M. Larger shocks lose more dollars but a smaller share of LPs' gain, which grows faster with shock size.*
+*Figure 12. (a) Hours of correctable blocks left uncorrected in the worst cost scenario, against arbitrageurs' stake held by one staker or by each separately, with hourly and daily settlement epochs. (b) LPs' gain lost to fresh unstaked accounts, in dollars, against $f_{\max}$, for the market's shocks scaled by one, two and four; zero is drawn at \$0.01 M. Larger shocks lose more dollars but a smaller share of LPs' gain, which grows faster with shock size.*
 
 ## Appendix D. Settlement measurements
 
