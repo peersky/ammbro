@@ -1,0 +1,200 @@
+{
+ "chain": "mainnet",
+ "populations_bps": {
+  "pop_monopoly": [
+   0.3
+  ],
+  "pop_duo": [
+   0.3,
+   0.6
+  ],
+  "pop_ten": [
+   0.3,
+   0.45,
+   0.6,
+   0.8,
+   1.0,
+   1.25,
+   1.5,
+   2.0,
+   2.5,
+   3.0
+  ],
+  "pop_cheap": [
+   0.15,
+   0.3,
+   0.5,
+   0.75,
+   1.25
+  ],
+  "pop_dear": [
+   0.6,
+   1.2,
+   2.0,
+   3.0,
+   5.0
+  ]
+ },
+ "rows": [
+  {
+   "scenario": "stable",
+   "design": "urgency by position, 3 bp",
+   "lp_gain_vs_today_m": 6.523,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 46.88,
+   "builder_payments_m": 1.085,
+   "today_builder_payments_m": 6.568,
+   "m_end_bps": 1.5116
+  },
+  {
+   "scenario": "stable",
+   "design": "decay without a signal, 3 bp",
+   "lp_gain_vs_today_m": 5.432,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 43.12,
+   "builder_payments_m": 2.087,
+   "today_builder_payments_m": 6.568,
+   "m_end_bps": 2.588
+  },
+  {
+   "scenario": "pop_monopoly",
+   "design": "urgency by position, 3 bp",
+   "lp_gain_vs_today_m": 5.358,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 45.53,
+   "builder_payments_m": 0.037,
+   "today_builder_payments_m": 0.0,
+   "m_end_bps": 2.588
+  },
+  {
+   "scenario": "pop_monopoly",
+   "design": "decay without a signal, 3 bp",
+   "lp_gain_vs_today_m": 5.358,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 45.53,
+   "builder_payments_m": 0.037,
+   "today_builder_payments_m": 0.0,
+   "m_end_bps": 2.588
+  },
+  {
+   "scenario": "pop_duo",
+   "design": "urgency by position, 3 bp",
+   "lp_gain_vs_today_m": 6.523,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 46.88,
+   "builder_payments_m": 1.085,
+   "today_builder_payments_m": 6.568,
+   "m_end_bps": 1.5116
+  },
+  {
+   "scenario": "pop_duo",
+   "design": "decay without a signal, 3 bp",
+   "lp_gain_vs_today_m": 5.432,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 43.12,
+   "builder_payments_m": 2.087,
+   "today_builder_payments_m": 6.568,
+   "m_end_bps": 2.588
+  },
+  {
+   "scenario": "pop_ten",
+   "design": "urgency by position, 3 bp",
+   "lp_gain_vs_today_m": 6.547,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 47.45,
+   "builder_payments_m": 1.27,
+   "today_builder_payments_m": 6.753,
+   "m_end_bps": 1.1613
+  },
+  {
+   "scenario": "pop_ten",
+   "design": "decay without a signal, 3 bp",
+   "lp_gain_vs_today_m": 5.425,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 42.82,
+   "builder_payments_m": 2.327,
+   "today_builder_payments_m": 6.753,
+   "m_end_bps": 2.7242
+  },
+  {
+   "scenario": "pop_cheap",
+   "design": "urgency by position, 3 bp",
+   "lp_gain_vs_today_m": 6.653,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 42.16,
+   "builder_payments_m": 1.292,
+   "today_builder_payments_m": 6.821,
+   "m_end_bps": 1.3101
+  },
+  {
+   "scenario": "pop_cheap",
+   "design": "decay without a signal, 3 bp",
+   "lp_gain_vs_today_m": 5.434,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 38.18,
+   "builder_payments_m": 2.444,
+   "today_builder_payments_m": 6.821,
+   "m_end_bps": 2.3357
+  },
+  {
+   "scenario": "pop_dear",
+   "design": "urgency by position, 3 bp",
+   "lp_gain_vs_today_m": 6.175,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 54.82,
+   "builder_payments_m": 0.824,
+   "today_builder_payments_m": 6.113,
+   "m_end_bps": 3.0025
+  },
+  {
+   "scenario": "pop_dear",
+   "design": "decay without a signal, 3 bp",
+   "lp_gain_vs_today_m": 5.261,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 52.04,
+   "builder_payments_m": 1.61,
+   "today_builder_payments_m": 6.113,
+   "m_end_bps": 2.588
+  },
+  {
+   "scenario": "depth_x0.5",
+   "design": "urgency by position, 3 bp",
+   "lp_gain_vs_today_m": 8.653,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 57.51,
+   "builder_payments_m": 0.892,
+   "today_builder_payments_m": 6.151,
+   "m_end_bps": 2.0461
+  },
+  {
+   "scenario": "depth_x0.5",
+   "design": "decay without a signal, 3 bp",
+   "lp_gain_vs_today_m": 8.162,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 55.55,
+   "builder_payments_m": 1.339,
+   "today_builder_payments_m": 6.151,
+   "m_end_bps": 4.9172
+  },
+  {
+   "scenario": "depth_x2",
+   "design": "urgency by position, 3 bp",
+   "lp_gain_vs_today_m": 8.655,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 37.26,
+   "builder_payments_m": 1.599,
+   "today_builder_payments_m": 10.542,
+   "m_end_bps": 0.8917
+  },
+  {
+   "scenario": "depth_x2",
+   "design": "decay without a signal, 3 bp",
+   "lp_gain_vs_today_m": 7.127,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 34.46,
+   "builder_payments_m": 3.008,
+   "today_builder_payments_m": 10.542,
+   "m_end_bps": 1.2293
+  }
+ ]
+}

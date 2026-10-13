@@ -195,7 +195,7 @@ M_{a,i} = \frac{1 - \tau}{P_{\mathrm{int}}}\; O_{a,i}\, \min\!\Big(1,\ \frac{\De
 
 Surplus beyond the accounts' excess, such as charges, stays with the LPs, and the take $\tau$ funds a per-pool reserve $\Omega_i$.
 
-REP is issued in no other way than by swaps: as these rebates, and as prepayments, an overpayment an account declares in a swap to acquire REP at par (10). The backing of every unit is held in a per-pool escrow $E_i$, one balance per token. It is released to the LPs present when REP is burned for a charge, through the pool manager's `donate`, which credits in-range liquidity pro rata, or to the holder when REP is redeemed. With $M_i = \sum_a M_{a,i}$ the units rebated, $A_i$ the units prepaid, $B_i$ the units burned for charges, $\Xi_i$ the units redeemed, and $R_0$ an initial issuance at deployment backed by $P_{\mathrm{int}}$ per unit, the outstanding REP $R_i$ and the escrow evolve together:
+REP is issued in no other way than by swaps: as these rebates, and as prepayments, an overpayment an account declares in a swap to acquire REP at par (10). The backing of every unit is held in a per-pool escrow $E_i$, one balance per token. It is released to the LPs present when REP is burned for a charge, in proportion to their active liquidity, or to the holder when REP is redeemed. With $M_i = \sum_a M_{a,i}$ the units rebated, $A_i$ the units prepaid, $B_i$ the units burned for charges, $\Xi_i$ the units redeemed, and $R_0$ an initial issuance at deployment backed by $P_{\mathrm{int}}$ per unit, the outstanding REP $R_i$ and the escrow evolve together:
 
 ```math
 \begin{aligned}
@@ -255,7 +255,7 @@ where $c_{\mathrm{p}}$ is the cost of a prepayment and $c_{\mathrm{r}}$ the cost
 
 ### 4.9 Settlement and gas
 
-The hook extends each swapper's record — post-trade price, active liquidity and token deltas, chained by hash — so that an account's unsettled swaps form a self-contained segment. An account may settle itself at any time, which releases its parked stake; at each epoch's end a keeper settles every account still in flight, and both paths advance the same pointer. Flights unsettled when the oracle's retention window expires are burned in full. Every swap prefunds $\gamma \times$ `block.basefee` into a gas tank, where $\gamma$ is a fixed number of gas units, in the native token and without any exchange rate; keepers are reimbursed from it with an escalating bounty, directly or through an ERC-4337 paymaster (Buterin et al. 2021), and one tank can serve many pools. Settlement is never forced into the current block. Where charges are proven off-chain, a designated leader avoids duplicated proving; it cannot alter a charge, which the record and the signed prices fix. At deployment, a pool may make an initial issuance $R_0$ of REP, each unit backed by $P_{\mathrm{int}}$ in escrow; REP issued without backing would release nothing to the LPs when burned for a charge.
+The pool extends each swapper's record — post-trade price, active liquidity and token deltas, chained by hash — so that an account's unsettled swaps form a self-contained segment. An account may settle itself at any time, which releases its parked stake; at each epoch's end a keeper settles every account still in flight, and both paths advance the same pointer. Flights unsettled when the oracle's retention window expires are burned in full. Every swap prefunds $\gamma$ units of gas at the chain's base fee into a gas tank, in the native token and without any exchange rate; keepers are reimbursed from it with an escalating bounty, and one tank can serve many pools. Settlement is never forced into the current block. Where charges are proven off-chain, a designated leader avoids duplicated proving; it cannot alter a charge, which the record and the signed prices fix. At deployment, a pool may make an initial issuance $R_0$ of REP, each unit backed by $P_{\mathrm{int}}$ in escrow; REP issued without backing would release nothing to the LPs when burned for a charge.
 
 ### 4.10 Assumptions and threat model
 
@@ -284,7 +284,7 @@ The adversary may be any trader, LP, arbitrageur, builder, sequencer or keeper, 
 | Charged to other correcting swaps | — | \$1.96 M |
 | Blocks ending within the band | 99.54% | 99.96% |
 
-*Table 3. Today's pool against BRO-AMM two fee units below it, Ethereum mainnet, urgency measured by block position, every correcting swap charged. Retail's price is the fee, plus the charges today's retail-aggregator flow would incur on its own accidental corrections (Appendix G.5), plus the router's cost of holding REP; both are upper bounds. LPs' net mints no REP; at $\theta^*$ = 2 bp, high-water minting would rebate \$0.30 M of it (Appendix E). The studies of Tables 7–12 leave users' corrections uncharged, which understates LPs' result by about \$1.9 M.*
+*Table 3. Today's pool against BRO-AMM two fee units below it, Ethereum mainnet, urgency measured by block position, every correcting swap charged. Retail's price is the fee, plus the charges today's retail-aggregator flow would incur on its own accidental corrections (Appendix G.5), plus the router's cost of holding REP; both are upper bounds. LPs' net mints no REP; at $\theta^*$ = 2 bp, high-water minting would rebate \$0.30 M of it (Appendix E). Unless stated, the studies in Appendices C and K leave users' corrections uncharged, which understates LPs' result by about \$1.9 M.*
 
 ![Value split](figures/fig_value_split.png)
 
@@ -566,6 +566,8 @@ A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps the
 *Figure 12. (a) Hours of correctable blocks left uncorrected in the worst cost scenario, against arbitrageurs' stake held by one staker or by each separately, with hourly and daily settlement epochs. (b) LPs' gain lost to fresh unstaked accounts, in dollars, against $f_{\max}$, for the market's shocks scaled by one, two and four; zero is drawn at \$0.01 M. Larger shocks lose more dollars but a smaller share of LPs' gain, which grows faster with shock size.*
 
 ## Appendix D. Settlement measurements
+
+**Implementation.** On Uniswap v4 (Uniswap Labs, n.d.) the mechanism is a hook on the pool. Escrow is released to LPs through the pool manager's `donate`, which credits in-range liquidity pro rata by the same accounting as swap fees, at constant gas. Each swap prefunds $\gamma \times$ `block.basefee` into the gas tank, and keepers are reimbursed directly or through an ERC-4337 paymaster (Buterin et al. 2021). The gas of each component:
 
 **Components.**
 
