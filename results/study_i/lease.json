@@ -1,0 +1,1095 @@
+{
+ "chain": "mainnet",
+ "configs": {
+  "lease, hourly": [
+   3600.0,
+   {}
+  ],
+  "lease, daily": [
+   0.0,
+   {}
+  ],
+  "lease + BRO, hourly, s_max = 4": [
+   3600.0,
+   {
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 4.0
+    }
+   }
+  ],
+  "lease + BRO, hourly, s_max = 8": [
+   3600.0,
+   {
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 8.0
+    }
+   }
+  ],
+  "lease + BRO, hourly, s_max = 4, B0 = $100 M": [
+   3600.0,
+   {
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 100000000.0,
+     "s_max": 4.0
+    }
+   }
+  ]
+ },
+ "rows": [
+  {
+   "scenario": "stable",
+   "config": "lease, hourly",
+   "lp_gain_vs_today_m": 5.238,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 43.6,
+   "lease": {
+    "slack_bps": 0.1,
+    "peak_epoch_lease_m": 0.258,
+    "mean_epoch_lease_m": 0.013,
+    "p99_epoch_lease_m": 0.087,
+    "credit_total_m": 0.022,
+    "credit_epoch_max_m": 0.018,
+    "bust_out_bound_by_arb_m": [
+     0.018,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 5.063,
+   "arb_volume_b": 13.222,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "stable",
+   "config": "lease, daily",
+   "lp_gain_vs_today_m": 5.238,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 43.6,
+   "lease": {
+    "slack_bps": 0.1,
+    "peak_epoch_lease_m": 1.437,
+    "mean_epoch_lease_m": 0.306,
+    "p99_epoch_lease_m": 1.389,
+    "credit_total_m": 0.0,
+    "credit_epoch_max_m": 0.0,
+    "bust_out_bound_by_arb_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 5.063,
+   "arb_volume_b": 13.222,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "stable",
+   "config": "lease + BRO, hourly, s_max = 4",
+   "lp_gain_vs_today_m": 5.238,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 43.6,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 4.0
+    },
+    "peak_epoch_lease_m": 0.115,
+    "mean_epoch_lease_m": 0.003,
+    "p99_epoch_lease_m": 0.024,
+    "credit_total_m": 0.478,
+    "credit_epoch_max_m": 0.091,
+    "bust_out_bound_by_arb_m": [
+     0.091,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     4.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     2228.5,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 5.063,
+   "arb_volume_b": 13.222,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "stable",
+   "config": "lease + BRO, hourly, s_max = 8",
+   "lp_gain_vs_today_m": 5.238,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 43.6,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 8.0
+    },
+    "peak_epoch_lease_m": 0.103,
+    "mean_epoch_lease_m": 0.002,
+    "p99_epoch_lease_m": 0.013,
+    "credit_total_m": 0.949,
+    "credit_epoch_max_m": 0.123,
+    "bust_out_bound_by_arb_m": [
+     0.123,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     8.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     2228.5,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 5.063,
+   "arb_volume_b": 13.222,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "stable",
+   "config": "lease + BRO, hourly, s_max = 4, B0 = $100 M",
+   "lp_gain_vs_today_m": 5.238,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 43.6,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 100000000.0,
+     "s_max": 4.0
+    },
+    "peak_epoch_lease_m": 0.095,
+    "mean_epoch_lease_m": 0.003,
+    "p99_epoch_lease_m": 0.022,
+    "credit_total_m": 0.494,
+    "credit_epoch_max_m": 0.091,
+    "bust_out_bound_by_arb_m": [
+     0.091,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     4.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     2228.5,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 5.063,
+   "arb_volume_b": 13.222,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "costs_x4",
+   "config": "lease, hourly",
+   "lp_gain_vs_today_m": 5.171,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 42.7,
+   "lease": {
+    "slack_bps": 0.1,
+    "peak_epoch_lease_m": 0.258,
+    "mean_epoch_lease_m": 0.012,
+    "p99_epoch_lease_m": 0.086,
+    "credit_total_m": 0.022,
+    "credit_epoch_max_m": 0.018,
+    "bust_out_bound_by_arb_m": [
+     0.018,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 4.998,
+   "arb_volume_b": 12.72,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "costs_x4",
+   "config": "lease, daily",
+   "lp_gain_vs_today_m": 5.171,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 42.7,
+   "lease": {
+    "slack_bps": 0.1,
+    "peak_epoch_lease_m": 1.437,
+    "mean_epoch_lease_m": 0.295,
+    "p99_epoch_lease_m": 1.389,
+    "credit_total_m": 0.0,
+    "credit_epoch_max_m": 0.0,
+    "bust_out_bound_by_arb_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 4.998,
+   "arb_volume_b": 12.72,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "costs_x4",
+   "config": "lease + BRO, hourly, s_max = 4",
+   "lp_gain_vs_today_m": 5.171,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 42.7,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 4.0
+    },
+    "peak_epoch_lease_m": 0.115,
+    "mean_epoch_lease_m": 0.003,
+    "p99_epoch_lease_m": 0.024,
+    "credit_total_m": 0.471,
+    "credit_epoch_max_m": 0.091,
+    "bust_out_bound_by_arb_m": [
+     0.091,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     4.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     2023.1,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 4.998,
+   "arb_volume_b": 12.72,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "costs_x4",
+   "config": "lease + BRO, hourly, s_max = 8",
+   "lp_gain_vs_today_m": 5.171,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 42.7,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 8.0
+    },
+    "peak_epoch_lease_m": 0.103,
+    "mean_epoch_lease_m": 0.002,
+    "p99_epoch_lease_m": 0.013,
+    "credit_total_m": 0.946,
+    "credit_epoch_max_m": 0.123,
+    "bust_out_bound_by_arb_m": [
+     0.123,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     8.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     2023.1,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 4.998,
+   "arb_volume_b": 12.72,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "costs_x4",
+   "config": "lease + BRO, hourly, s_max = 4, B0 = $100 M",
+   "lp_gain_vs_today_m": 5.171,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 42.7,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 100000000.0,
+     "s_max": 4.0
+    },
+    "peak_epoch_lease_m": 0.095,
+    "mean_epoch_lease_m": 0.003,
+    "p99_epoch_lease_m": 0.022,
+    "credit_total_m": 0.487,
+    "credit_epoch_max_m": 0.091,
+    "bust_out_bound_by_arb_m": [
+     0.091,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     4.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     2023.1,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 4.998,
+   "arb_volume_b": 12.72,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "costs_x8",
+   "config": "lease, hourly",
+   "lp_gain_vs_today_m": 5.065,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 39.56,
+   "lease": {
+    "slack_bps": 0.1,
+    "peak_epoch_lease_m": 0.258,
+    "mean_epoch_lease_m": 0.012,
+    "p99_epoch_lease_m": 0.086,
+    "credit_total_m": 0.025,
+    "credit_epoch_max_m": 0.018,
+    "bust_out_bound_by_arb_m": [
+     0.018,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 4.891,
+   "arb_volume_b": 12.209,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "costs_x8",
+   "config": "lease, daily",
+   "lp_gain_vs_today_m": 5.065,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 39.56,
+   "lease": {
+    "slack_bps": 0.1,
+    "peak_epoch_lease_m": 1.437,
+    "mean_epoch_lease_m": 0.283,
+    "p99_epoch_lease_m": 1.389,
+    "credit_total_m": 0.0,
+    "credit_epoch_max_m": 0.0,
+    "bust_out_bound_by_arb_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 4.891,
+   "arb_volume_b": 12.209,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "costs_x8",
+   "config": "lease + BRO, hourly, s_max = 4",
+   "lp_gain_vs_today_m": 5.065,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 39.56,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 4.0
+    },
+    "peak_epoch_lease_m": 0.115,
+    "mean_epoch_lease_m": 0.003,
+    "p99_epoch_lease_m": 0.024,
+    "credit_total_m": 0.477,
+    "credit_epoch_max_m": 0.091,
+    "bust_out_bound_by_arb_m": [
+     0.091,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     4.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     1816.4,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 4.891,
+   "arb_volume_b": 12.209,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "costs_x8",
+   "config": "lease + BRO, hourly, s_max = 8",
+   "lp_gain_vs_today_m": 5.065,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 39.56,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 8.0
+    },
+    "peak_epoch_lease_m": 0.103,
+    "mean_epoch_lease_m": 0.002,
+    "p99_epoch_lease_m": 0.012,
+    "credit_total_m": 0.944,
+    "credit_epoch_max_m": 0.123,
+    "bust_out_bound_by_arb_m": [
+     0.123,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     8.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     1816.4,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 4.891,
+   "arb_volume_b": 12.209,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "costs_x8",
+   "config": "lease + BRO, hourly, s_max = 4, B0 = $100 M",
+   "lp_gain_vs_today_m": 5.065,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 39.56,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 100000000.0,
+     "s_max": 4.0
+    },
+    "peak_epoch_lease_m": 0.095,
+    "mean_epoch_lease_m": 0.003,
+    "p99_epoch_lease_m": 0.021,
+    "credit_total_m": 0.492,
+    "credit_epoch_max_m": 0.091,
+    "bust_out_bound_by_arb_m": [
+     0.091,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     4.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     1816.4,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 4.891,
+   "arb_volume_b": 12.209,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "vol_x2",
+   "config": "lease, hourly",
+   "lp_gain_vs_today_m": 24.035,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 50.79,
+   "lease": {
+    "slack_bps": 0.1,
+    "peak_epoch_lease_m": 0.55,
+    "mean_epoch_lease_m": 0.038,
+    "p99_epoch_lease_m": 0.23,
+    "credit_total_m": 0.084,
+    "credit_epoch_max_m": 0.047,
+    "bust_out_bound_by_arb_m": [
+     0.047,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 23.455,
+   "arb_volume_b": 39.392,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "vol_x2",
+   "config": "lease, daily",
+   "lp_gain_vs_today_m": 24.035,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 50.79,
+   "lease": {
+    "slack_bps": 0.1,
+    "peak_epoch_lease_m": 4.07,
+    "mean_epoch_lease_m": 0.912,
+    "p99_epoch_lease_m": 3.806,
+    "credit_total_m": 0.0,
+    "credit_epoch_max_m": 0.0,
+    "bust_out_bound_by_arb_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 23.455,
+   "arb_volume_b": 39.392,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "vol_x2",
+   "config": "lease + BRO, hourly, s_max = 4",
+   "lp_gain_vs_today_m": 24.035,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 50.79,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 4.0
+    },
+    "peak_epoch_lease_m": 0.246,
+    "mean_epoch_lease_m": 0.01,
+    "p99_epoch_lease_m": 0.058,
+    "credit_total_m": 2.463,
+    "credit_epoch_max_m": 0.449,
+    "bust_out_bound_by_arb_m": [
+     0.449,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     4.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     6796.4,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 23.455,
+   "arb_volume_b": 39.392,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "vol_x2",
+   "config": "lease + BRO, hourly, s_max = 8",
+   "lp_gain_vs_today_m": 24.035,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 50.79,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 8.0
+    },
+    "peak_epoch_lease_m": 0.217,
+    "mean_epoch_lease_m": 0.005,
+    "p99_epoch_lease_m": 0.029,
+    "credit_total_m": 6.784,
+    "credit_epoch_max_m": 0.517,
+    "bust_out_bound_by_arb_m": [
+     0.517,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     8.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     6796.4,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 23.455,
+   "arb_volume_b": 39.392,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "vol_x2",
+   "config": "lease + BRO, hourly, s_max = 4, B0 = $100 M",
+   "lp_gain_vs_today_m": 24.035,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 50.79,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 100000000.0,
+     "s_max": 4.0
+    },
+    "peak_epoch_lease_m": 0.176,
+    "mean_epoch_lease_m": 0.01,
+    "p99_epoch_lease_m": 0.058,
+    "credit_total_m": 2.474,
+    "credit_epoch_max_m": 0.449,
+    "bust_out_bound_by_arb_m": [
+     0.449,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     4.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     6796.4,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 23.455,
+   "arb_volume_b": 39.392,
+   "unstaked_volume_b": 0.007
+  },
+  {
+   "scenario": "vol_x4",
+   "config": "lease, hourly",
+   "lp_gain_vs_today_m": 119.393,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 53.51,
+   "lease": {
+    "slack_bps": 0.1,
+    "peak_epoch_lease_m": 1.122,
+    "mean_epoch_lease_m": 0.102,
+    "p99_epoch_lease_m": 0.561,
+    "credit_total_m": 0.875,
+    "credit_epoch_max_m": 0.246,
+    "bust_out_bound_by_arb_m": [
+     0.246,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 117.698,
+   "arb_volume_b": 105.748,
+   "unstaked_volume_b": 0.035
+  },
+  {
+   "scenario": "vol_x4",
+   "config": "lease, daily",
+   "lp_gain_vs_today_m": 119.393,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 53.51,
+   "lease": {
+    "slack_bps": 0.1,
+    "peak_epoch_lease_m": 10.39,
+    "mean_epoch_lease_m": 2.448,
+    "p99_epoch_lease_m": 9.503,
+    "credit_total_m": 0.0,
+    "credit_epoch_max_m": 0.0,
+    "bust_out_bound_by_arb_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 117.698,
+   "arb_volume_b": 105.748,
+   "unstaked_volume_b": 0.035
+  },
+  {
+   "scenario": "vol_x4",
+   "config": "lease + BRO, hourly, s_max = 4",
+   "lp_gain_vs_today_m": 119.393,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 53.51,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 4.0
+    },
+    "peak_epoch_lease_m": 0.484,
+    "mean_epoch_lease_m": 0.026,
+    "p99_epoch_lease_m": 0.141,
+    "credit_total_m": 27.394,
+    "credit_epoch_max_m": 0.988,
+    "bust_out_bound_by_arb_m": [
+     0.988,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     4.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     18556.6,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 117.698,
+   "arb_volume_b": 105.748,
+   "unstaked_volume_b": 0.035
+  },
+  {
+   "scenario": "vol_x4",
+   "config": "lease + BRO, hourly, s_max = 8",
+   "lp_gain_vs_today_m": 119.393,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 53.51,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 500000000.0,
+     "s_max": 8.0
+    },
+    "peak_epoch_lease_m": 0.369,
+    "mean_epoch_lease_m": 0.013,
+    "p99_epoch_lease_m": 0.07,
+    "credit_total_m": 60.237,
+    "credit_epoch_max_m": 1.129,
+    "bust_out_bound_by_arb_m": [
+     1.129,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     8.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     18556.6,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 117.698,
+   "arb_volume_b": 105.748,
+   "unstaked_volume_b": 0.035
+  },
+  {
+   "scenario": "vol_x4",
+   "config": "lease + BRO, hourly, s_max = 4, B0 = $100 M",
+   "lp_gain_vs_today_m": 119.393,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 53.51,
+   "lease": {
+    "slack_bps": 0.1,
+    "bro": {
+     "half_life_epochs": 720,
+     "b0_usd": 100000000.0,
+     "s_max": 4.0
+    },
+    "peak_epoch_lease_m": 0.28,
+    "mean_epoch_lease_m": 0.026,
+    "p99_epoch_lease_m": 0.141,
+    "credit_total_m": 27.622,
+    "credit_epoch_max_m": 0.988,
+    "bust_out_bound_by_arb_m": [
+     0.988,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "s_end": [
+     4.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "bro_end_m": [
+     18556.6,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "recapture_m": 117.698,
+   "arb_volume_b": 105.748,
+   "unstaked_volume_b": 0.035
+  }
+ ]
+}

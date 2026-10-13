@@ -410,6 +410,38 @@ def run_one(args) -> dict:
     # the batch benchmark is owed later, from a margin mu_a * V. The margin is parked from stake
     # (the swap then uses mu_a / rho of its volume in coverage) or withheld from the output (it
     # uses none). mu_a is the account's own record: a high quantile of its past true-ups per unit.
+    # REP leased against capital (§4.7): an arbitrageur deposits P_int per unit and leases, for the
+    # epoch, the REP that holds its fee within slack of f_min on its epoch volume so far,
+    # r = (rho * V / s_a) * ln((f_max - f_min) / slack). Charges are paid from the leased REP; what
+    # exceeds it is credit. BRO: an account-bound score earned per settled epoch from the correction
+    # volume it settled, decaying with a half-life, that steepens the account's curve,
+    # s_a = 1 + (s_max - 1) * min(BRO_a / B0, 1); an account that leaves charges beyond its lease
+    # unpaid (a bust-out) forfeits its BRO.
+    lease = settings.get("lease")
+    if lease is not None:
+        _nl = len(POPULATIONS.get(scenario, ARB_COSTS_BPS))
+        ls_slack = lease.get("slack_bps", 0.1) / 1e4
+        ls_ln = math.log(max(fmax_fee - F, 1e-9) / ls_slack)
+        bro_cfg = lease.get("bro")
+        ls = {"r": np.zeros(_nl), "bro": np.zeros(_nl), "s": np.ones(_nl),
+              "peak": 0.0, "sum": 0.0, "n_ep": 0, "per_ep": [], "credit": 0.0, "credit_ep_max": 0.0, "credit_arb_ep_max": np.zeros(_nl)}
+        if bro_cfg:
+            bro_decay = 0.5 ** (1.0 / bro_cfg.get("half_life_epochs", 720))
+            bro_b0, bro_smax = bro_cfg.get("b0_usd", 5e8), bro_cfg.get("s_max", 4.0)
+
+    def _close_lease_epoch():
+        if lease is None:
+            return
+        tot = float(ls["r"].sum()); ls["peak"] = max(ls["peak"], tot); ls["sum"] += tot; ls["n_ep"] += 1
+        ls["per_ep"].append(tot)
+        exc = np.maximum(ch_ep - ls["r"], 0.0)             # charges beyond the lease: credit
+        ls["credit"] += float(exc.sum()); ls["credit_ep_max"] = max(ls["credit_ep_max"], float(exc.sum()))
+        ls["credit_arb_ep_max"] = np.maximum(ls["credit_arb_ep_max"], exc)
+        if bro_cfg:
+            ls["bro"] = ls["bro"] * bro_decay + vol_ep
+            ls["s"] = 1.0 + (bro_smax - 1.0) * np.minimum(ls["bro"] / bro_b0, 1.0)
+        ls["r"][:] = 0.0
+
     rep = settings.get("report")
     rep_on = rep is not None and not rep.get("off", False)
     if rep is not None:
@@ -427,6 +459,8 @@ def run_one(args) -> dict:
     def arb_fee(j, add=0.0):
         if stake_K is None or rule == "today":
             return F
+        if lease is not None:                        # leases enough REP to stay within slack of f_min
+            return F + ls_slack
         if pm_v is not None:
             r, v = r_arb[j], vol_ep[j]
             if r <= 0:
@@ -531,11 +565,13 @@ def run_one(args) -> dict:
             d_sr_obs = d_sr_stale = 0
             d_wins[:] = 0
             if not stake_epoch_s:
+                _close_lease_epoch()
                 vol_hist.append(vol_ep.copy()); vol_ep[:] = 0.0; ch_ep[:] = 0.0
         if stake_epoch_s:                           # settlement epoch shorter than a day: stake recycles
             _sep = int(i * _DATA["step_s"] // stake_epoch_s)
             if _sep != cur_sep:
                 if cur_sep >= 0:
+                    _close_lease_epoch()
                     vol_hist.append(vol_ep.copy())
                 vol_ep[:] = 0.0; ch_ep[:] = 0.0; cur_sep = _sep
         oi = o0 + vol_k * (o[i] - o0); D = Dd[i] * depth_x
@@ -891,6 +927,9 @@ def run_one(args) -> dict:
                               unc = max(tu - rp_mu[jw] * V, 0.0)        # beyond the withheld margin
                               rp_stats["uncovered_beyond_margin"] += unc
                               stake_uncov += unc; extra_fee -= unc
+                      elif lease is not None and not w[3]:
+                          jw = w[6]; ch_ep[jw] += max(E - kept, 0.0)
+                          ls["r"][jw] = max(ls["r"][jw], RHO * vol_ep[jw] / ls["s"][jw] * ls_ln)
                       elif collateral and stake_K is not None and not w[3]:
                           jw = w[6]; chg = max(E - kept, 0.0)
                           avail = (stake_K - ch_ep.sum()) if pooled else (stake_K / n_arb - ch_ep[jw])
@@ -1046,6 +1085,13 @@ def run_one(args) -> dict:
                   "premium_mint_v": pm_v, "shock_k": shock_k, "shock_key": shock_key,
                   "relief": relief, "relief_trades": rl_trades, "relief_volume_b": round(rl_vol / 1e9, 3), "relief_on_blocks": rl_blocks, "rep_minted_to_arbs_m": round(pm_minted / 1e6, 3), "uncovered_charges_m": round((pm_leak + stake_uncov) / 1e6, 3),
                   "arb_stake_end_m": None if pm_v is None else round(float(r_arb.sum()) / 1e6, 3)}, "vol_x": vol_k,
+        "lease": None if lease is None else {**{k: v for k, v in lease.items()},
+                                         "peak_epoch_lease_m": round(ls["peak"] / 1e6, 3),
+                                         "mean_epoch_lease_m": round(ls["sum"] / max(ls["n_ep"], 1) / 1e6, 3),
+                                         "p99_epoch_lease_m": round(float(np.percentile(ls["per_ep"], 99)) / 1e6, 3) if ls["per_ep"] else 0.0,
+                                         "credit_total_m": round(ls["credit"] / 1e6, 3), "credit_epoch_max_m": round(ls["credit_ep_max"] / 1e6, 3),
+                                         "bust_out_bound_by_arb_m": [round(float(x) / 1e6, 3) for x in ls["credit_arb_ep_max"]],
+                                         "s_end": [round(float(x), 2) for x in ls["s"]], "bro_end_m": [round(float(x) / 1e6, 1) for x in ls["bro"]]},
         "report": None if rep is None else {**rep, **{k: (round(v / 1e9, 3) if "volume" in k else round(v / 1e6, 4) if isinstance(v, float) else v) for k, v in rp_stats.items()},
                                            "mu_end_bps": [round(float(x) * 1e4, 3) for x in rp_mu]},
         "arb_volume_b": round(arb_vol / 1e9, 3),
