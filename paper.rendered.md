@@ -232,7 +232,7 @@ where $R_a$ is the REP the account holds, $X_a$ an overpayment in token 0 it dec
 A_i = B_i - M_i + \Xi_i, \qquad \frac{B_i}{M_i} = \frac{\sum_j C_j}{(1 - \tau)\, \Delta S^{\mathrm r}_i},
 ```
 
-where $\Delta S^{\mathrm r}_i \le \Delta S_i$ is the part of the surplus rebated by (7d). The ratio $B_i/M_i$ is the burn amplification: it measures how much of the LPs' gain comes from recapture rather than from benign overpayment, and it is large in our data (Appendix K.4), so REP held only as rebates could not sustain the bonds. REP is not a claim on the pool's surplus: a rebate goes to an account for its own excess (7d), not for REP held, and every unit is backed at par whatever its source (8), so prepaying while $G_i$ is below its high-water mark gains nothing from the shortfall's recovery and dilutes no holder.
+where $\Delta S^{\mathrm r}_i \le \Delta S_i$ is the part of the surplus rebated by (7d). The burn-to-rebate ratio $B_i/M_i$ compares the two reasons REP is burned: rebated REP, whose burning cancels what the LPs owed an overpayer, and prepaid REP, whose burning pays an arbitrageur's charge. Every burn is a charge, so nothing is burned beyond what is owed; the ratio is large in our data (Appendix K.4) because charges for extraction far exceed benign overpayment, so most burned REP was prepaid to pay charges, and REP held only as rebates could not sustain the bonds. REP is not a claim on the pool's surplus: a rebate goes to an account for its own excess (7d), not for REP held, and every unit is backed at par whatever its source (8), so prepaying while $G_i$ is below its high-water mark gains nothing from the shortfall's recovery and dilutes no holder.
 
 Table 2 traces each kind of shock through (1).
 
@@ -941,7 +941,7 @@ This subsection uses decay without a signal, whose worst-case gain with full sta
 | Prepayment with a 1% markup | no | \$5.23 M | users' staleness +0.6 bp |
 | Prepayment with a 2.5% markup | no | \$4.86 M | users' staleness +2.4 bp |
 
-*Table 28. Where arbitrageurs' REP comes from. Charges burn \$4.24 M of REP over six months in calm markets and \$114 M under shocks ×4, against \$0.30–1.31 M of rebates; a markup takes \$0.04–0.15 M for the reserve and costs LPs \$0.4–1.2 M of recapture. On the final design at 3 bp, charges burn \$8.71 M of REP over six months against \$0.30–1.31 M rebated at $\theta^*$ = 2 and 1 bp (Appendix E), a burn amplification $B/M$ of about 29 and 7.*
+*Table 28. Where arbitrageurs' REP comes from. Charges burn \$4.24 M of REP over six months in calm markets and \$114 M under shocks ×4, against \$0.30–1.31 M of rebates; a markup takes \$0.04–0.15 M for the reserve and costs LPs \$0.4–1.2 M of recapture. On the final design at 3 bp, charges burn \$8.71 M of REP over six months against \$0.30–1.31 M rebated at $\theta^*$ = 2 and 1 bp (Appendix E), a burn-to-rebate ratio $B/M$ of about 29 and 7.*
 
 | Redemption and initial issuance | Result |
 |---|---|
