@@ -563,7 +563,7 @@ A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps the
 
 ![Recapture frontier](figures/fig_recapture_frontier.png)
 
-*Figure 10. Recapture against profitable arbitrage preserved, for all schedules evaluated.*
+*Figure 10. Charging schedules evaluated statically with the benchmark known exactly, on every historical swap. Each dot is one schedule, a charge on each extracting swap set from its measured extraction. Vertical: share of extraction recaptured for LPs. Horizontal: arbitrage trades that would still be profitable after the charge, relative to today; at 0, corrections no longer pay and the pool would go stale. Charging all extraction recaptures most but leaves no arbitrage; charging only extraction above the benign fee keeps arbitrage but recaptures little, and the clip schedules near 2× also cut the benign fee to 1 bp; leaving an allowance $m$ and charging the rest, the static form of (4b), does both. The schedule fixed in advance, $m$ = 2 bp with charges capped at 500 bp, is circled.*
 
 ![Controller paths](figures/fig_controller_paths.png)
 

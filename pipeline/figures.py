@@ -209,22 +209,32 @@ def extraction_by_position() -> None:
 
 
 def recapture_frontier() -> None:
-    fig, axes = plt.subplots(1, 2, figsize=(7.4, 2.8), sharey=True)
-    forms = {"clip": C[4], "additive": C[1], "margin": C[0]}
+    """Study B, static and with perfect information: each dot is one charging schedule applied to every
+    historical swap; recapture against the profitable arbitrage it leaves, relative to today."""
+    fig, axes = plt.subplots(1, 2, figsize=(7.4, 3.0), sharey=True)
+    forms = {"clip": (C[4], "clip: charge only extraction above the benign fee"),
+             "additive": (C[1], "additive: charge all extraction"),
+             "margin": (C[0], "margin: leave an allowance m, charge the rest")}
     for ax, (name, base) in zip(axes, CHAINS.items()):
         b = j(base / "study_b" / "metrics.json")
         sw = b["by_horizon"]["h0"]["sweep_all"]
         base_s = b["by_horizon"]["h0"]["baseline"]["arb_survival"]
-        for form, col in forms.items():
+        ax.axvline(1.0, color=MUTED, lw=0.8, ls="--")
+        ax.text(1.03, 97, "as many as today", fontsize=7, color=MUTED, va="center")
+        for form, (col, lab) in forms.items():
             pts = [(s["arb_survival"] / base_s, s["capture_fraction"] * 100) for s in sw if s["form"] == form]
-            ax.scatter(*zip(*pts), s=14, color=col, alpha=0.75, label=f"{form} schedules", edgecolor="white", lw=0.4)
+            ax.scatter(*zip(*pts), s=14, color=col, alpha=0.8, label=lab, edgecolor="white", lw=0.4)
         obj = [s for s in sw if s["form"] == "margin" and s["m_bps"] == 2.0 and s["cap_bps"] == 500.0][0]
-        ax.scatter([obj["arb_survival"] / base_s], [obj["capture_fraction"] * 100], s=70, facecolor="none", edgecolor=INK, lw=1.4)
-        ax.annotate("chosen a priori\n(m = 2 bp, cap = f_max)", (obj["arb_survival"] / base_s, obj["capture_fraction"] * 100),
-                    xytext=(0.36, 0.86), textcoords="axes fraction", fontsize=7.5, arrowprops=dict(arrowstyle="-", color=INK, lw=0.7))
-        ax.set_title(name); ax.set_xlabel("profitable arbitrage preserved (× today)")
-    axes[0].set_ylabel("extraction recaptured (%)")
-    axes[0].legend(loc="lower left", fontsize=7)
+        x0, y0 = obj["arb_survival"] / base_s, obj["capture_fraction"] * 100
+        ax.scatter([x0], [y0], s=70, facecolor="none", edgecolor=INK, lw=1.4)
+        ax.annotate(f"fixed in advance:\nm = 2 bp, {y0:.0f}% recaptured", (x0, y0), xytext=(0.56, 0.60),
+                    textcoords="axes fraction", fontsize=7.5, arrowprops=dict(arrowstyle="-", color=INK, lw=0.7))
+        ax.set_title(name); ax.set_xlabel("arbitrage trades still profitable (× today)")
+    axes[0].set_ylabel("extraction recaptured for LPs (%)")
+    axes[0].annotate("", xy=(0.03, 0.98), xytext=(0.03, 0.80), xycoords="axes fraction",
+                     arrowprops=dict(arrowstyle="-|>", color=MUTED, lw=0.8))
+    axes[0].text(0.06, 0.89, "better", transform=axes[0].transAxes, fontsize=7, color=MUTED, va="center")
+    fig.legend(*axes[0].get_legend_handles_labels(), loc="lower center", ncol=3, fontsize=7, frameon=False, bbox_to_anchor=(0.5, -0.06))
     save(fig, "fig_recapture_frontier")
 
 
