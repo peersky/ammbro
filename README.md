@@ -69,15 +69,15 @@ must pass before any study runs against a pool.
 
 | Paper | Code | Results |
 |---|---|---|
-| §3.5 decision latency, Appendix B | `pipeline/study_e.py`, `timing_gaming.py` | `results/study_e/` |
+| §4.2 decision latency, Appendix B | `pipeline/study_e.py`, `timing_gaming.py` | `results/study_e/` |
 | §5.1 score validity, extraction by position | `study_a.py`, `supp1.py`, `study_d.py`, `study_i_index.py` | `results/study_a/`, `supp1/`, `study_i/block_index.json` |
 | §5.2 recapture under perfect information | `study_b.py` | `results/study_b/` |
 | §5.2 Table 4 (lower fees, every correcting swap charged) | `study_i_ramp.py` (`baseline`, `fee4`), `router_risk.py` | `results/study_i/ramp_baseline.json`, `results/arbitrum/study_i/ramp_fee4.json`, `results/*router_risk*.json` |
 | §5.2 Figure 4, Appendix C at today's fee | `study_i_headline.py`, `study_i_retention.py`, `study_i_routing.py`, `study_i_capture.py` | `results/study_i/{headline,retention,routing,capture}.json` |
 | Appendix I (Arbitrum): sender rule, Timeboost, per-gap reverse auction | `study_i_ramp.py` (`timeboost`, `main`, `robust`, `steep`, `monopoly`, `fee4`) | `results/arbitrum/study_i/ramp_*.json` |
 | Appendix G.5 router costs and charges | `router_costs.py`, `router_risk.py` | `results/router_costs.json`, `results/*router_risk*.json` |
-| §4.6, §5.3 controllers, Appendix F.7 | `study_i.py`, `study_i_position.py`, `study_i_redundancy.py`, `study_i_paths.py`, `study_i_final.py` | `results/study_i/` |
-| §4.6 Timeboost, Appendix B | `study_i_timeboost.py` (public Arbitrum RPC) | `results/arbitrum/study_i/timeboost.json` |
+| §4.7, §5.3 controllers, Appendix F.7 | `study_i.py`, `study_i_position.py`, `study_i_redundancy.py`, `study_i_paths.py`, `study_i_final.py` | `results/study_i/` |
+| §4.7 Timeboost, Appendix B | `study_i_timeboost.py` (public Arbitrum RPC) | `results/arbitrum/study_i/timeboost.json` |
 | §5.4 stake, fresh accounts, correction lane | `study_i_stake.py`, `study_i_relief.py` | `results/study_i/stake.json`, `relief.json` |
 | Appendix F rejected designs | `study_i_review.py`, `study_i_bonus.py`, `study_i_rotation.py`, `study_i_relief.py` | `results/study_i/` |
 | §5.5 collateral | `study_c_collateral.py` | `results/study_c/` |
