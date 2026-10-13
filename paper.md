@@ -132,19 +132,21 @@ The adversary may be any trader, LP, arbitrageur, builder, sequencer or keeper, 
 ```mermaid
 flowchart LR
   S[Swap] -->|hook: fee from active stake,<br/>park ℓ·V, record, prefund gas| P[(Pool + account record)]
-  L[Correcting swap<br/>with signed report] -->|hook: verify, charge at once,<br/>park margin from REP or output| P
+  L[Correcting swap<br/>with signed report] -->|hook: verify, pay f_min,<br/>charge against report at once,<br/>hold margin μV from REP or output| P
   P -->|any time| SS[Self-settlement<br/>by the account]
-  P -->|hourly epoch end| K[Keeper settlement]
+  P -->|end of hourly epoch| K[Keeper settlement]
   O[Signed price batch] --> SS
   O --> K
-  SS --> R{Charge vs allowance}
+  SS --> R{Score at t*:<br/>charge vs allowance}
   K --> R
-  R -->|surplus above target| M[Mint REP,<br/>surplus to escrow]
-  R -->|extraction beyond m| B[Burn stake,<br/>escrow to LPs]
+  R -->|extraction beyond m| B[Burn stake,<br/>escrow to LPs via donate]
+  R -->|income above<br/>high-water mark| M[Mint REP to payers,<br/>τ to reserve,<br/>surplus to escrow]
+  R -->|lane swap| A[True up charge<br/>from margin]
+  R -->|epoch settled| U[Release parked stake<br/>and margin]
   T[(Gas tank)] -->|reimburse + bounty| K
 ```
 
-*Figure 1. Lifecycle of a swap. Most swaps take the upper path; a correcting swap may instead take the correction lane (§4.12), settled provisionally at execution and reconciled with the rest.*
+*Figure 1. Lifecycle of a swap. Most swaps take the upper path and are priced only at settlement; a correcting swap may instead take the correction lane (§4.12), charged provisionally against its report at execution and trued up against the batch price with the rest. Settlement scores every swap at its decision instant $t^*$, burns stake for extraction beyond the allowance, mints REP from income above the high-water mark (6), and releases parked stake each hourly epoch.*
 
 At execution the hook reads the trader's active REP stake, charges the fee given by the coverage curve, parks part of the stake, records the swap and prefunds its share of settlement gas; no oracle is consulted, so trading remains synchronous and permissionless. At reconciliation, the swap is scored against signed prices and settled against stake only: benign surplus mints REP, and extraction beyond the job allowance is burned from stake. Because a departed counterparty's cash cannot be recalled, stake is both the fee determinant and the collateral.
 
