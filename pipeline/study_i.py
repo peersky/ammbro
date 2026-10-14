@@ -449,6 +449,21 @@ def run_one(args) -> dict:
     # Prepaid charges (B): charges are paid in REP minted by declared prepayment at P_int / (1 - tau), so
     # each unit of charge costs the arbitrageur surcharge = tau / (1 - tau) more; it weighs this when
     # choosing a trade, and the surcharge goes to the reserve.
+    # Crash (tail-event study): the external price falls by pct over dur_s, from the first block of
+    # day start_day after the sample's start, and stays there.
+    crash = settings.get("crash")
+    if crash is not None:
+        _cd = day[0] + int(crash.get("start_day", 90))
+        cr_i0 = int(np.searchsorted(day, _cd)); cr_ln = math.log(1.0 - float(crash["pct"]))
+        cr_steps = max(float(crash.get("dur_s", 3600.0)) / _DATA["step_s"], 1.0)
+    # Speed-scaled collateral: the capacity scale rises with the pool's own price move over the last
+    # window, rho_eff = rho * (1 + k * |move| / ref), so a fixed bond covers less volume in a fast market.
+    volcol = settings.get("vol_collateral")
+    p_hist = []
+    if volcol is not None:
+        vc_k, vc_ref = float(volcol["k"]), float(volcol.get("ref_bps", 50.0)) / 1e4
+        vc_w = max(int(float(volcol.get("window_s", 3600.0)) / _DATA["step_s"]), 1)
+    rho_eff = [RHO]
     surcharge = float(settings.get("charge_surcharge", 0.0)); sur_tot = 0.0
     # REP supply without prepayment (D): pooled arbitrage stake starts at the launch issuance, charges burn
     # it at each settlement, and rebates add to it; arbitrageurs cannot otherwise acquire REP.
@@ -519,7 +534,7 @@ def run_one(args) -> dict:
             return F if (rep_on and v <= 0) else fmax_fee
         if v <= 0:
             return F
-        cov = c_steep * r / (RHO * v)                # steepness s scales the coverage a unit of stake buys
+        cov = c_steep * r / (rho_eff[0] * v)         # steepness s scales the coverage a unit of stake buys
         if c_form == "power":                        # power-law tail: degrades gently when volume spikes
             return F + (fmax_fee - F) * (1.0 + cov) ** (-c_alpha)
         return F + (fmax_fee - F) * math.exp(-cov)
@@ -617,6 +632,12 @@ def run_one(args) -> dict:
                     vol_hist.append(vol_ep.copy())
                 vol_ep[:] = 0.0; ch_ep[:] = 0.0; cur_sep = _sep
         oi = o0 + vol_k * (o[i] - o0); D = Dd[i] * depth_x
+        if crash is not None and i >= cr_i0:
+            oi += cr_ln * min(1.0, (i - cr_i0 + 1) / cr_steps)
+        if volcol is not None:
+            p_hist.append(p)
+            _mv = abs(p - p_hist[-vc_w]) if len(p_hist) >= vc_w else abs(p - p_hist[0])
+            rho_eff[0] = RHO * (1.0 + vc_k * _mv / vc_ref)
         _jump = 0.0 if o_prev is None else abs(oi - o_prev); o_prev = oi
         if pm_v is not None and i % _DATA["raise_steps"] == 0:
             r_arb += pend; pend[:] = 0.0
