@@ -63,7 +63,7 @@ def timeline() -> None:
     phases = [(0.1, 3.0, C[0], "1  Fee, at execution", "eq. (3)",
                "known from the sender's stake;\nno oracle needed; part of\nthe stake is parked (9)"),
               (3.45, 3.1, C[1], "2  Charge, at reconciliation", "eq. (4b)",
-               "needs the signed price at\nthe decision instant; taken\nfrom the parked stake"),
+               "needs the signed price at\nthe decision instant; paid in\ntokens, parked REP secures it"),
               (6.9, 3.0, C[2], "3  Rebate, at epoch end", "eq. (7)",
                "needs the epoch's income\nagainst the target; stake\nreleased, REP minted")]
     for x0, w, col, title, eq, body in phases:
