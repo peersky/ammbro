@@ -1,0 +1,210 @@
+{
+ "L_honest_s": 1.5,
+ "bracket_s": [
+  1.25,
+  1.75
+ ],
+ "sweep": [
+  {
+   "L_s": 0.0,
+   "n": 990555,
+   "share_lp_negative": 0.221,
+   "gross_lvr_m": 9.03,
+   "baseline_net_lp_m": -0.58,
+   "headline_delta_m": 3.78,
+   "headline_capture_fraction": 0.418,
+   "auc": 0.862,
+   "auc_gt100k": 0.9771
+  },
+  {
+   "L_s": 1.0,
+   "n": 990555,
+   "share_lp_negative": 0.2336,
+   "gross_lvr_m": 9.55,
+   "baseline_net_lp_m": -1.38,
+   "headline_delta_m": 3.96,
+   "headline_capture_fraction": 0.414,
+   "auc": 0.882,
+   "auc_gt100k": 0.9828
+  },
+  {
+   "L_s": 1.25,
+   "n": 990555,
+   "share_lp_negative": 0.236,
+   "gross_lvr_m": 9.64,
+   "baseline_net_lp_m": -1.5,
+   "headline_delta_m": 4.0,
+   "headline_capture_fraction": 0.414,
+   "auc": 0.8845,
+   "auc_gt100k": 0.9825
+  },
+  {
+   "L_s": 1.5,
+   "n": 990555,
+   "share_lp_negative": 0.2386,
+   "gross_lvr_m": 9.72,
+   "baseline_net_lp_m": -1.59,
+   "headline_delta_m": 4.05,
+   "headline_capture_fraction": 0.416,
+   "auc": 0.8859,
+   "auc_gt100k": 0.9823
+  },
+  {
+   "L_s": 1.75,
+   "n": 990555,
+   "share_lp_negative": 0.2417,
+   "gross_lvr_m": 9.82,
+   "baseline_net_lp_m": -1.7,
+   "headline_delta_m": 4.12,
+   "headline_capture_fraction": 0.419,
+   "auc": 0.8864,
+   "auc_gt100k": 0.9818
+  }
+ ],
+ "rows": [
+  {
+   "alpha": 0.1,
+   "delta_s": 0.5,
+   "L_estimated_s": 1.5,
+   "L_within_bracket_s": 1.5,
+   "recapture_change_pct": 0.0,
+   "measured_extraction_change_pct": 0.0,
+   "recapture_change_pct_unbounded": 0.0
+  },
+  {
+   "alpha": 0.1,
+   "delta_s": 1.0,
+   "L_estimated_s": 1.5,
+   "L_within_bracket_s": 1.5,
+   "recapture_change_pct": 0.0,
+   "measured_extraction_change_pct": 0.0,
+   "recapture_change_pct_unbounded": 0.0
+  },
+  {
+   "alpha": 0.1,
+   "delta_s": 2.0,
+   "L_estimated_s": 1.75,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 1.73
+  },
+  {
+   "alpha": 0.1,
+   "delta_s": 4.0,
+   "L_estimated_s": 1.5,
+   "L_within_bracket_s": 1.5,
+   "recapture_change_pct": 0.0,
+   "measured_extraction_change_pct": 0.0,
+   "recapture_change_pct_unbounded": 0.0
+  },
+  {
+   "alpha": 0.25,
+   "delta_s": 0.5,
+   "L_estimated_s": 1.75,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 1.73
+  },
+  {
+   "alpha": 0.25,
+   "delta_s": 1.0,
+   "L_estimated_s": 2.0,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 3.46
+  },
+  {
+   "alpha": 0.25,
+   "delta_s": 2.0,
+   "L_estimated_s": 2.5,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 6.91
+  },
+  {
+   "alpha": 0.25,
+   "delta_s": 4.0,
+   "L_estimated_s": 3.25,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 12.1
+  },
+  {
+   "alpha": 0.5,
+   "delta_s": 0.5,
+   "L_estimated_s": 1.75,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 1.73
+  },
+  {
+   "alpha": 0.5,
+   "delta_s": 1.0,
+   "L_estimated_s": 2.0,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 3.46
+  },
+  {
+   "alpha": 0.5,
+   "delta_s": 2.0,
+   "L_estimated_s": 3.0,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 10.37
+  },
+  {
+   "alpha": 0.5,
+   "delta_s": 4.0,
+   "L_estimated_s": 5.0,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 24.2
+  },
+  {
+   "alpha": 1.0,
+   "delta_s": 0.5,
+   "L_estimated_s": 2.0,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 3.46
+  },
+  {
+   "alpha": 1.0,
+   "delta_s": 1.0,
+   "L_estimated_s": 2.5,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 6.91
+  },
+  {
+   "alpha": 1.0,
+   "delta_s": 2.0,
+   "L_estimated_s": 3.5,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 13.83
+  },
+  {
+   "alpha": 1.0,
+   "delta_s": 4.0,
+   "L_estimated_s": 5.5,
+   "L_within_bracket_s": 1.75,
+   "recapture_change_pct": 1.73,
+   "measured_extraction_change_pct": 1.03,
+   "recapture_change_pct_unbounded": 27.65
+  }
+ ]
+}

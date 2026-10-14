@@ -464,6 +464,14 @@ def run_one(args) -> dict:
         vc_k, vc_ref = float(volcol["k"]), float(volcol.get("ref_bps", 50.0)) / 1e4
         vc_w = max(int(float(volcol.get("window_s", 3600.0)) / _DATA["step_s"]), 1)
     rho_eff = [RHO]
+    # Settlement pause (keeper outage, e.g. a base-fee spike): from start_day for `hours`, no epoch settles,
+    # so parked stake is not released and coverage and charges accumulate; the controller, which runs on
+    # reconciled data, does not move. Settlement resumes afterwards.
+    spause = settings.get("settle_pause")
+    if spause is not None:
+        sp_t0 = (int(np.searchsorted(day, day[0] + int(spause.get("start_day", 90))))) * _DATA["step_s"]
+        sp_t1 = sp_t0 + float(spause["hours"]) * 3600.0
+    paused = lambda: spause is not None and sp_t0 <= i * _DATA["step_s"] < sp_t1
     surcharge = float(settings.get("charge_surcharge", 0.0)); sur_tot = 0.0
     # REP supply without prepayment (D): pooled arbitrage stake starts at the launch issuance, charges burn
     # it at each settlement, and rebates add to it; arbitrageurs cannot otherwise acquire REP.
@@ -561,7 +569,7 @@ def run_one(args) -> dict:
             daily.append((int(d_cur), round(d_m * 1e4, 4), round(st, 4), round(ct, 4)))
             lp_cum.append((int(d_cur), lp_arb + lp_exo))         # LPs' cumulative net at each day's end
             day_cum.append((int(d_cur), lp_arb + lp_exo, arb_vol + exo_vol, charge_tot + user_ch, o_prev))   # for escrow analysis
-            if controlled:
+            if controlled and not paused():
                 if param == "ctl_urgm":
                     d_sr = d_sr_stale / max(d_sr_obs, 1)
                     um = d_urg_meas / max(d_arb, 1)
@@ -625,7 +633,9 @@ def run_one(args) -> dict:
                 vol_hist.append(vol_ep.copy()); vol_ep[:] = 0.0; ch_ep[:] = 0.0
         if stake_epoch_s:                           # settlement epoch shorter than a day: stake recycles
             _sep = int(i * _DATA["step_s"] // stake_epoch_s)
-            if _sep != cur_sep:
+            if _sep != cur_sep and paused():
+                cur_sep = _sep                       # epoch would close, but no keeper settles it
+            elif _sep != cur_sep:
                 if cur_sep >= 0:
                     _close_lease_epoch()
                     _close_supply(stake_epoch_s / 3600)
@@ -1078,7 +1088,7 @@ def run_one(args) -> dict:
                             first_corrects = True; break
             if not first_corrects:
                 sr_stale += 1; w_sr_stale += 1; d_sr_stale += 1
-        if fast:
+        if fast and not paused():
             w_n += 1
             if w_n >= _DATA["raise_steps"]:
                 if feasible:

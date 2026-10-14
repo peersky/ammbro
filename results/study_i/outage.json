@@ -1,0 +1,161 @@
+{
+ "chain": "mainnet",
+ "spike_x": 100.0,
+ "start_day": 90,
+ "tank": [
+  {
+   "spike_hours": 0,
+   "policy": "settle anyway",
+   "balance_before_eth": 0.314,
+   "largest_drop_eth": 0.012,
+   "drop_share_of_balance": 0.038,
+   "drop_in_typical_epochs": 30.1,
+   "insolvent": false,
+   "max_settlement_delay_h": 0.0
+  },
+  {
+   "spike_hours": 0,
+   "policy": "wait for the fee",
+   "balance_before_eth": 0.314,
+   "largest_drop_eth": 0.012,
+   "drop_share_of_balance": 0.038,
+   "drop_in_typical_epochs": 30.1,
+   "insolvent": false,
+   "max_settlement_delay_h": 0.0
+  },
+  {
+   "spike_hours": 6,
+   "policy": "settle anyway",
+   "balance_before_eth": 0.275,
+   "largest_drop_eth": 0.006,
+   "drop_share_of_balance": 0.02,
+   "drop_in_typical_epochs": 13.9,
+   "insolvent": false,
+   "max_settlement_delay_h": 0.0
+  },
+  {
+   "spike_hours": 6,
+   "policy": "wait for the fee",
+   "balance_before_eth": 0.314,
+   "largest_drop_eth": -0.04,
+   "drop_share_of_balance": -0.128,
+   "drop_in_typical_epochs": -100.0,
+   "insolvent": false,
+   "max_settlement_delay_h": 7.0
+  },
+  {
+   "spike_hours": 24,
+   "policy": "settle anyway",
+   "balance_before_eth": 0.275,
+   "largest_drop_eth": 0.014,
+   "drop_share_of_balance": 0.051,
+   "drop_in_typical_epochs": 34.9,
+   "insolvent": false,
+   "max_settlement_delay_h": 0.0
+  },
+  {
+   "spike_hours": 24,
+   "policy": "wait for the fee",
+   "balance_before_eth": 0.314,
+   "largest_drop_eth": -0.04,
+   "drop_share_of_balance": -0.128,
+   "drop_in_typical_epochs": -100.8,
+   "insolvent": false,
+   "max_settlement_delay_h": 25.0
+  },
+  {
+   "spike_hours": 72,
+   "policy": "settle anyway",
+   "balance_before_eth": 0.275,
+   "largest_drop_eth": 0.249,
+   "drop_share_of_balance": 0.904,
+   "drop_in_typical_epochs": 612.7,
+   "insolvent": false,
+   "max_settlement_delay_h": 0.0
+  },
+  {
+   "spike_hours": 72,
+   "policy": "wait for the fee",
+   "balance_before_eth": 0.314,
+   "largest_drop_eth": -0.04,
+   "drop_share_of_balance": -0.128,
+   "drop_in_typical_epochs": -100.3,
+   "insolvent": false,
+   "max_settlement_delay_h": 73.0
+  }
+ ],
+ "simulation": [
+  {
+   "scenario": "stable",
+   "pause_hours": 0,
+   "lp_gain_vs_today_m": 5.087,
+   "lp_cost_of_pause_m": 0.0,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.35,
+   "uncorrected_hours_no_pause": 1.35
+  },
+  {
+   "scenario": "stable",
+   "pause_hours": 6,
+   "lp_gain_vs_today_m": 5.154,
+   "lp_cost_of_pause_m": -0.067,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.36,
+   "uncorrected_hours_no_pause": 1.35
+  },
+  {
+   "scenario": "stable",
+   "pause_hours": 24,
+   "lp_gain_vs_today_m": 5.246,
+   "lp_cost_of_pause_m": -0.159,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 2.85,
+   "uncorrected_hours_no_pause": 1.35
+  },
+  {
+   "scenario": "stable",
+   "pause_hours": 72,
+   "lp_gain_vs_today_m": 5.204,
+   "lp_cost_of_pause_m": -0.117,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 2.44,
+   "uncorrected_hours_no_pause": 1.35
+  },
+  {
+   "scenario": "vol_x4",
+   "pause_hours": 0,
+   "lp_gain_vs_today_m": 118.32,
+   "lp_cost_of_pause_m": 0.0,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 2.76,
+   "uncorrected_hours_no_pause": 2.76
+  },
+  {
+   "scenario": "vol_x4",
+   "pause_hours": 6,
+   "lp_gain_vs_today_m": 118.158,
+   "lp_cost_of_pause_m": 0.162,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 2.2,
+   "uncorrected_hours_no_pause": 2.76
+  },
+  {
+   "scenario": "vol_x4",
+   "pause_hours": 24,
+   "lp_gain_vs_today_m": 117.913,
+   "lp_cost_of_pause_m": 0.407,
+   "keeps_rebalanced": true,
+   "uncorrected_hours": 1.76,
+   "uncorrected_hours_no_pause": 2.76
+  },
+  {
+   "scenario": "vol_x4",
+   "pause_hours": 72,
+   "lp_gain_vs_today_m": 119.337,
+   "lp_cost_of_pause_m": -1.017,
+   "keeps_rebalanced": false,
+   "uncorrected_hours": 21.48,
+   "uncorrected_hours_no_pause": 2.76
+  }
+ ]
+}
