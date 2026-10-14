@@ -10,7 +10,7 @@ Liquidity providers (LPs) in automated market makers lose value to arbitrageurs 
 
 LVR is a permanent, non-mean-reverting cost for liquidity providers (LPs). For a constant-product pool it accrues at $\sigma^2/8$ of the pool's value per unit of time, where $\sigma$ is the volatility of the external price over that unit [@milionis2022lvr], about 11% a year at a daily volatility of 5%; measured arbitrage losses exceed the fees LPs earn in many of the largest Uniswap pools [@fritsch2024arbitrage], and in our sample LPs of the mainnet ETH/USDC pool ended \$1.58 M down after fees (Appendix K.1). Arbitrage itself is necessary: it keeps the pool's price aligned with the market. The problem is its price. Arbitrageurs capture the full gap between pool and market, and on Ethereum they pass much of it to block builders in competition for position, a cost ultimately borne by LPs and by the wider blockchain community, since it keeps the AMM from being adopted at scale as a reliable, low-risk building block in which passive retail and institutional capital can be parked; fixed fee tiers, moreover, fragment liquidity without resolving the trade-off.
 
-This matters beyond the returns of LPs. @buterin2025lowrisk argues that low-risk DeFi — payments and savings, well-understood tools such as synthetic assets and fully collateralised lending, "and the ability to exchange between these assets" — can be for Ethereum what search was for Google. Exchange is the primitive the others rely on, and it is low-risk only if supplying liquidity is: an LP who expects to lose a predictable share of liquidity to arbitrage each year is not holding a savings-grade position. We therefore design an exchange whose risks to LPs are bounded and stated. Execution stays synchronous and permissionless; nothing is lent or leveraged; all value settles in the pool's own pair, with no third asset or numeraire; extraction is secured by stake posted in advance; and the reputation asset is fully backed in escrow and redeemable at par (Theorem 1), so that it never draws on the pool's principal. The mechanism does add a dependency: a signed oracle, whose error we bound by a tolerance rather than eliminate (Appendix K.6). Oracle risk and contract risk are the very risks that Buterin names as having held low-risk DeFi back, and we list them explicitly among our assumptions (§4.10).
+This matters beyond the returns of LPs. @buterin2025lowrisk argues that low-risk DeFi — payments and savings, well-understood tools such as synthetic assets and fully collateralised lending, "and the ability to exchange between these assets" — can be for Ethereum what search was for Google. Exchange is the primitive the others rely on, and it is low-risk only if supplying liquidity is: an LP who expects to lose a predictable share of liquidity to arbitrage each year is not holding a savings-grade position. We therefore design an exchange whose risks to LPs are bounded and stated. Execution stays synchronous and permissionless; nothing is lent or leveraged; all value settles in the pool's own pair, with no third asset or numeraire; extraction is secured by stake posted in advance; and the reputation asset is fully backed in escrow and redeemable at par (Theorem 1), so that it never draws on the pool's principal. The mechanism does add a dependency: a signed oracle, whose error we bound by a tolerance rather than eliminate (Appendix K.6). Oracle risk and contract risk are the very risks that Buterin names as having held low-risk DeFi back, and we list them explicitly among our assumptions (§3.2).
 
 We pursue two goals: to return as much of the arbitrage surplus as possible to LPs while charging uninformed flow as little as possible, and to replace the hard-coded fee by a variable the system sets itself. The contributions are:
 
@@ -44,7 +44,18 @@ This is a quantitative design-science study: we specify a mechanism (§4) and ev
 
 Together these answer whether the score identifies extraction, whether a pool can charge less than today's and leave LPs and retail better off without being less rebalanced, how much arbitrage stake that needs, how sensitive charges are to oracle error, and whether settlement is viable; §5 summarises the answers and Appendix K details them.
 
-### 3.2 Data
+### 3.2 Assumptions and threat model
+
+- **A1 (oracle).** Signed bid and ask prices exist for every block, are retained for longer than settlement takes, and are correct up to a bias and noise bounded by $\varepsilon$; a compromised oracle is outside the model. No swap reads the oracle at execution.
+- **A2 (chain).** The mechanism executes atomically with the swap and the chain exposes its base fee; reorganisations beyond finality are not considered.
+- **A3 (ordering).** No ordering is assumed to be honest. The only ordering property used is whether a chain runs builder auctions or a first-come-first-served sequencer (§4.5).
+- **A4 (arbitrage).** Arbitrageurs are rational, with private, time-varying costs; at least one is active, and competition among them is not assumed.
+- **A5 (liveness).** At least one keeper settles each epoch before its deadline.
+- **A6 (operation).** Each pool has an operator that maintains its oracle relationship and signing, monitors its security, and may change $f_{\max}$, $\rho$, $\theta^*$, $\tau$, $\varepsilon$, $L$ and the controller's thresholds only within ranges fixed at deployment and after a delay long enough for LPs to exit; it cannot move funds, alter a recorded swap or charge, or mint REP outside (7).
+
+The adversary may be any trader, LP, arbitrageur, builder, sequencer or keeper, or a coalition of them; it may create any number of accounts, split trades, buy position and trade REP, and an LP may trade against its own pool to mint REP and then withdraw. Accounts carry no identity and can be bought and sold with their keys, as can REP (§3.1), and a new account pays $f_{\max}$. The mechanism aims for five properties: a swap's score does not depend on its position in the block (G1, by (2)); splitting a trade reduces neither its charge nor its parked stake (G2, by (4b) and (9)); charges are secured by stake posted before the trade, otherwise covered by the reserve, never by another trader (G3, by (9)); outstanding REP is always backed in escrow (G4, by (8)); and no keeper can alter a charge (G5). Contract bugs and relational attacks such as sandwiches, which per-swap scoring cannot see, are outside the model.
+
+### 3.3 Data
 
 We study the Uniswap v3 ETH/USDC 5 bp pool on Ethereum mainnet from 1 March to 31 August 2026 (Table 1), chosen because its arbitrage is competitive and its block position is sold by builder auction. Swaps and their transactions were extracted from archive nodes over JSON-RPC; senders are grouped by labels that use no prices (Appendix B). The benchmark is Binance ETHUSDT corrected by USDCUSDT, from the exchange's public archive, with a touch-level bid/ask proxy built from aggressor-flagged trades; it stands in for a signed feed such as Chainlink Data Streams [@chainlinkDataStreams], whose error is therefore modelled rather than measured (Appendix K.6). A USDC/USDT pool, where no extraction is expected, is the negative control: it scored a median absolute $Q_{\mathrm{LP}}$ of 0.9–1.1 bp (95th percentile 2.3 bp), inside the band within which the peg itself moves (99th percentile 12.8 bp). Appendix I repeats the evaluation on Arbitrum's WETH/USDC pool, where ordering by arrival changes the competition signal (§4.5).
 
@@ -58,19 +69,19 @@ We study the Uniswap v3 ETH/USDC 5 bp pool on Ethereum mainnet from 1 March to 3
 
 *Table 1. Sample, March–August 2026.*
 
-### 3.3 Simulation and outcomes
+### 3.4 Simulation and outcomes
 
 The block-level simulator (Appendix C) replays every block in order: arbitrageurs with hedging costs from 0.3 to 2.5 bp choose the trade that maximises profit under the payout rule tested, the winner paying the runner-up's profit for position, and the block's real non-arbitrage swaps follow at their observed size and direction. Three *cost scenarios* hold costs fixed or multiply them by four or by eight from 1 June; stake is also tested under *volatility shocks* that scale the price path's deviation by two or four. A *worst-case* figure is the least favourable of the three cost scenarios.
 
 The primary outcome is *LPs' gain*: the change from today's pool, on the same path, in *LPs' net* — fee income less losses to arbitrage over the six months — in the worst case. It counts only for designs that *keep the pool rebalanced*: relative to today, the share of blocks ending within the fee plus 1 bp of the benchmark falls by at most 0.5 percentage points, and the volume-weighted staleness of the price users trade against rises by at most 0.1 bp; otherwise a pool could raise LPs' income by stopping arbitrage at users' expense. Secondary outcomes are retail's all-in price, *payments to builders* (what arbitrageurs pay block builders, directly or through priority fees, to be ordered first — part of what LPs lose to arbitrage), arbitrageurs' margin, LPs' daily risk, and charges left uncovered by stake. Comparisons are paired replays of one realised path, so we report scenarios and worst cases rather than significance tests. Parameters were chosen by the same rule (Appendix J).
 
-### 3.4 Reproducibility and ethics
+### 3.5 Reproducibility and ethics
 
 Raw data are not redistributed; the repository pins checksums of every archive file, commits the results behind each table and figure, and gates every study on the negative control. The study uses only public blockchain records and a public exchange archive, involves no human participants or personal data beyond pseudonymous addresses, and reports senders only by label and in aggregate; no contract was deployed to a public network.
 
 ## 4. System design
 
-BRO-AMM executes a swap at once and prices it after the block. Every rule of the mechanism is a term of one settlement equation; §4.1 states it, §4.2–4.8 expand its terms, and §4.9–4.10 cover settlement and the threat model. The values used in the evaluation are collected in Appendix J, and Appendix H follows two swaps through the mechanism with numbers.
+BRO-AMM executes a swap at once and prices it after the block. Every rule of the mechanism is a term of one settlement equation; §4.1 states it, §4.2–4.8 expand its terms, and §4.9 covers settlement; the assumptions and threat model are in §3.2. The values used in the evaluation are collected in Appendix J, and Appendix H follows two swaps through the mechanism with numbers.
 
 ### 4.1 The settlement equation
 
@@ -96,7 +107,7 @@ Every swap in block $b$ is priced against the external price at one instant,
 t^*_b = T_b + L, \qquad Q_{\mathrm{LP},j} = \frac{\Delta_{0,j} + P_{\mathrm{dir}}(t^*_b)\,\Delta_{1,j}}{v_j} \tag{2}
 ```
 
-where $T_b$ is the block's timestamp, $L$ is the pool's decision latency, measured from correcting swaps (§3.2), $\Delta_{0,j}$ and $\Delta_{1,j}$ are the amounts of tokens 0 and 1 the pool receives from swap $j$ (negative when it pays out), fees included, and $\hat P_j = P_{\mathrm{dir}}(t^*_b)$ is the price of token 1 in token 0 at the touch: the liquidity-weighted bid when the pool sells the risky asset, the ask when it buys it [@chainlinkDataStreams]. $Q_{\mathrm{LP},j}\, v_j$ is the swap's gain to LPs, negative for losses. One instant per block makes the score independent of position in the block. Where $N$ blocks share a timestamp $S$, the block of rank $j' = 0, \dots, N-1$ is placed at $S + (j' + \tfrac12)/N$ of the timestamp's resolution, and the error is absorbed by a scoring window of width $\Delta_{\mathrm w}$ around $t^*_b$.
+where $T_b$ is the block's timestamp, $L$ is the pool's decision latency, measured from correcting swaps (§3.3), $\Delta_{0,j}$ and $\Delta_{1,j}$ are the amounts of tokens 0 and 1 the pool receives from swap $j$ (negative when it pays out), fees included, and $\hat P_j = P_{\mathrm{dir}}(t^*_b)$ is the price of token 1 in token 0 at the touch: the liquidity-weighted bid when the pool sells the risky asset, the ask when it buys it [@chainlinkDataStreams]. $Q_{\mathrm{LP},j}\, v_j$ is the swap's gain to LPs, negative for losses. One instant per block makes the score independent of position in the block. Where $N$ blocks share a timestamp $S$, the block of rank $j' = 0, \dots, N-1$ is placed at $S + (j' + \tfrac12)/N$ of the timestamp's resolution, and the error is absorbed by a scoring window of width $\Delta_{\mathrm w}$ around $t^*_b$.
 
 ### 4.3 The fee term
 
@@ -251,17 +262,6 @@ where $c_{\mathrm{r}}$ is the cost of a redemption, including the wait until the
 ### 4.9 Settlement and gas
 
 The pool extends each swapper's record — post-trade price, active liquidity and token deltas, chained by hash — so that an account's unsettled swaps form a self-contained segment. An account may settle itself at any time, which releases its parked stake; at each epoch's end a keeper settles every account still in flight, and both paths advance the same pointer. Flights unsettled when the oracle's retention window expires are burned in full. Every swap prefunds $\gamma$ units of gas at the chain's base fee into a gas tank, in the native token and without any exchange rate; keepers are reimbursed from it with an escalating bounty, and one tank can serve many pools. Settlement is never forced into the current block. Where charges are proven off-chain, a designated leader avoids duplicated proving; it cannot alter a charge, which the record and the signed prices fix. At deployment, a pool may make an initial issuance $R_0$ of REP, each unit backed by $P_{\mathrm{int}}$ in escrow; REP issued without backing would release nothing to the LPs when burned for a charge.
-
-### 4.10 Assumptions and threat model
-
-- **A1 (oracle).** Signed bid and ask prices exist for every block, are retained for longer than settlement takes, and are correct up to a bias and noise bounded by $\varepsilon$; a compromised oracle is outside the model. No swap reads the oracle at execution.
-- **A2 (chain).** The mechanism executes atomically with the swap and the chain exposes its base fee; reorganisations beyond finality are not considered.
-- **A3 (ordering).** No ordering is assumed to be honest. The only ordering property used is whether a chain runs builder auctions or a first-come-first-served sequencer (§4.5).
-- **A4 (arbitrage).** Arbitrageurs are rational, with private, time-varying costs; at least one is active, and competition among them is not assumed.
-- **A5 (liveness).** At least one keeper settles each epoch before its deadline.
-- **A6 (operation).** Each pool has an operator that maintains its oracle relationship and signing, monitors its security, and may change $f_{\max}$, $\rho$, $\theta^*$, $\tau$, $\varepsilon$, $L$ and the controller's thresholds only within ranges fixed at deployment and after a delay long enough for LPs to exit; it cannot move funds, alter a recorded swap or charge, or mint REP outside (7).
-
-The adversary may be any trader, LP, arbitrageur, builder, sequencer or keeper, or a coalition of them; it may create any number of accounts, split trades, buy position and trade REP, and an LP may trade against its own pool to mint REP and then withdraw. Accounts carry no identity and can be bought and sold with their keys, as can REP (§3.1), and a new account pays $f_{\max}$. The mechanism aims for five properties: a swap's score does not depend on its position in the block (G1, by (2)); splitting a trade reduces neither its charge nor its parked stake (G2, by (4b) and (9)); charges are secured by stake posted before the trade, otherwise covered by the reserve, never by another trader (G3, by (9)); outstanding REP is always backed in escrow (G4, by (8)); and no keeper can alter a charge (G5). Contract bugs and relational attacks such as sandwiches, which per-swap scoring cannot see, are outside the model.
 
 ## 5. Results
 
@@ -765,7 +765,7 @@ Table 20 collects the variables and parameters of the settlement equation (1), t
 | $f_{\min}$, $f_{\max}$ | fee floor and ceiling | (3) | 3 bp; 1,000 bp | lowest fee at which LPs' net stays positive in every cost scenario (§5.1); smallest at which fresh accounts take nothing under shocks four times the market's (Appendix K.4) |
 | $\rho$ | capacity scale of the curve; base parking rate | (3), (9) | 5 bp | held fixed; the curve's shape is varied through $s$ instead (Appendix C) |
 | $s$ | steepness of the curve | (3) | 1 | milder curves stall correctors, steeper ones leave charges uncovered; neither passes shocks with daily epochs (Appendix C) |
-| $L$, $t^*_b$, $\hat P_j$ | decision latency; decision instant of block $b$; directional benchmark | (2) | 1.5 s | measured from correcting swaps (§3.2) |
+| $L$, $t^*_b$, $\hat P_j$ | decision latency; decision instant of block $b$; directional benchmark | (2) | 1.5 s | measured from correcting swaps (§3.3) |
 | $\varepsilon$ | tolerance for oracle error | (4a) | 0.5 bp | $\max(\lvert\text{bias}\rvert, 2\sigma_o)$ (Appendix K.6) |
 | $m$ | allowance per unit of volume | (4b), (6) | discovered | by (6) |
 | $\lambda$, $a_j$ | late-fix penalty; protected retail share ahead of swap $j$ | (4b) | 0.25 | position model (Appendix F.7) |
