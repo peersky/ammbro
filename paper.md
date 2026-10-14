@@ -17,7 +17,7 @@ We pursue two goals: to return as much of the arbitrage surplus as possible to L
 1. a per-swap quality score $Q_{\mathrm{LP}}$, measured against signed bid/ask prices at an empirically measured decision instant, and a method that prices every swap after finality, in hourly epochs (§4.1–4.2);
 2. a payout rule for arbitrage — a per-unit cap with an allowance discovered on-chain — under which what an arbitrageur can bid for position is bounded by the allowance (§4.4–4.5);
 3. a per-pair reputation asset whose rebates are netted by a high-water mark and fully backed in escrow, which closes minting by LPs against their own pool, and a collateral design that makes the charge collectable after the fact, with REP a transferable bond, issued only by swaps and redeemable at par once settled, that correctors hold or borrow as a market swing requires (§4.6–4.8);
-4. a settlement layer that is pair-native and costs a fraction of the swaps it settles (§4.9);
+4. a settlement layer that is pair-native and costs a fraction of the swaps it settles (Appendix D);
 5. an evaluation on Ethereum covering scoring validity, recapture, payout rules, REP bonds, oracle error and settlement cost, which finds that a pool charging 3 bp instead of today's 5 bp leaves its LPs better off than today in every cost scenario while retail pays less (§5), with an arrival-ordered rollup, Arbitrum, in Appendix I.
 
 ## 2. Related work
@@ -81,7 +81,7 @@ Raw data are not redistributed; the repository pins checksums of every archive f
 
 ## 4. System design
 
-BRO-AMM executes a swap at once and prices it after the block. Every rule of the mechanism is a term of one settlement equation; §4.1 states it, §4.2–4.8 expand its terms, and §4.9 covers settlement; the assumptions and threat model are in §3.2. The values used in the evaluation are collected in Appendix J, and Appendix H follows two swaps through the mechanism with numbers.
+BRO-AMM executes a swap at once and prices it after the block. Every rule of the mechanism is a term of one settlement equation; §4.1 states it and §4.2–4.8 expand its terms; the assumptions and threat model are in §3.2, and the settlement procedure and its gas in Appendix D. The values used in the evaluation are collected in Appendix J, and Appendix H follows two swaps through the mechanism with numbers.
 
 ### 4.1 The settlement equation
 
@@ -258,10 +258,6 @@ P_{\mathrm{mkt}} \;\ge\; P_{\mathrm{int}} - c_{\mathrm{r}}, \qquad P_{\mathrm{mk
 ```
 
 where $c_{\mathrm{r}}$ is the cost of a redemption, including the wait until the holder's settlements are done. Between these bounds the price reflects REP's fee discount and the rent it earns bonding correctors, which rises with the arbitrage the market expects. The reserve, funded by the take $\tau$, covers charges an account leaves unpaid beyond its REP (9) and the pool's maintenance.
-
-### 4.9 Settlement and gas
-
-The pool extends each swapper's record — post-trade price, active liquidity and token deltas, chained by hash — so that an account's unsettled swaps form a self-contained segment. An account may settle itself at any time, which releases its parked stake; at each epoch's end a keeper settles every account still in flight, and both paths advance the same pointer. Flights unsettled when the oracle's retention window expires are burned in full. Every swap prefunds $\gamma$ units of gas at the chain's base fee into a gas tank, in the native token and without any exchange rate; keepers are reimbursed from it with an escalating bounty, and one tank can serve many pools. Settlement is never forced into the current block. Where charges are proven off-chain, a designated leader avoids duplicated proving; it cannot alter a charge, which the record and the signed prices fix. At deployment, a pool may make an initial issuance $R_0$ of REP, each unit backed by $P_{\mathrm{int}}$ in escrow; REP issued without backing would release nothing to the LPs when burned for a charge.
 
 ## 5. Results
 
@@ -511,7 +507,9 @@ A milder curve stalls arbitrageurs even in calm markets. A steeper one keeps the
 
 *Figure 12. (a) Hours of correctable blocks left uncorrected in the worst cost scenario, against arbitrageurs' stake held by one staker or by each separately, with hourly and daily settlement epochs. (b) LPs' gain lost to fresh unstaked accounts, in dollars, against $f_{\max}$, for the market's shocks scaled by one, two and four; zero is drawn at \$0.01 M. Larger shocks lose more dollars but a smaller share of LPs' gain, which grows faster with shock size.*
 
-## Appendix D. Settlement measurements
+## Appendix D. Settlement procedure and measurements
+
+**Procedure.** The pool extends each swapper's record — post-trade price, active liquidity and token deltas, chained by hash — so that an account's unsettled swaps form a self-contained segment. An account may settle itself at any time, which releases its parked stake; at each epoch's end a keeper settles every account still in flight, and both paths advance the same pointer. Flights unsettled when the oracle's retention window expires are burned in full. Every swap prefunds $\gamma$ units of gas at the chain's base fee into a gas tank, in the native token and without any exchange rate; keepers are reimbursed from it with an escalating bounty, and one tank can serve many pools. Settlement is never forced into the current block. Where charges are proven off-chain, a designated leader avoids duplicated proving; it cannot alter a charge, which the record and the signed prices fix. At deployment, a pool may make an initial issuance $R_0$ of REP, each unit backed by $P_{\mathrm{int}}$ in escrow; REP issued without backing would release nothing to the LPs when burned for a charge.
 
 **Implementation.** On Uniswap v4 [@uniswapV4core] the mechanism is a hook on the pool. Escrow is released to LPs through the pool manager's `donate`, which credits in-range liquidity pro rata by the same accounting as swap fees, at constant gas. Each swap prefunds $\gamma \times$ `block.basefee` into the gas tank, and keepers are reimbursed directly or through an ERC-4337 paymaster [@erc4337]. The gas of each component:
 
@@ -604,7 +602,7 @@ The escrow can also work as capital: held as a full-range position in the pool, 
 
 *Figure 15. Rent kept as a function of trade size under the per-unit cap and the average-edge cap: the first stops growing at the band, the second keeps growing past the benchmark.*
 
-**F.2 Reimbursing gas separately.** The chain exposes its base fee at execution, so the arbitrageur's gas could be reimbursed on top of the allowance rather than folded into it. An allowance paid per unit of volume cannot cover the gas of the smallest corrections, so reimbursement helps: in an earlier version of the simulation, which judged staleness by a block's first swap, it raised LPs' worst-case gain from \$4.81 M to \$5.07 M on mainnet and left it unchanged on Arbitrum. We forgo it because crediting gas, paid in the native token, against a charge in the pool's tokens needs an exchange rate the pair does not contain; the gas tank of §4.9 needs none, since swappers fund it and keepers draw from it in the same native token (§4.4).
+**F.2 Reimbursing gas separately.** The chain exposes its base fee at execution, so the arbitrageur's gas could be reimbursed on top of the allowance rather than folded into it. An allowance paid per unit of volume cannot cover the gas of the smallest corrections, so reimbursement helps: in an earlier version of the simulation, which judged staleness by a block's first swap, it raised LPs' worst-case gain from \$4.81 M to \$5.07 M on mainnet and left it unchanged on Arbitrum. We forgo it because crediting gas, paid in the native token, against a charge in the pool's tokens needs an exchange rate the pair does not contain; the gas tank of Appendix D needs none, since swappers fund it and keepers draw from it in the same native token.
 
 **F.3 Controller variants.** Measuring staleness as the share of time a gap is open, over every block, mistook mainnet's 12 s of fresh drift for staleness and drove $m$ to 21–31 bp. An allowance growing with the standing gap silenced the signal that raises $m$ and lengthened stalls (20–61 h on Arbitrum).
 
@@ -782,7 +780,7 @@ Table 20 collects the variables and parameters of the settlement equation (1), t
 | $R_a$, $Y_a$, $\xi$ | REP the account holds; token balance it keeps to pay charges; units it redeems at par once no settlement is pending | (9), (10) | chosen by the account | REP bonded peaks at \$1.12 M under shocks ×4 (Appendix K.4) |
 | $R_0$ | initial issuance at deployment, backed by $P_{\mathrm{int}}$ per unit | (8) | about \$1 M | smallest that keeps the pool rebalanced under shocks ×4 (Appendix K.4) |
 | $c_{\mathrm{r}}$ | cost of a redemption | (11) | gas and the wait for settlement | — |
-| $\gamma$ | gas units prefunded per swap | §4.9 | — | gas-tank solvency (Appendix K.7) |
+| $\gamma$ | gas units prefunded per swap | Appendix D | — | gas-tank solvency (Appendix K.7) |
 
 *Table 20. Variables and parameters of (1). Parameters are fixed within ranges at deployment and changed only after a delay (A6). Each was chosen by two criteria applied together: the design must keep the pool rebalanced in every cost scenario, and among such designs the larger worst-case gain for LPs is preferred; designs that change collateral must also leave charges collectable from stake.*
 
