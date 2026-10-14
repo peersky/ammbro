@@ -452,11 +452,35 @@ def run_one(args) -> dict:
     surcharge = float(settings.get("charge_surcharge", 0.0)); sur_tot = 0.0
     # REP supply without prepayment (D): pooled arbitrage stake starts at the launch issuance, charges burn
     # it at each settlement, and rebates add to it; arbitrageurs cannot otherwise acquire REP.
+    # With burn = False (charges paid in tokens, REP slashed only on default), supply S grows by rebates
+    # and shrinks only by redemption: holders redeem a share redeem_per_day of idle REP, the supply beyond
+    # what arbitrageurs needed last epoch to trade within slack of f_min. Routers keep router_hold_usd for
+    # their own coverage, so arbitrageurs bond from S - router_hold.
     rsup = settings.get("rep_supply")
-    rs_min = rs_burn = 0.0
+    rs_min = rs_burn = rs_redeemed = 0.0; rs_series = []
     if rsup is not None:
-        stake_K = float(rsup["launch_usd"]); rs_min = stake_K
+        rs_burn_on = bool(rsup.get("burn", True))
+        rs_hold = float(rsup.get("router_hold_usd", 0.0))
+        rs_redeem = float(rsup.get("redeem_per_day", 0.0))
+        rs_S = float(rsup["launch_usd"])
+        stake_K = max(rs_S - rs_hold, 0.0); rs_min = stake_K
         rs_reb_h = float(rsup.get("rebate_usd_per_h", 0.0))
+        rs_ln = math.log(max(fmax_fee - F, 1e-9) / 1e-5)
+
+    def _close_supply(hours):
+        nonlocal stake_K, rs_S, rs_min, rs_burn, rs_redeemed
+        if rsup is None:
+            return
+        if rs_burn_on:
+            _b = min(ch_ep.sum(), stake_K); rs_burn += _b
+            stake_K = stake_K - _b + rs_reb_h * hours; rs_min = min(rs_min, stake_K)
+            return
+        need = RHO * float(vol_ep.sum()) * rs_ln
+        idle = max(rs_S - rs_hold - need, 0.0)
+        red = idle * (1.0 - (1.0 - rs_redeem) ** (hours / 24.0))
+        rs_S = rs_S + rs_reb_h * hours - red; rs_redeemed += red
+        stake_K = max(rs_S - rs_hold, 0.0); rs_min = min(rs_min, stake_K)
+        rs_series.append(round(rs_S / 1e3, 1))
 
     rep = settings.get("report")
     rep_on = rep is not None and not rep.get("off", False)
@@ -582,18 +606,14 @@ def run_one(args) -> dict:
             d_wins[:] = 0
             if not stake_epoch_s:
                 _close_lease_epoch()
-                if rsup is not None:
-                    _b = min(ch_ep.sum(), stake_K); rs_burn += _b
-                    stake_K = stake_K - _b + rs_reb_h * 24; rs_min = min(rs_min, stake_K)
+                _close_supply(24.0)
                 vol_hist.append(vol_ep.copy()); vol_ep[:] = 0.0; ch_ep[:] = 0.0
         if stake_epoch_s:                           # settlement epoch shorter than a day: stake recycles
             _sep = int(i * _DATA["step_s"] // stake_epoch_s)
             if _sep != cur_sep:
                 if cur_sep >= 0:
                     _close_lease_epoch()
-                    if rsup is not None:
-                        _b = min(ch_ep.sum(), stake_K); rs_burn += _b
-                        stake_K = stake_K - _b + rs_reb_h * stake_epoch_s / 3600; rs_min = min(rs_min, stake_K)
+                    _close_supply(stake_epoch_s / 3600)
                     vol_hist.append(vol_ep.copy())
                 vol_ep[:] = 0.0; ch_ep[:] = 0.0; cur_sep = _sep
         oi = o0 + vol_k * (o[i] - o0); D = Dd[i] * depth_x
@@ -1133,7 +1153,8 @@ def run_one(args) -> dict:
                                          "bust_out_bound_by_arb_m": [round(float(x) / 1e6, 3) for x in ls["credit_arb_ep_max"]],
                                          "s_end": [round(float(x), 2) for x in ls["s"]], "bro_end_m": [round(float(x) / 1e6, 1) for x in ls["bro"]]},
         "charge_surcharge": {"rate": surcharge, "paid_m": round(sur_tot / 1e6, 3)} if surcharge else None,
-        "rep_supply": None if rsup is None else {**rsup, "end_usd": round(stake_K), "min_usd": round(rs_min), "burned_m": round(rs_burn / 1e6, 3)},
+        "rep_supply": None if rsup is None else {**rsup, "end_usd": round(stake_K), "min_usd": round(rs_min), "burned_m": round(rs_burn / 1e6, 3),
+                                                 "redeemed_m": round(rs_redeemed / 1e6, 3), "supply_k_by_epoch": rs_series if rsup.get("series") else None},
         "report": None if rep is None else {**rep, **{k: (round(v / 1e9, 3) if "volume" in k else round(v / 1e6, 4) if isinstance(v, float) else v) for k, v in rp_stats.items()},
                                            "mu_end_bps": [round(float(x) * 1e4, 3) for x in rp_mu]},
         "arb_volume_b": round(arb_vol / 1e9, 3),
