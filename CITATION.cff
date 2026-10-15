@@ -6,6 +6,9 @@ authors:
     given-names: Tims
     email: tim@peeramid.xyz
 repository-code: "https://github.com/peersky/ammbro"
+license:
+  - AGPL-3.0-only
+  - CC-BY-4.0
 date-released: 2026-10-08
 keywords:
   - automated market maker

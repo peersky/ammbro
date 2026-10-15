@@ -17,4 +17,5 @@ If you sign for an organisation, you confirm that you are authorised to bind it 
 2. You grant the repository owner and recipients of the project a perpetual, worldwide, non-exclusive, royalty-free, irrevocable licence to use, reproduce, modify, publish, sublicense and distribute your contributions, and to relicense them as part of the project.
 3. You grant a patent licence on the same terms for any patent claims you or the organisation hold that your contributions necessarily infringe.
 4. You confirm each contribution is your original work, or that you have the right to submit it, and you identify any third-party material in it.
-5. Contributions are provided "as is", without warranties of any kind.
+5. The project is distributed under AGPL-3.0-only for code and CC BY 4.0 for the paper and its material (see `CONTRIBUTING.md`); the licence in item 2 lets the owner keep doing so and change these licences.
+6. Contributions are provided "as is", without warranties of any kind.

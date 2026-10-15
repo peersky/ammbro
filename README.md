@@ -123,6 +123,12 @@ data/                       raw and derived data (gitignored); data/checksums/ i
 - **On-chain.** Uniswap v3 ETH/USDC 0.05% on mainnet and WETH/USDC on Arbitrum, with a USDC/USDT
   control pool on each chain, extracted over RPC. Raw extracts are gitignored.
 
+## Contributing and licence
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md); contributors sign the [CLA](CLA.md). Code is licensed
+under [AGPL-3.0-only](LICENSE); the paper, figures, docs and results under
+[CC BY 4.0](LICENSE-CC-BY-4.0).
+
 ## Citation
 
 Pecerskis, T. (2026). *BRO-AMM: A Bonded Reconciliation Oracle AMM as a Low-Risk DeFi Primitive.*

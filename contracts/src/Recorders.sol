@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.26;
 
 /// Study G — three ways a swap hook can leave the record reconciliation needs.
